@@ -314,9 +314,10 @@ function joystick(){const area=el('joy'),stickEl=el('stick');let pid=null;functi
  */
 const motionHost=createWirelessHost({
  onStatus:state=>{
-  el("linkStatus").textContent=state.message+(state.connected?" · 연결 지연 "+state.latencyMs+"ms":"");
-  el("motionOpen").classList.toggle("connected",state.connected);
-  el("motionOpen").textContent=state.connected?"모션 연결됨":"모션 설정";
+  el("linkStatus").textContent=state.message+(state.connected&&state.latencyMs?" · 연결 지연 "+state.latencyMs+"ms":"");
+  if(state.connected&&!wasLinked){lastMotionSequence=-1;lastMotionAt=-Infinity;}
+  wasLinked=state.connected;
+  refreshMotionIndicator();
  },
  onMessage:packet=>{
   if(packet.type==="diagnostic"){
@@ -337,10 +338,10 @@ const motionHost=createWirelessHost({
   if(packet.gesture==="throw")magic();else swordHit();
  }
 });
-let lastMotionSequence=-1,lastMotionAt=-Infinity,poseEvents=0;
+let lastMotionSequence=-1,lastMotionAt=-Infinity,poseEvents=0,wasLinked=false;
 const poseCamera=createPoseCamera({
  video:el("posePreview"),
- onStatus:state=>{el("poseStatus").textContent=state.message;},
+ onStatus:state=>{el("poseStatus").textContent=state.message;refreshMotionIndicator();},
  onDodge:event=>{
   poseEvents++;
   const description=event.direction==="duck"?"앉기":event.direction==="left"?"왼쪽 이동":"오른쪽 이동";
@@ -351,6 +352,12 @@ const poseCamera=createPoseCamera({
   }
  }
 });
+function refreshMotionIndicator(){
+ const camera=poseCamera.active,connected=motionHost.connected;
+ const button=el("motionOpen");
+ button.classList.toggle("connected",camera||connected);
+ button.textContent=camera&&connected?"모션 2/2":camera?"카메라 켜짐":connected?"S21 연결됨":"모션 설정";
+}
 el("motionOpen").onclick=()=>{el("motionPanel").hidden=false;};
 el("motionClose").onclick=()=>{el("motionPanel").hidden=true;};
 el("motionPanel").addEventListener("pointerdown",e=>{if(e.target===el("motionPanel"))el("motionPanel").hidden=true;});
