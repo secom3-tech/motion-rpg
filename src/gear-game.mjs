@@ -126,12 +126,17 @@ export function claimIndoorBattle(state,result){
  // An arena can produce a result for a limited number of defeated enemies.
  const kills=clamp(result.kills,1,24);
  const capped=completeArcadeGame(state,"throw",Math.min(30,kills));
- const next=withRpgGear(capped);
+ // The old arcade pays at most 2 G for 8+ kills. Add bounded hunt rewards
+ // so crafting is achievable through actual victories, not an idle clicker.
+ const extraXp=Math.min(16,kills),extraGold=Math.min(36,kills*2);
+ const earned={...capped,xp:capped.xp+extraXp,gold:capped.gold+extraGold};
+ earned.level=1+Math.floor(earned.xp/100);
+ const next=withRpgGear(earned);
  const materials=rewardMaterials(kills);
  for(const [key,n] of Object.entries(materials))next.rpgGear.materials[key]+=n;
  next.rpgGear.totalKills+=kills;
  next.rpgGear.combatClaims=[...p.combatClaims,id].slice(-100);
- return {state:next,awarded:true,kills,materials,xp:next.arcade.lastResult.gainedXp,gold:next.arcade.lastResult.gainedGold};
+ return {state:next,awarded:true,kills,materials,xp:next.arcade.lastResult.gainedXp+extraXp,gold:next.arcade.lastResult.gainedGold+extraGold};
 }
 /** GPS expedition must already have passed settleAdventure's claim checks. */
 export function addExpeditionMaterials(state,session,claimId){
