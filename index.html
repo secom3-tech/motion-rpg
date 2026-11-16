@@ -36,6 +36,7 @@
   <div class="screen hidden" id="view-outdoor"><section class="card">
     <h2>야외 러닝 시뮬레이션</h2>
     <div class="hero"><div class="tree" id="scene">🌲 🌳 🌲</div><strong id="phaseTitle">탐험 대기 중</strong><span class="muted" id="phaseHint">페이스를 정한 뒤 다음 구간으로 이동해 봐.</span></div>
+    <div class="row"><button id="gpsStart">실제 GPS 러닝 시작</button><button id="gpsStop" class="secondary">GPS 러닝 종료</button></div><div class="result" id="gpsSessionInfo">GPS 권한을 허용하면 실제 이동 기록을 받을 수 있다.</div>
     <label for="pace">가상 페이스: <b id="paceValue">8.0</b> 분/km <span class="muted">(작을수록 빠름)</span></label><input id="pace" type="range" min="4" max="12" value="8" step=".5" />
     <div class="row"><input id="gpsDistance" type="number" min="20" value="125" aria-label="모의 이동 거리 미터" /><input id="gpsDuration" type="number" min="10" value="60" aria-label="모의 이동 시간 초" /><button id="gpsApply" class="secondary">GPS 모의 신호 반영</button></div><div class="muted" id="gpsInfo">수동 페이스를 사용 중</div>
     <div class="row"><button id="start">다음 구간으로 이동</button><button id="reset" class="secondary">처음부터</button></div>
@@ -63,7 +64,7 @@
   <footer>Motion RPG — 기본 규칙과 실험 코드는 GitHub에서 관리 · 실전 GPS 및 운동 처방 기능 미구현</footer>
 </main>
 <script type="module">
-  import { ACTIONS, ITEMS, REGIONS, QUESTS, UPGRADES, availableActions, availableRegions, newGame, adjustTreadmillSpeed, advanceTreadmill, beginEncounter, beginBossEncounter, isBossAvailable, recordIndoorSignal, recordOutdoorSignal, resolveEncounter, beginTraining, resolveTraining, purchaseUpgrade, selectRegion, setTreadmillGoal, setTreadmillSpeed, startTreadmill, stopTreadmill } from "./src/engine.mjs";
+  import { ACTIONS, ITEMS, REGIONS, QUESTS, UPGRADES, availableActions, availableRegions, newGame, adjustTreadmillSpeed, advanceTreadmill, beginEncounter, beginBossEncounter, isBossAvailable, recordIndoorSignal, recordOutdoorSegment, recordOutdoorSignal, resolveEncounter, beginTraining, resolveTraining, purchaseUpgrade, selectRegion, setTreadmillGoal, setTreadmillSpeed, startOutdoorSession, startTreadmill, stopOutdoorSession, stopTreadmill } from "./src/engine.mjs";
   const SAVE_KEY = "motion-rpg-save-v1";
   const $ = id => document.getElementById(id);
   function loadGame() {
@@ -71,10 +72,10 @@
     try {
       const saved = JSON.parse(localStorage.getItem(SAVE_KEY) || "null");
       if (!saved || typeof saved !== "object") return blank;
-      return { ...blank, ...saved, inventory: { ...blank.inventory, ...saved.inventory }, training: { ...blank.training, ...saved.training }, camp: { ...blank.camp, ...saved.camp }, treadmill: { ...blank.treadmill, ...saved.treadmill }, regionAttempts: { ...blank.regionAttempts, ...saved.regionAttempts }, quests: { ...blank.quests, ...saved.quests }, unlockedRegions: saved.unlockedRegions || blank.unlockedRegions };
+      return { ...blank, ...saved, inventory: { ...blank.inventory, ...saved.inventory }, training: { ...blank.training, ...saved.training }, camp: { ...blank.camp, ...saved.camp }, treadmill: { ...blank.treadmill, ...saved.treadmill }, outdoorSession: { ...blank.outdoorSession, ...saved.outdoorSession, active: false }, regionAttempts: { ...blank.regionAttempts, ...saved.regionAttempts }, quests: { ...blank.quests, ...saved.quests }, unlockedRegions: saved.unlockedRegions || blank.unlockedRegions };
     } catch { return blank; }
   }
-  let state = loadGame(); let view = "home"; let treadmillTimer = null; let treadmillLastTick = 0;
+  let state = loadGame(); let view = "home"; let treadmillTimer = null; let treadmillLastTick = 0; let gpsWatchId = null; let gpsLastPosition = null; let gpsStatus = "GPS 권한을 허용하면 실제 이동 기록을 받을 수 있다.";
   function saveGame() { localStorage.setItem(SAVE_KEY, JSON.stringify(state)); }
   function stopTreadmillTimer() { if (treadmillTimer) window.clearInterval(treadmillTimer); treadmillTimer = null; }
   function startTreadmillTimer() {
@@ -85,6 +86,21 @@
       treadmillLastTick = now; const wasExploring = state.phase === "exploring"; state = advanceTreadmill(state, seconds); if (wasExploring && state.phase === "encounter") view = "outdoor"; render();
     }, 1000);
   }
+  const gpsDistanceMeters = (a,b) => { const rad=x=>x*Math.PI/180, earth=6371000, dLat=rad(b.latitude-a.latitude), dLng=rad(b.longitude-a.longitude), q=Math.sin(dLat/2)**2+Math.cos(rad(a.latitude))*Math.cos(rad(b.latitude))*Math.sin(dLng/2)**2; return 2*earth*Math.atan2(Math.sqrt(q),Math.sqrt(1-q)); };
+  function stopGpsWatch() { if (gpsWatchId !== null && navigator.geolocation) navigator.geolocation.clearWatch(gpsWatchId); gpsWatchId = null; gpsLastPosition = null; }
+  function beginGpsRun() {
+    if (!navigator.geolocation) { gpsStatus = "이 브라우저는 GPS 위치 기능을 지원하지 않는다."; render(); return; }
+    state = startOutdoorSession(state); gpsStatus = "GPS 위치 권한을 확인하는 중…"; gpsLastPosition = null;
+    gpsWatchId = navigator.geolocation.watchPosition(position => {
+      const point = { latitude: position.coords.latitude, longitude: position.coords.longitude, accuracy: position.coords.accuracy, timestamp: position.timestamp };
+      if (point.accuracy > 100) { gpsStatus = `GPS 정확도 ${Math.round(point.accuracy)}m · 신호 안정화 중`; render(); return; }
+      if (!gpsLastPosition) { gpsLastPosition = point; gpsStatus = `GPS 연결됨 · 정확도 ${Math.round(point.accuracy)}m`; render(); return; }
+      const durationSec = Math.max(1, Math.round((point.timestamp - gpsLastPosition.timestamp) / 1000)); const distanceM = gpsDistanceMeters(gpsLastPosition, point); gpsLastPosition = point;
+      if (distanceM / durationSec > 8) { gpsStatus = "비정상 위치 점프를 제외했다."; render(); return; }
+      const wasExploring = state.phase === "exploring"; state = recordOutdoorSegment(state, distanceM, durationSec); if (wasExploring && state.phase === "encounter") view = "outdoor"; gpsStatus = `GPS 기록 중 · 정확도 ${Math.round(point.accuracy)}m`; render();
+    }, error => { gpsStatus = error.code === 1 ? "위치 권한이 필요하다. 브라우저 설정에서 허용해 줘." : "GPS 신호를 받지 못했다. 잠시 뒤 다시 시도해 줘."; if (state.outdoorSession.active) state = stopOutdoorSession(state); stopGpsWatch(); render(); }, { enableHighAccuracy: true, maximumAge: 5000, timeout: 15000 });
+    render();
+  }
   function render() {
     saveGame(); $("saveStatus").textContent = "이 브라우저에 진행 상황을 자동 저장 중 · 처음부터를 누르면 저장도 초기화된다.";
     for (const id of ["home","outdoor","indoor"]) $("view-"+id).classList.toggle("hidden", view !== id); document.querySelectorAll("[data-view]").forEach(button => button.classList.toggle("active", button.dataset.view === view));
@@ -92,6 +108,7 @@
     for (const item of Object.keys(ITEMS)) $(item).textContent = state.inventory[item];
     const history = [...state.history].reverse(); $("history").replaceChildren(...(history.length ? history.map(entry => { const li=document.createElement("li"); const source=entry.inputSource === "treadmill" ? "러닝머신" : entry.inputSource === "gps" ? "GPS" : "수동"; li.textContent=`${entry.passed ? "성공" : "도전"} · ${entry.title} · ${ACTIONS[entry.action].label} · ${source} · +${entry.gainedXp} XP${entry.gainedGold ? ` / +${entry.gainedGold} G` : ""}`; return li; }) : [Object.assign(document.createElement("li"), { textContent: "아직 기록이 없다. 첫 사건을 해결해 봐." })]));
     const outdoorLabel = state.outdoorInput?.source === "treadmill" ? "최근 러닝머신 신호" : "최근 GPS 모의 신호"; $("gpsInfo").textContent = state.outdoorInput ? `${outdoorLabel}: ${state.outdoorInput.distanceM}m / ${state.outdoorInput.durationSec}초 · ${state.outdoorInput.pace.toFixed(1)} 분/km` : "수동 페이스를 사용 중";
+    const outdoor = state.outdoorSession, gpsNext = outdoor.nextEncounterM ?? 250; $("gpsSessionInfo").textContent = outdoor.active ? `${gpsStatus} · ${outdoor.distanceM}m · ${Math.floor(outdoor.elapsedSec / 60)}분 ${outdoor.elapsedSec % 60}초 · 다음 사건 ${Math.max(0, gpsNext - outdoor.distanceM)}m` : outdoor.lastSummary ? `최근 GPS 러닝 ${outdoor.lastSummary.distanceM}m · ${Math.floor(outdoor.lastSummary.elapsedSec / 60)}분 ${outdoor.lastSummary.elapsedSec % 60}초 · 사건 ${outdoor.lastSummary.encounters}회` : gpsStatus; $("gpsStart").disabled = outdoor.active || state.phase !== "exploring" || state.training.phase !== "ready"; $("gpsStop").disabled = !outdoor.active;
     $("motionInfo").textContent = `최근 동작 모의 신호: ${state.training.inputCount ?? 0}회 · 8회 이상이면 훈련 성공 XP +2`;
     $("treadmillTitle").textContent = state.treadmill.active ? `${state.treadmill.speedKmh.toFixed(1)} km/h로 주행 중` : "러닝머신 대기 중";
     const session = { goalM: 1000, startDistanceM: state.treadmill.distanceM, startElapsedSec: state.treadmill.elapsedSec, startAttempts: state.attempts, lastSummary: null, ...(state.treadmill.session ?? {}) }; const sessionDistance = Math.max(0, state.treadmill.distanceM - session.startDistanceM); const nextEncounterM = state.treadmill.nextEncounterM ?? 250; $("treadmillInfo").textContent = `누적 ${state.treadmill.distanceM}m · ${Math.floor(state.treadmill.elapsedSec / 60)}분 ${state.treadmill.elapsedSec % 60}초 · 다음 사건 ${Math.max(0, nextEncounterM - state.treadmill.distanceM)}m`;
@@ -113,6 +130,6 @@
     else if (state.training.lastDrill) { const d=state.training.lastDrill; $("trainingTitle").textContent="다음 훈련 준비"; $("trainingHint").textContent="훈련 결과가 모험가 상태에 반영됐다."; $("trainingScene").textContent="⚔️ ✨ 🛡️"; $("trainingResult").textContent=`${d.title} · ${ACTIONS[d.action].label} — ${d.passed ? `성공! +${d.gainedXp} XP / +${d.gainedGold} G${d.inputBonus ? " · 신호 보너스 +2 XP" : ""}` : `아쉬운 결과. +${d.gainedXp} XP`}`; }
   }
   $("pace").addEventListener("input",e=>$("paceValue").textContent=Number(e.target.value).toFixed(1));
-  document.querySelectorAll("[data-view]").forEach(button=>button.onclick=()=>{view=button.dataset.view;render();}); $("gpsApply").onclick=()=>{state=recordOutdoorSignal(state,$("gpsDistance").value,$("gpsDuration").value);render();}; $("motionApply").onclick=()=>{state=recordIndoorSignal(state,$("motionCount").value);render();}; $("treadmillStart").onclick=()=>{state=startTreadmill(state);startTreadmillTimer();render();}; $("treadmillDown").onclick=()=>{state=adjustTreadmillSpeed(state,-0.5);render();}; $("treadmillUp").onclick=()=>{state=adjustTreadmillSpeed(state,0.5);render();}; $("treadmillStop").onclick=()=>{state=stopTreadmill(state);stopTreadmillTimer();render();}; $("start").onclick=()=>{state=beginEncounter(state,$("pace").value);render();}; $("bossStart").onclick=()=>{state=beginBossEncounter(state,$("pace").value);render();}; $("trainingStart").onclick=()=>{state=beginTraining(state);render();}; $("reset").onclick=()=>{stopTreadmillTimer();localStorage.removeItem(SAVE_KEY);state=newGame();render();}; if (state.treadmill.active) startTreadmillTimer(); render();
+  document.querySelectorAll("[data-view]").forEach(button=>button.onclick=()=>{view=button.dataset.view;render();}); $("gpsStart").onclick=beginGpsRun; $("gpsStop").onclick=()=>{state=stopOutdoorSession(state);stopGpsWatch();gpsStatus="GPS 러닝을 종료했다.";render();}; $("gpsApply").onclick=()=>{state=recordOutdoorSignal(state,$("gpsDistance").value,$("gpsDuration").value);render();}; $("motionApply").onclick=()=>{state=recordIndoorSignal(state,$("motionCount").value);render();}; $("treadmillStart").onclick=()=>{state=startTreadmill(state);startTreadmillTimer();render();}; $("treadmillDown").onclick=()=>{state=adjustTreadmillSpeed(state,-0.5);render();}; $("treadmillUp").onclick=()=>{state=adjustTreadmillSpeed(state,0.5);render();}; $("treadmillStop").onclick=()=>{state=stopTreadmill(state);stopTreadmillTimer();render();}; $("start").onclick=()=>{state=beginEncounter(state,$("pace").value);render();}; $("bossStart").onclick=()=>{state=beginBossEncounter(state,$("pace").value);render();}; $("trainingStart").onclick=()=>{state=beginTraining(state);render();}; $("reset").onclick=()=>{stopTreadmillTimer();stopGpsWatch();localStorage.removeItem(SAVE_KEY);state=newGame();gpsStatus="GPS 권한을 허용하면 실제 이동 기록을 받을 수 있다.";render();}; if (state.treadmill.active) startTreadmillTimer(); render();
 </script>
 </body></html>

@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { ACTIONS, EVENTS, ITEMS, RIDGE_EVENTS, REGIONS, QUESTS, TRAINING_DRILLS, UPGRADES, availableActions, availableRegions, newGame, adjustTreadmillSpeed, advanceTreadmill, beginEncounter, beginBossEncounter, isBossAvailable, recordIndoorSignal, recordOutdoorSignal, resolveEncounter, advanceGame, beginTraining, resolveTraining, purchaseUpgrade, selectRegion, setTreadmillGoal, setTreadmillSpeed, startTreadmill, stopTreadmill } from "../src/engine.mjs";
+import { ACTIONS, EVENTS, ITEMS, RIDGE_EVENTS, REGIONS, QUESTS, TRAINING_DRILLS, UPGRADES, availableActions, availableRegions, newGame, adjustTreadmillSpeed, advanceTreadmill, beginEncounter, beginBossEncounter, isBossAvailable, recordIndoorSignal, recordOutdoorSegment, recordOutdoorSignal, resolveEncounter, advanceGame, beginTraining, resolveTraining, purchaseUpgrade, selectRegion, setTreadmillGoal, setTreadmillSpeed, startOutdoorSession, startTreadmill, stopOutdoorSession, stopTreadmill } from "../src/engine.mjs";
 
 assert.equal(new Set(EVENTS.map(e => e.id)).size, EVENTS.length, "Event IDs must be unique");
 assert.equal(new Set(Object.keys(ACTIONS)).size, Object.keys(ACTIONS).length, "Action IDs must be unique");
@@ -67,6 +67,19 @@ sensorRun = beginEncounter(sensorRun, 4);
 assert.equal(sensorRun.currentEvent.pace, 8);
 assert.equal(sensorRun.currentEvent.inputSource, "gps");
 assert.throws(() => recordOutdoorSignal(newGame(), 0, 60), /Invalid/);
+let gpsRun = startOutdoorSession(newGame());
+gpsRun = recordOutdoorSegment(gpsRun, 125, 60);
+assert.equal(gpsRun.outdoorSession.distanceM, 125);
+assert.equal(gpsRun.outdoorInput.pace, 8);
+gpsRun = recordOutdoorSegment(gpsRun, 125, 60);
+assert.equal(gpsRun.phase, "encounter");
+assert.equal(gpsRun.currentEvent.inputSource, "gps");
+assert.equal(gpsRun.outdoorSession.nextEncounterM, 500);
+gpsRun = resolveEncounter(gpsRun, "push");
+gpsRun = stopOutdoorSession(gpsRun);
+assert.equal(gpsRun.outdoorSession.lastSummary.distanceM, 250);
+assert.equal(gpsRun.outdoorSession.lastSummary.encounters, 1);
+assert.throws(() => recordOutdoorSegment(newGame(), 10, 10), /not active/);
 let motionRun = recordIndoorSignal(newGame(), 8);
 motionRun = resolveTraining(beginTraining(motionRun), "form");
 assert.equal(motionRun.training.lastDrill.inputBonus, 2);
