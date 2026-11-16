@@ -6,32 +6,37 @@
 export const GEAR = Object.freeze({
   head: Object.freeze([
     {id:"bare",name:"기본 머리"},
+    {id:"hunterCap",name:"사냥꾼 가죽모자"},
     {id:"hood",name:"숲지기 후드"},
     {id:"ironHelm",name:"강철 투구"},
     {id:"circlet",name:"별빛 머리띠"}
   ]),
   armor: Object.freeze([
     {id:"traveler",name:"여행자의 옷"},
+    {id:"hunter",name:"숲 사냥꾼의 방랑복"},
     {id:"leather",name:"정찰 가죽갑옷"},
     {id:"iron",name:"기사의 판금갑옷"},
     {id:"forest",name:"숲의 수호갑옷"}
   ]),
   weapon: Object.freeze([
     {id:"sword",name:"초보자의 검"},
+    {id:"bow",name:"숲의 사냥활"},
     {id:"greatsword",name:"청명한 장검"},
     {id:"staff",name:"고목 마법지팡이"},
     {id:"axe",name:"전투 도끼"}
   ]),
   offhand: Object.freeze([
     {id:"none",name:"보조장비 없음"},
+    {id:"satchel",name:"가죽 여행 가방"},
     {id:"shield",name:"목제 방패"},
     {id:"orb",name:"푸른 마력구"},
     {id:"lantern",name:"탐험 랜턴"}
   ])
 });
-export const DEFAULT_LOADOUT=Object.freeze({head:"bare",armor:"traveler",weapon:"sword",offhand:"none"});
+export const DEFAULT_LOADOUT=Object.freeze({head:"hunterCap",armor:"hunter",weapon:"bow",offhand:"satchel"});
 export const SAMPLE_SETS=Object.freeze({
-  beginner: Object.freeze({...DEFAULT_LOADOUT}),
+  beginner: Object.freeze({head:"bare",armor:"traveler",weapon:"sword",offhand:"none"}),
+  hunter: Object.freeze({...DEFAULT_LOADOUT}),
   scout: Object.freeze({head:"hood",armor:"leather",weapon:"sword",offhand:"lantern"}),
   knight: Object.freeze({head:"ironHelm",armor:"iron",weapon:"greatsword",offhand:"shield"}),
   mage: Object.freeze({head:"circlet",armor:"forest",weapon:"staff",offhand:"orb"})
@@ -50,11 +55,11 @@ export function describeLoadout(loadout){
 }
 export function drawAvatar(ctx,footX,footY,scale=1,equipment=DEFAULT_LOADOUT,bob=0){
  if(!ctx||typeof ctx.save!=="function"||!Number.isFinite(footX)||!Number.isFinite(footY)||!Number.isFinite(scale)||scale<=0)return;
- const l=sanitizeLoadout(equipment),iron=l.armor==="iron",forest=l.armor==="forest",leather=l.armor==="leather";
- const outfit=iron?"#b1c2c5":forest?"#4f9b78":leather?"#95704c":"#557f75";
- const outfitSide=iron?"#687c8f":forest?"#225a47":leather?"#654b36":"#30585c";
- const accent=iron?"#e8d09c":forest?"#d5e79b":leather?"#dba76d":"#add0ab";
- const cape=iron?"#7b4342":forest?"#1b5546":leather?"#4a443a":"#345964";
+ const l=sanitizeLoadout(equipment),iron=l.armor==="iron",forest=l.armor==="forest",leather=l.armor==="leather",hunter=l.armor==="hunter";
+ const outfit=iron?"#b1c2c5":forest?"#4f9b78":hunter?"#64755b":leather?"#95704c":"#557f75";
+ const outfitSide=iron?"#687c8f":forest?"#225a47":hunter?"#4b4235":leather?"#654b36":"#30585c";
+ const accent=iron?"#e8d09c":forest?"#d5e79b":hunter?"#c5a878":leather?"#dba76d":"#add0ab";
+ const cape=iron?"#7b4342":forest?"#1b5546":hunter?"#6d6045":leather?"#4a443a":"#345964";
  const poly=(coords,color,stroke)=>{ctx.beginPath();for(let i=0;i<coords.length;i++){const p=coords[i];if(i===0)ctx.moveTo(p[0],p[1]);else ctx.lineTo(p[0],p[1]);}ctx.closePath();ctx.fillStyle=color;ctx.fill();if(stroke){ctx.strokeStyle=stroke;ctx.lineWidth=1.6;ctx.stroke();}};
  const line=(coords,color,width)=>{ctx.beginPath();coords.forEach((p,i)=>i?ctx.lineTo(p[0],p[1]):ctx.moveTo(p[0],p[1]));ctx.lineCap="round";ctx.lineJoin="round";ctx.strokeStyle=color;ctx.lineWidth=width;ctx.stroke();};
  const oval=(x,y,rx,ry,color)=>{ctx.beginPath();ctx.ellipse(x,y,rx,ry,0,0,Math.PI*2);ctx.fillStyle=color;ctx.fill();};
@@ -63,9 +68,16 @@ export function drawAvatar(ctx,footX,footY,scale=1,equipment=DEFAULT_LOADOUT,bob
  oval(0,0,58,12,"#04161382");
  ctx.translate(0,bob);
  // Back cloak has actual volume rather than a flat rectangular costume.
- poly([[-38,-166],[34,-166],[52,-48],[40,-9],[11,-25],[-14,-14],[-48,-34],[-48,-101]],cape,"#092a2b");
- poly([[-24,-162],[15,-161],[26,-44],[-2,-26],[-27,-49]],"rgba(200,242,182,.13)");
- poly([[-39,-156],[-51,-97],[-45,-32],[-30,-46]],"rgba(0,0,0,.20)");
+ if(hunter){
+   // Uneven shoulder cape and compact travel pack instead of formal knight's cloak.
+   poly([[-41,-161],[31,-159],[46,-82],[30,-56],[-4,-72],[-45,-82],[-49,-116]],cape,"#1e3930");
+   poly([[-30,-155],[-10,-158],[2,-75],[-22,-86]],"rgba(213,202,155,.16)");
+   poly([[24,-152],[42,-150],[52,-90],[29,-93]],"#6d5136","#312b29");
+ }else{
+   poly([[-38,-166],[34,-166],[52,-48],[40,-9],[11,-25],[-14,-14],[-48,-34],[-48,-101]],cape,"#092a2b");
+   poly([[-24,-162],[15,-161],[26,-44],[-2,-26],[-27,-49]],"rgba(200,242,182,.13)");
+   poly([[-39,-156],[-51,-97],[-45,-32],[-30,-46]],"rgba(0,0,0,.20)");
+ }
  // Legs and articulated plated boots.
  poly([[-29,-90],[-1,-91],[-8,-35],[-31,-34]],"#334f51");
  poly([[5,-91],[33,-88],[28,-35],[4,-35]],iron?"#63798b":"#365451");
@@ -79,7 +91,15 @@ export function drawAvatar(ctx,footX,footY,scale=1,equipment=DEFAULT_LOADOUT,bob
  poly([[-29,-157],[0,-149],[0,-88],[-26,-87],[-37,-114]],"rgba(255,255,255,.11)");
  poly([[0,-148],[28,-155],[36,-110],[28,-85],[0,-86]],"rgba(0,0,0,.13)");
  if(iron||forest){poly([[-35,-143],[-13,-152],[23,-149],[37,-140],[30,-117],[-31,-117]],iron?"#c0d1d3":"#65a97c");poly([[-33,-140],[0,-145],[0,-121],[-32,-122]],"rgba(255,255,255,.22)");}
- if(leather){line([[-26,-145],[22,-93]],"#443526",12);line([[-25,-145],[22,-95]],"#d0aa70",5);}
+ if(leather||hunter){line([[-26,-145],[22,-93]],"#443526",12);line([[-25,-145],[22,-95]],"#d0aa70",5);}
+ if(hunter){
+   // Practical split vest, hoodless scarf and utility pouch.
+   poly([[-26,-148],[-12,-151],[-4,-97],[-31,-97]],"#826f50","#3c4031");
+   poly([[7,-150],[27,-149],[31,-99],[14,-96]],"#516d52");
+   poly([[-24,-157],[9,-161],[17,-153],[-20,-147]],"#9c9171");
+   poly([[21,-107],[44,-106],[42,-82],[18,-83]],"#7e5c3f","#382e28");
+   line([[23,-103],[40,-102]],"#c1a77c",2);
+ }
  // Metal insignia and gear belt.
  poly([[-37,-94],[33,-94],[34,-82],[-36,-82]],"#423c35");
  poly([[-7,-96],[9,-96],[10,-81],[-8,-81]],accent,"#5a5138");
@@ -105,6 +125,14 @@ export function drawAvatar(ctx,footX,footY,scale=1,equipment=DEFAULT_LOADOUT,bob
  line([[0,-182],[7,-182]],"#915c51",1.7);
  // Dark sculpted hair.
  if(l.head==="bare"){poly([[-26,-202],[-28,-221],[-17,-237],[3,-242],[24,-235],[29,-218],[23,-211],[14,-226],[-2,-219],[-17,-224]],"#3b3531");poly([[-28,-217],[-25,-199],[-21,-198],[-18,-222]],"#2d2f2b");}
+ if(l.head==="hunterCap"){
+   // Soft wide-brimmed leather hat: clearly a woodland hunter, not an armoured soldier.
+   poly([[-29,-221],[-20,-236],[8,-240],[25,-231],[30,-220],[20,-215],[-24,-215]],"#493f32");
+   poly([[-42,-215],[-13,-223],[29,-219],[43,-211],[23,-207],[-30,-208]],"#756647","#362e29");
+   poly([[-18,-229],[9,-234],[24,-226],[16,-219],[-19,-221]],"#89764f");
+   line([[-20,-220],[20,-217]],"#bb9e6a",3);
+   poly([[18,-235],[36,-248],[24,-229]],"#a7b689");
+ }
  if(l.head==="hood"){
    poly([[-31,-209],[-29,-234],[-14,-253],[15,-253],[34,-232],[33,-201],[22,-216],[18,-233],[-18,-229],[-22,-204]],"#1c5945","#15372f");
    poly([[-29,-224],[-19,-241],[16,-244],[26,-224],[18,-229],[-18,-231]],"#80ad74");
@@ -140,6 +168,13 @@ export function drawAvatar(ctx,footX,footY,scale=1,equipment=DEFAULT_LOADOUT,bob
    glow(56,-106,26,"rgba(251,190,76,.40)");
    line([[45,-125],[45,-139],[67,-139],[67,-125]],"#cead72",3);
  }
+ if(l.offhand==="satchel"){
+   line([[36,-151],[46,-101]],"#9c815a",7);
+   poly([[48,-112],[85,-114],[89,-69],[46,-69]],"#614931","#302b24");
+   poly([[47,-117],[85,-119],[83,-99],[48,-98]],"#a08054","#42362a");
+   poly([[65,-111],[70,-111],[70,-103],[65,-103]],"#d2b178");
+   line([[49,-77],[83,-77]],"#a98a59",2);
+ }
  // Main weapon on the viewer left, never behind the armor.
  if(l.weapon==="sword"||l.weapon==="greatsword"){
    const large=l.weapon==="greatsword";
@@ -150,6 +185,15 @@ export function drawAvatar(ctx,footX,footY,scale=1,equipment=DEFAULT_LOADOUT,bob
    line([[-66,-108],[-65,-84]],"#5a382a",8);
    oval(-65,-82,7,6,large?"#93eafa":"#c1a474");
    if(large){glow(-66,-180,20,"rgba(82,195,239,.16)");poly([[-72,-188],[-67,-212],[-63,-188],[-67,-175]],"#8eddf5");}
+ }
+ if(l.weapon==="bow"){
+   // Hunter bow held in the left hand, curved wooden limbs and visible taut string.
+   line([[-76,-92],[-111,-167],[-85,-243]],"#704d31",11);
+   line([[-76,-92],[-111,-167],[-85,-243]],"#b88c50",4);
+   line([[-76,-92],[-85,-243]],"#e7dcaf",1.9);
+   line([[-106,-177],[-62,-160]],"#d0a676",2.5);
+   poly([[-61,-162],[-71,-167],[-71,-157]],"#d7dfc6");
+   poly([[-107,-165],[-99,-170],[-99,-162]],"#544e34");
  }
  if(l.weapon==="staff"){
    line([[-66,-91],[-76,-234]],"#59482d",12);
