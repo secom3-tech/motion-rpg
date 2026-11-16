@@ -61,7 +61,7 @@ assert.equal(swapped.rpgGear.equipped.head,"hood");
 
 const poor=newGame();poor.gold=100;poor.level=10;
 assert.equal(gearRequirement(poor,"hood").ok,false,"Must require materials, not just gold");
-const rich=newGame();rich.gold=1000;rich.level=5;
+let rich=newGame();rich.gold=1000;rich.level=5;
 rich.rpgGear={owned:[...STARTER_OWNED],materials:{wood:200,fang:200,essence:200,ore:200}};
 assert.equal(gearRequirement(rich,"greatsword").ok,false,"Boss gate not bypassed by money");
 rich.quests.forest.bossDefeated=true;
