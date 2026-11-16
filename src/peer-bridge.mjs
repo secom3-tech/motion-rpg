@@ -19,16 +19,22 @@ export function loadPeerLibrary(){
  }).catch(e=>{libraryPromise=null;throw e});
  return libraryPromise;
 }
-const alphabet="abcdefghjkmnpqrstuvwxyz23456789";
+/**
+ * A short six-digit code for pairing. Internal WebRTC peer ID retains an mrpg-
+ * prefix. The room is ephemeral and accepts one controller only.
+ * 6 digits are convenient, but not a strong authentication secret.
+ */
 export function randomRoom(randomBytes=null){
- const bytes=randomBytes||(()=>{const b=new Uint8Array(10);crypto.getRandomValues(b);return b})();
- if(bytes.length<10)throw Error("At least 10 random bytes required");
- return "mrpg-"+Array.from(bytes).slice(0,10).map(b=>alphabet[b%alphabet.length]).join("");
+ const bytes=randomBytes||(()=>{const b=new Uint8Array(4);crypto.getRandomValues(b);return b})();
+ if(bytes.length<4)throw Error("At least 4 random bytes required");
+ const number=((bytes[0]*0x1000000)+(bytes[1]<<16)+(bytes[2]<<8)+bytes[3])>>>0;
+ return "mrpg-"+String(number%1000000).padStart(6,"0");
 }
 export function cleanRoom(input){
- const str=String(input||"").trim().toLowerCase();
+ const str=String(input||"").trim().toLowerCase().replace(/\s+/g,"");
  const value=str.startsWith("mrpg-")?str:"mrpg-"+str;
- return /^mrpg-[a-hj-km-np-z2-9]{10}$/.test(value)?value:null;
+ // Continue accepting older longer peer codes for already open sessions.
+ return /^mrpg-(?:[0-9]{6}|[a-hj-km-np-z2-9]{10})$/.test(value)?value:null;
 }
 export function createWirelessHost({onStatus=()=>{},onMessage=()=>{}}={}){
  let peer=null,conn=null,room="",active=false,lastHeartbeat=0,watch=null,latestPing=0;
