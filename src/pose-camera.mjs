@@ -4,11 +4,39 @@
  * Uses the MediaPipe pose-lite model and a limited ~8fps cadence.
  */
 import {createPoseTracker} from "./pose-core.mjs";
-const VERSION="0.10.22";
-const BUNDLE="https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@"+VERSION+"/vision_bundle.mjs";
-const WASM="https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@"+VERSION+"/wasm";
+// Browser ESM availability depends on CDN packaging. jsDelivr package root
+// is the primary endpoint; alternate vendors/versions are tried on failure.
 const MODEL="https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_lite/float16/1/pose_landmarker_lite.task";
-const sleep=ms=>new Promise(resolve=>setTimeout(resolve,ms));
+export const VISION_SOURCES=Object.freeze([
+ {name:"jsDelivr root 0.10.22",module:"https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.22",wasm:"https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.22/wasm"},
+ {name:"jsDelivr bundle 0.10.22",module:"https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.22/vision_bundle.mjs",wasm:"https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.22/wasm"},
+ {name:"UNPKG 0.10.22",module:"https://unpkg.com/@mediapipe/tasks-vision@0.10.22/vision_bundle.mjs",wasm:"https://unpkg.com/@mediapipe/tasks-vision@0.10.22/wasm"},
+ {name:"jsDelivr root 0.10.14",module:"https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14",wasm:"https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/wasm"},
+ {name:"jsDelivr 1.2.3",module:"https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@1.2.3/vision_bundle.mjs",wasm:"https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@1.2.3/wasm"}
+]);
+export async function loadPoseModel({importer=(url)=>import(url),report=()=>{}}={}){
+ const errors=[];
+ for(let i=0;i<VISION_SOURCES.length;i++){
+  const source=VISION_SOURCES[i];
+  try{
+   report("자세 인식 준비 "+(i+1)+"/"+VISION_SOURCES.length+" · "+source.name);
+   const module=await importer(source.module);
+   const api=module?.FilesetResolver&&module?.PoseLandmarker?module:module?.default;
+   if(!api?.FilesetResolver||!api?.PoseLandmarker)throw Error("모듈 내 자세 인식 API가 없음");
+   const vision=await api.FilesetResolver.forVisionTasks(source.wasm);
+   const model=await api.PoseLandmarker.createFromOptions(vision,{
+    baseOptions:{modelAssetPath:MODEL,delegate:"CPU"},
+    runningMode:"VIDEO",numPoses:1,
+    minPoseDetectionConfidence:.6,
+    minPosePresenceConfidence:.6,
+    minTrackingConfidence:.55
+   });
+   report("자세 인식 엔진 준비 완료");
+   return {model,source:source.name};
+  }catch(error){errors.push(source.name+": "+(error?.message||String(error)));}
+ }
+ throw Error("모든 자세 인식 모듈 경로가 실패했습니다. Chrome 또는 삼성 인터넷에서 열어 다시 시도하세요. "+errors.map(x=>x.slice(0,100)).join(" | "));
+}
 export function createPoseCamera({video,onStatus=()=>{},onDodge=()=>{}}={}){
  if(!video)throw Error("Camera video element missing");
  const pose=createPoseTracker({calibrationFrames:14,stableFrames:2,resetFrames:3,cooldownMs:1100});
@@ -50,17 +78,10 @@ export function createPoseCamera({video,onStatus=()=>{},onDodge=()=>{}}={}){
    stream=await navigator.mediaDevices.getUserMedia({audio:false,video:{facingMode:"user",width:{ideal:480},height:{ideal:360},frameRate:{ideal:15,max:24}}});
    video.srcObject=stream;
    await video.play();
-   status("자세 인식 모델을 다운로드하고 있어요...");
-   const {FilesetResolver,PoseLandmarker}=await import(BUNDLE);
-   const vision=await FilesetResolver.forVisionTasks(WASM);
-   // Keep CPU and arena WebGL independent; GPU can contend with mobile rendering.
-   model=await PoseLandmarker.createFromOptions(vision,{
-    baseOptions:{modelAssetPath:MODEL,delegate:"CPU"},
-    runningMode:"VIDEO",numPoses:1,
-    minPoseDetectionConfidence:.6,
-    minPosePresenceConfidence:.6,
-    minTrackingConfidence:.55
-   });
+   status("자세 인식 모듈을 불러오는 중... (접속 경로 자동 변경 지원)");
+   // Keep CPU vision inference independent from the arena WebGL renderer.
+   const ready=await loadPoseModel({report:status});
+   model=ready.model;
    pose.reset();active=true;starting=false;
    status("정면에서 2초 정도 가만히 서서 기준 자세를 잡아 주세요.");
    process();
