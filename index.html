@@ -24,18 +24,18 @@
 <main>
   <div class="eyebrow">MOTION RPG · ALPHA BUILD 0.24.0</div>
   <h1>경계의 숲</h1>
-  <div class="muted">현실의 움직임으로 숲과 실내 던전을 탐험하는 모험 RPG</div>
-  <div class="notice"><b>오늘의 원정은 네 움직임에서 시작된다.</b> 야외 GPS와 러닝머신은 기록·사건·보상으로 이어진다. 실내 투척은 휴대폰 자이로센서로 시험한다.<div class="muted" id="saveStatus">이 브라우저에 진행 상황을 자동 저장한다.</div></div>
-  <nav class="view-nav" aria-label="게임 모드"><button data-view="home" class="active">⚔️ 캠프</button><button data-view="outdoor">🌲 야외 원정</button><button data-view="indoor">🏟️ 실내 던전</button></nav>
-  <div class="screen" id="view-home"><section class="card"><h2>모험가 HUD</h2><div class="stats">
-    <div class="stat"><span>레벨</span><b id="level">1</b></div><div class="stat"><span>경험치</span><b id="xp">0 XP</b></div><div class="stat"><span>골드</span><b id="gold">0 G</b></div><div class="stat"><span>기력 (게임 수치)</span><b id="energy">100</b></div><div class="stat"><span>모의 거리</span><b id="distance">0 m</b></div><div class="stat"><span>진행</span><b id="time">0 분</b></div>
+  <div class="muted">현실의 움직임으로 경계의 숲을 탐험하는 모험 RPG</div>
+  <div class="notice"><b>숲 입구 마을에서 오늘의 원정을 준비한다.</b> 야외 GPS와 러닝머신은 숲의 이동·사건·보상으로 이어진다. 실내에서는 마력체와 1인칭 전투를 벌인다.<div class="muted" id="saveStatus">이 브라우저에 진행 상황을 자동 저장한다.</div></div>
+  <nav class="view-nav" aria-label="게임 모드"><button data-view="home" class="active">🏘️ 마을</button><button data-view="outdoor">🌲 경계의 숲</button><button data-view="indoor">⚔️ 균열 전투</button></nav>
+  <div class="screen" id="view-home"><section class="card"><h2>마을의 모험가</h2><div class="stats">
+    <div class="stat"><span>레벨</span><b id="level">1</b></div><div class="stat"><span>경험치</span><b id="xp">0 XP</b></div><div class="stat"><span>골드</span><b id="gold">0 G</b></div><div class="stat"><span>기력 (게임 수치)</span><b id="energy">100</b></div><div class="stat"><span>탐험 거리</span><b id="distance">0 m</b></div><div class="stat"><span>진행</span><b id="time">0 분</b></div>
   </div></section>
-  <section class="card"><h2>원정 보드</h2><div class="stats"><div class="stat"><span>야외 원정</span><b id="outdoorBoard">대기</b></div><div class="stat"><span>실내 던전</span><b id="indoorBoard">대기</b></div><div class="stat"><span>다음 관문</span><b id="nextBoard">사건 탐색</b></div></div></section>
+  <section class="card"><h2>마을 게시판</h2><div class="stats"><div class="stat"><span>숲 원정</span><b id="outdoorBoard">대기</b></div><div class="stat"><span>균열 전투</span><b id="indoorBoard">대기</b></div><div class="stat"><span>다음 관문</span><b id="nextBoard">사건 탐색</b></div></div></section>
   <section class="card"><h2>전투 기록</h2><ul id="history" aria-label="최근 탐험 기록"><li>아직 기록이 없다. 첫 사건을 해결해 봐.</li></ul></section>
   <section class="card"><h2>탐험 가방</h2><div class="stats">
     <div class="stat"><span>횃불</span><b id="torch">0</b></div><div class="stat"><span>지도 조각</span><b id="map">0</b></div><div class="stat"><span>붕대</span><b id="bandage">0</b></div>
   </div><div class="muted">보급 사건에서 획득한 물품은 해당 유형의 사건에서 선택지로 나타난다.</div></section>
-  <section class="card"><h2>캠프 강화</h2><div class="muted">골드를 써서 야외 탐험과 실내 훈련에 지속 효과를 더한다.</div><div id="shop" class="actions" aria-label="캠프 강화"></div></section>
+  <section class="card"><h2>마을 시설</h2><div class="muted">골드를 써서 숲 탐험과 균열 전투에 지속 효과를 더한다.</div><div id="shop" class="actions" aria-label="마을 시설"></div></section>
   <section class="card"><h2>탐험 지역</h2><div class="muted" id="regionInfo">현재 지역</div><div id="regions" class="actions" aria-label="탐험 지역 선택"></div><div class="result" id="questInfo">지역 조사 목표를 확인하는 중</div><div class="row"><button id="bossStart" class="secondary">지역 보스 도전</button></div></section></div>
   <div class="screen hidden" id="view-outdoor"><section class="card">
     <h2>야외 원정 · 경계의 숲</h2>
@@ -43,15 +43,15 @@
     <div class="row"><button id="gpsStart">원정 시작 · GPS</button><button id="gpsPause" class="secondary">일시정지</button><button id="gpsStop" class="secondary">원정 종료</button><button id="voiceToggle" class="secondary" aria-pressed="false">음성 안내 켜기</button></div><div class="result" id="gpsSessionInfo">GPS 권한을 허용하면 실제 이동 기록을 받을 수 있다.</div>
     <div class="muted" id="companionInfo">러닝 중 화면이 유지되도록 요청하며, 기기 정책에 따라 백그라운드 GPS는 제한될 수 있다.</div>
     <label for="pace">가상 페이스: <b id="paceValue">8.0</b> 분/km <span class="muted">(작을수록 빠름)</span></label><input id="pace" type="range" min="4" max="12" value="8" step=".5" />
-    <div class="row"><input id="gpsDistance" type="number" min="20" value="125" aria-label="모의 이동 거리 미터" /><input id="gpsDuration" type="number" min="10" value="60" aria-label="모의 이동 시간 초" /><button id="gpsApply" class="secondary">GPS 모의 신호 반영</button></div><div class="muted" id="gpsInfo">수동 페이스를 사용 중</div>
+    <div class="row"><input id="gpsDistance" type="number" min="20" value="125" aria-label="이동 거리 미터" /><input id="gpsDuration" type="number" min="10" value="60" aria-label="이동 시간 초" /><button id="gpsApply" class="secondary">기록 입력 반영</button></div><div class="muted" id="gpsInfo">수동 페이스를 사용 중</div>
     <div class="row"><button id="start">수동 원정 시작</button><button id="reset" class="secondary">처음부터</button></div>
     <div id="actions" class="actions hidden" aria-label="사건 선택"></div>
     <div id="event" class="result" role="status" aria-live="polite">첫 모험을 시작해 봐.</div>
     <ul><li>한 구간은 <b>이동 → 사건 선택 → 결과</b> 순서로 진행된다.</li><li>페이스는 실제 운동 기록이 아닌 테스트 입력이다.</li><li>게임 난이도와 실제 운동 강도는 별도로 설계한다.</li></ul>
   </section></div>
   <div class="screen hidden" id="view-indoor"><section class="card">
-    <h2>실내 던전 · 러닝머신 원정</h2>
-    <div class="result"><b>1인칭 실내 전투</b><br><span class="muted">훈련장·몬스터 전투는 전용 3D 화면에서 진행한다. 지금은 화면 조작으로 전투 감각을 확인하는 단계다.</span><div class="row"><a class="controller-link" href="./indoor.html">⚔️ 3D 훈련장 입장</a></div></div>
+    <h2>경계의 숲 · 실내 이동</h2>
+    <div class="result"><b>숲의 균열 전투</b><br><span class="muted">숲에서 새어 나온 마력체와 전용 1인칭 화면에서 싸운다. 현재는 화면 조작으로 전투 감각을 확인하는 단계다.</span><div class="row"><a class="controller-link" href="./indoor.html">⚔️ 균열 전투 입장</a></div></div>
     <div class="hero"><div class="tree">🏃‍♂️ ▰▰▰</div><strong id="treadmillTitle">러닝머신 대기 중</strong><span class="muted" id="treadmillInfo">속도를 정한 뒤 시작해 봐.</span></div>
     <div class="muted">원정 거리 선택</div><div id="treadmillGoals" class="actions" aria-label="러닝 목표 거리"></div><div class="muted">출발 속도</div><div id="treadmillSpeeds" class="actions" aria-label="러닝 시작 속도"></div><div class="result" id="treadmillSummary">원정 거리를 고른 뒤 던전으로 진입해 봐.</div>
     <div class="row"><button id="treadmillStart">던전 진입</button><button id="treadmillDown" class="secondary">속도 −</button><button id="treadmillUp" class="secondary">속도 +</button></div>
@@ -59,21 +59,21 @@
     <div class="muted">시작하면 앱 타이머가 1초 단위로 거리와 시간을 자동 누적한다. 실제 연동 전까지는 설정한 속도를 기준으로 계산한다.</div>
   </section>
   <section class="card">
-    <h2>훈련장 · 몬스터 전투</h2>
+    <h2>균열 전투 기록</h2>
     <div class="battle-arena" id="battleArena" data-state="ready">
-      <div class="battle-top"><span id="battleLocation">실내 훈련장 · 준비 구역</span><span class="round-badge" id="battleRound">READY</span></div>
-      <div class="combatant enemy"><div class="fighter" id="enemySprite">👁️</div><div class="fighter-name" id="trainingTitle">훈련용 표적</div><div class="hp-line"><i id="enemyHpBar"></i></div><div class="hp-text" id="enemyHpText">HP —</div></div>
+      <div class="battle-top"><span id="battleLocation">숲의 균열 · 관측 구역</span><span class="round-badge" id="battleRound">READY</span></div>
+      <div class="combatant enemy"><div class="fighter" id="enemySprite">👁️</div><div class="fighter-name" id="trainingTitle">마력체 반응</div><div class="hp-line"><i id="enemyHpBar"></i></div><div class="hp-text" id="enemyHpText">HP —</div></div>
       <div class="versus">VS</div><div class="battle-ground"></div>
       <div class="combatant player"><div class="fighter">🧙</div><div class="fighter-name">로직 마스터</div><div class="hp-line"><i id="playerHpBar"></i></div><div class="hp-text" id="playerHpText">기력 100 / 100</div></div>
-      <div class="combat-callout" id="trainingHint">훈련장에 입장해 첫 몬스터를 불러내자.</div>
+      <div class="combat-callout" id="trainingHint">균열의 마력체가 나타나기를 기다린다.</div>
     </div>
-    <div class="muted">훈련 던전 목표</div><div id="trainingGoals" class="actions" aria-label="훈련 던전 목표"></div><div class="result" id="trainingSummary">목표를 정하고 훈련장에 진입해 봐.</div>
+    <div class="muted">균열 정화 목표</div><div id="trainingGoals" class="actions" aria-label="균열 정화 목표"></div><div class="result" id="trainingSummary">목표를 정하고 균열에 진입해 봐.</div>
     <div class="result"><b>S21 모션 컨트롤러</b><br><span class="muted">투척·근접 휘두르기는 S21에서, 폴드6은 화면·카메라 회피 판정에 쓴다.</span><div class="row"><a class="controller-link" href="./controller.html">S21 컨트롤러 열기</a></div></div>
     <div class="row"><button id="cameraStart" class="secondary">카메라 동작 테스트</button><button id="cameraStop" class="secondary" disabled>카메라 끄기</button></div>
     <div id="cameraPanel" class="camera-panel hidden"><video id="motionVideo" autoplay muted playsinline></video><div class="motion-meter"><i id="motionMeter"></i></div><div class="muted" id="cameraInfo">카메라는 회피 동작 판정용으로 시험한다.</div></div>
-    <div class="row"><input id="motionCount" type="number" min="0" max="100" value="0" aria-label="모의 동작 수" /><button id="motionApply" class="secondary">동작 신호 반영</button></div><div class="muted" id="motionInfo">동작 신호 8회 이상이면 훈련 성공 XP +2</div>
-    <div class="row"><button id="trainingStart">훈련장 진입</button></div>
-    <div id="trainingActions" class="actions hidden" aria-label="훈련 선택"></div>
+    <div class="row"><input id="motionCount" type="number" min="0" max="100" value="0" aria-label="동작 수" /><button id="motionApply" class="secondary">동작 신호 반영</button></div><div class="muted" id="motionInfo">전투 동작 신호 8회 이상이면 정화 보상 XP +2</div>
+    <div class="row"><button id="trainingStart">균열 진입</button></div>
+    <div id="trainingActions" class="actions hidden" aria-label="균열 대응 선택"></div>
     <div id="trainingResult" class="combat-feed" role="status" aria-live="polite">S21은 투척·근접 휘두르기, 폴드6은 카메라 회피를 담당한다. 몬스터가 나타나면 맞는 장비로 대응해 봐.</div>
     <ul><li>슬라임 사수·그림자 늑대·철갑 골렘과 차례로 전투한다.</li><li>카메라는 기기 안에서 프레임 변화만 측정하며, 영상은 저장·전송하지 않는다.</li></ul>
   </section></div>
@@ -93,7 +93,7 @@
       return { ...blank, ...saved, inventory: { ...blank.inventory, ...saved.inventory }, arcade: { ...blank.arcade, ...saved.arcade, bestScores: { ...blank.arcade.bestScores, ...saved.arcade?.bestScores } }, training: { ...blank.training, ...saved.training, session: { ...blank.training.session, ...saved.training?.session, active: false } }, camp: { ...blank.camp, ...saved.camp }, treadmill: { ...blank.treadmill, ...saved.treadmill }, outdoorSession: { ...blank.outdoorSession, ...saved.outdoorSession, active: false }, regionAttempts: { ...blank.regionAttempts, ...saved.regionAttempts }, quests: { ...blank.quests, ...saved.quests }, unlockedRegions: saved.unlockedRegions || blank.unlockedRegions };
     } catch { return blank; }
   }
-  function claimIndoorResult(current) { try { const result=JSON.parse(localStorage.getItem(INDOOR_RESULT_KEY)||"null"); if (!result || !Number.isInteger(result.kills) || result.kills < 1) return { state:current, text:"" }; const score=Math.min(30,result.kills); localStorage.removeItem(INDOOR_RESULT_KEY); const next=completeArcadeGame(current,"throw",score); return { state:next, text:`3D 훈련장 보상 수령 · ${result.kills}체 격파 / +${next.arcade.lastResult.gainedXp} XP / +${next.arcade.lastResult.gainedGold} G` }; } catch { return { state:current, text:"" }; } }
+  function claimIndoorResult(current) { try { const result=JSON.parse(localStorage.getItem(INDOOR_RESULT_KEY)||"null"); if (!result || !Number.isInteger(result.kills) || result.kills < 1) return { state:current, text:"" }; const score=Math.min(30,result.kills); localStorage.removeItem(INDOOR_RESULT_KEY); const next=completeArcadeGame(current,"throw",score); return { state:next, text:`숲의 균열 보상 수령 · 마력체 ${result.kills}체 격파 / +${next.arcade.lastResult.gainedXp} XP / +${next.arcade.lastResult.gainedGold} G` }; } catch { return { state:current, text:"" }; } }
   const claimedIndoor = claimIndoorResult(loadGame()); let state = claimedIndoor.state; let indoorRewardNotice=claimedIndoor.text; let view = "home"; let treadmillTimer = null; let treadmillLastTick = 0; let gpsWatchId = null; let gpsLastPosition = null; let gpsSignalTimer = null; let lastGpsSignalAt = 0; let wakeLock = null; let wakeLockStatus = "화면 유지 요청 전"; let voiceEnabled = localStorage.getItem(VOICE_KEY) === "true"; let gpsStatus = "GPS 권한을 허용하면 실제 이동 기록을 받을 수 있다."; let cameraStream = null; let motionFrame = null; let motionTimer = null; let motionLastAt = 0; let dodgeCount = 0; let detectedMotions = state.training.inputCount ?? 0;
   function saveGame() { localStorage.setItem(SAVE_KEY, JSON.stringify(state)); }
   function speak(message) { if (!voiceEnabled || !("speechSynthesis" in window)) return; window.speechSynthesis.cancel(); const utterance = new SpeechSynthesisUtterance(message); utterance.lang = "ko-KR"; utterance.rate = 1.12; window.speechSynthesis.speak(utterance); }
@@ -158,12 +158,12 @@
     saveGame(); $("saveStatus").textContent = indoorRewardNotice || "이 브라우저에 진행 상황을 자동 저장 중 · 처음부터를 누르면 저장도 초기화된다.";
     for (const id of ["home","outdoor","indoor"]) $("view-"+id).classList.toggle("hidden", view !== id); document.querySelectorAll("[data-view]").forEach(button => button.classList.toggle("active", button.dataset.view === view));
     for (const [id,value] of [["level",state.level],["xp",state.xp+" XP"],["gold",state.gold+" G"],["energy",state.energy],["distance",state.distanceM+" m"],["time",state.elapsedMin+" 분"]]) $(id).textContent = value;
-    const lastOutdoor=state.outdoorSession.lastSummary, lastIndoor=state.treadmill.session?.lastSummary; $("outdoorBoard").textContent=state.outdoorSession.active ? `${state.outdoorSession.distanceM}m 진행 중` : lastOutdoor ? `${lastOutdoor.distanceM}m · 사건 ${lastOutdoor.encounters}` : "대기"; $("indoorBoard").textContent=state.treadmill.active ? `${state.treadmill.speedKmh.toFixed(1)} km/h` : lastIndoor ? `${lastIndoor.distanceM}m · ${lastIndoor.completed ? "완주" : "도전"}` : "대기"; $("nextBoard").textContent=state.phase === "encounter" ? "사건 대응" : state.training.phase === "challenge" ? "훈련 선택" : `${REGIONS[state.region].label} 탐색`;
+    const lastOutdoor=state.outdoorSession.lastSummary, lastIndoor=state.treadmill.session?.lastSummary; $("outdoorBoard").textContent=state.outdoorSession.active ? `${state.outdoorSession.distanceM}m 진행 중` : lastOutdoor ? `${lastOutdoor.distanceM}m · 사건 ${lastOutdoor.encounters}` : "대기"; $("indoorBoard").textContent=state.treadmill.active ? `${state.treadmill.speedKmh.toFixed(1)} km/h` : state.arcade.lastResult ? `마력체 ${state.arcade.lastResult.score}체 격파` : lastIndoor ? `${lastIndoor.distanceM}m · ${lastIndoor.completed ? "완주" : "도전"}` : "대기"; $("nextBoard").textContent=state.phase === "encounter" ? "사건 대응" : state.training.phase === "challenge" ? "균열 대응" : `${REGIONS[state.region].label} 탐색`;
     for (const item of Object.keys(ITEMS)) $(item).textContent = state.inventory[item];
     const history = [...state.history].reverse(); $("history").replaceChildren(...(history.length ? history.map(entry => { const li=document.createElement("li"); const source=entry.inputSource === "treadmill" ? "러닝머신" : entry.inputSource === "gps" ? "GPS" : "수동"; li.textContent=`${entry.passed ? "성공" : "도전"} · ${entry.title} · ${ACTIONS[entry.action].label} · ${source} · +${entry.gainedXp} XP${entry.gainedGold ? ` / +${entry.gainedGold} G` : ""}`; return li; }) : [Object.assign(document.createElement("li"), { textContent: "아직 기록이 없다. 첫 사건을 해결해 봐." })]));
     const outdoorLabel = state.outdoorInput?.source === "treadmill" ? "최근 러닝머신 신호" : "최근 GPS 모의 신호"; $("gpsInfo").textContent = state.outdoorInput ? `${outdoorLabel}: ${state.outdoorInput.distanceM}m / ${state.outdoorInput.durationSec}초 · ${state.outdoorInput.pace.toFixed(1)} 분/km` : "수동 페이스를 사용 중";
     const outdoor = state.outdoorSession, gpsNext = outdoor.nextEncounterM ?? 250; $("gpsSessionInfo").textContent = outdoor.active ? `${outdoor.paused ? "GPS 일시정지" : gpsStatus} · ${outdoor.distanceM}m · ${Math.floor(outdoor.elapsedSec / 60)}분 ${outdoor.elapsedSec % 60}초 · 최근 안정 페이스 ${state.outdoorInput?.pace?.toFixed(1) ?? "-"}분/km · 다음 사건 ${Math.max(0, gpsNext - outdoor.distanceM)}m` : outdoor.lastSummary ? `최근 GPS 러닝 ${outdoor.lastSummary.distanceM}m · ${Math.floor(outdoor.lastSummary.elapsedSec / 60)}분 ${outdoor.lastSummary.elapsedSec % 60}초 · 사건 ${outdoor.lastSummary.encounters}회` : gpsStatus; $("gpsStart").disabled = outdoor.active || state.phase !== "exploring" || state.training.phase !== "ready"; $("gpsPause").disabled = !outdoor.active; $("gpsPause").textContent = outdoor.paused ? "GPS 재개" : "일시정지"; $("gpsStop").disabled = !outdoor.active; $("voiceToggle").textContent = voiceEnabled ? "음성 안내 켜짐" : "음성 안내 켜기"; $("voiceToggle").setAttribute("aria-pressed", String(voiceEnabled)); $("companionInfo").textContent = `화면 유지: ${wakeLockStatus} · 화면을 완전히 끄면 모바일 브라우저의 GPS 연속 기록은 기기 정책에 따라 멈출 수 있다.`;
-    $("motionInfo").textContent = `전투 동작 신호: ${state.training.inputCount ?? 0}회 · 8회 이상이면 훈련 성공 XP +2`;
+    $("motionInfo").textContent = `전투 동작 신호: ${state.training.inputCount ?? 0}회 · 8회 이상이면 정화 보상 XP +2`;
     $("playerHpBar").style.width=`${Math.max(0,Math.min(100,state.energy))}%`; $("playerHpText").textContent=`기력 ${state.energy} / 100`;
     const trainingSession={goal:3,active:false,startAttempts:state.training.attempts,lastSummary:null,...(state.training.session??{})}; const completedDrills=Math.max(0,state.training.attempts-trainingSession.startAttempts); $("trainingGoals").replaceChildren(...[1,3,5].map(goal=>{const b=document.createElement("button");b.className="action";b.disabled=trainingSession.active||goal===trainingSession.goal;b.innerHTML=`${goal}회 ${goal===trainingSession.goal?"선택됨":"훈련"}<small>완주 보상: +${2+goal*2} XP / +${Math.floor((goal+1)/2)} G</small>`;b.onclick=()=>{state=setTrainingGoal(state,goal);render();};return b;})); $("trainingSummary").textContent=trainingSession.active?`훈련 던전 ${completedDrills}/${trainingSession.goal}회 · 다음 훈련을 진행해 봐.`:trainingSession.lastSummary?`최근 훈련 던전 ${trainingSession.lastSummary.drills}회 완료 · +${trainingSession.lastSummary.gainedXp} XP / +${trainingSession.lastSummary.gainedGold} G`:`${trainingSession.goal}회 훈련을 완료하면 +${2+trainingSession.goal*2} XP / +${Math.floor((trainingSession.goal+1)/2)} G`;
     $("treadmillTitle").textContent = state.treadmill.active ? `${state.treadmill.speedKmh.toFixed(1)} km/h로 주행 중` : "러닝머신 대기 중";

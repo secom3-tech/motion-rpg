@@ -1,4 +1,4 @@
-const CACHE = "motion-rpg-v0.25.1";
+const CACHE = "motion-rpg-v0.26.0";
 const ASSETS = ["./", "./index.html", "./indoor.html", "./controller.html", "./manifest.webmanifest", "./icons/icon.svg", "./src/engine.mjs?v=0.23.0"];
 
 self.addEventListener("install", event => event.waitUntil(caches.open(CACHE).then(cache => cache.addAll(ASSETS)).then(() => self.skipWaiting())));
