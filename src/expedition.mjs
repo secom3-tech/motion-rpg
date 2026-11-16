@@ -51,12 +51,12 @@ export function paceRequirement(type,base){
  return {label:"안정적으로 이동",hint:"평소 편안한 페이스를 유지해.",lower:base*.88,upper:base*1.16};
 }
 export function paceQualifies(type,pace,base){
- if(!Number.isFinite(pace)||pace<=0)return false;
+ if(!Number.isFinite(pace)||pace<=0||pace>16)return false;
  const r=paceRequirement(type,base);
  return (!r.upper||pace<=r.upper)&&(!r.lower||pace>=r.lower);
 }
 export function createAdventure({mode="demo",basePace=8.5,style="scout",durationMin=20,seed=17,level=1}={}){
- if(!["gps","demo"].includes(mode)||!STYLES[style])throw Error("Invalid mode/style");
+ if(!["gps","demo","treadmill"].includes(mode)||!STYLES[style])throw Error("Invalid mode/style");
  if(!Number.isFinite(basePace)||basePace<5||basePace>15)throw Error("Invalid baseline pace");
  if(![12,20,30].includes(durationMin))throw Error("Invalid duration");
  return {version:1,mode,basePace,style,durationSec:durationMin*60,seed:(seed>>>0)||17,level:Math.max(1,Math.floor(level)),
