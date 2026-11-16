@@ -88,8 +88,8 @@
 <div class="ui" id="enemyHud"><div id="enemyName"><span class="label" id="monName">🌿 이끼 슬라임</span><span class="dist" id="distance">12 m</span></div><div id="barwrap"><div id="enemyHP"></div></div><div id="attackCue" role="status" aria-live="polite">적의 움직임을 살펴보세요</div></div>
 <div id="attackBanner" hidden aria-live="off"><b id="attackBannerText">공격 준비</b><div class="attackMeter"><i id="attackBannerMeter"></i></div><small id="attackBannerHint"></small></div>
 <div class="ui glass" id="playerHud"><b id="gearHud">숲 사냥꾼</b><div id="heroHpText">기력 100 / 100</div><div id="heroHpWrap"><div id="heroHp"></div></div><small id="dodgeInfo">적의 경고에 맞춰 회피</small></div><div id="cross"><div class="ring"></div></div><div class="ui" id="instruction">화면을 드래그하면 시야가 움직입니다</div><div id="weaponStatus">무기 준비 중</div><div id="attackFeedback"></div><div id="toast"></div><div id="hitFx" aria-hidden="true"></div><div id="damageNumber" aria-hidden="true"></div>
-<div class="ui" id="controls"><div id="moveArea"><div id="joy"><div id="stick">✦</div></div><span>이동 · 키보드 WASD</span></div><div id="actions"><button class="action" id="dodge" aria-label="회피"><span class="icon">↪</span><b>회피</b></button><button class="action" id="sword" aria-label="근접 휘두르기"><span class="icon">⚔️</span><b>근접 휘두르기</b></button><button class="action" id="fire" aria-label="마법 투척"><span class="icon">✨</span><b>마법 투척</b></button></div></div><div id="footerNote">중앙 조준점으로 적을 맞혀라 · 투척은 원거리 / 근접은 가까이에서</div>
-<div id="intro"><div id="introCard"><div class="emblem">✦ 🧙 ✦</div><h2>숲의 균열</h2><p>경계의 숲에서 새어 나온 마력체를 조준하고<br><b>마법 투척</b> 또는 <b>근접 휘두르기</b>로 격파해 봐.<br>몬스터의 반격 경고에 맞춰 회피하면서 싸우자. 장착한 장비의 공격력과 방어력이 반영된다.</p><button id="begin">균열에 진입하기</button><small>드래그: 시야 이동 · 왼쪽 원: 이동 · 오른쪽: 공격<br>오른쪽 상단 [모션 설정]에서 S21 무선 무기와 전면 카메라 회피를 연결할 수 있어</small></div></div>
+<div class="ui" id="controls"><div id="moveArea"><div id="joy"><div id="stick">✦</div></div><span>이동 · 키보드 WASD</span></div><div id="actions"><button class="action" id="dodge" aria-label="회피"><span class="icon">↪</span><b>회피</b></button><button class="action" id="sword" aria-label="근접 휘두르기"><span class="icon">⚔️</span><b>근접 휘두르기</b></button><button class="action" id="fire" aria-label="마법 투척"><span class="icon">✨</span><b>마법 투척</b></button></div></div><div id="footerNote">근접 버튼: 좌우 드래그 = 가로 베기 · 아래 = 내려찍기 · 위 = 찌르기</div>
+<div id="intro"><div id="introCard"><div class="emblem">✦ 🧙 ✦</div><h2>숲의 균열</h2><p>경계의 숲에서 새어 나온 마력체를 조준하고<br><b>마법 투척</b> 또는 <b>근접 휘두르기</b>로 격파해 봐.<br>몬스터의 반격 경고에 맞춰 회피하면서 싸우자. 장착한 장비의 공격력과 방어력이 반영된다.</p><button id="begin">균열에 진입하기</button><small>드래그: 시야 이동 · 근접 버튼 방향 드래그: 가로/세로/찌르기<br>오른쪽 상단 [모션 설정]에서 S21 무선 무기와 전면 카메라 회피를 연결할 수 있어</small></div></div>
 <div id="err"></div><div id="retryWrap" hidden><strong>기력이 소진됐어</strong><p>S21 연결은 유지돼. 바로 재도전하면 새 연결 코드를 입력할 필요 없어.</p><button id="retryCombat">기력 회복 · 다시 싸우기</button></div>
 <div id="motionPanel" hidden role="dialog" aria-modal="true" aria-label="실전 모션 입력 설정">
  <div class="motionDialog">
@@ -569,7 +569,7 @@ const motionHost=createWirelessHost({
   if(packet.seq<=lastMotionSequence)return;
   lastMotionSequence=packet.seq;
   // Diagnose every authentic sensor event, including ones that cannot attack.
-  const action=packet.gesture==="throw"?"투척":"검격";
+  const action=packet.gesture==="throw"?"투척":({sweep:"가로 베기",overhead:"내려찍기",thrust:"찌르기"}[packet.style]||"검격");
   const respond=(accepted,reason)=>{
    motionHost.send({type:"gesture-ack",seq:packet.seq,accepted,reason,time:Date.now()});
    el("remoteStatus").textContent="S21 "+action+" 감지됨 · "+(accepted?"전투 공격 실행":reason)+" · 강도 "+packet.strength;
@@ -583,7 +583,7 @@ const motionHost=createWirelessHost({
   if(now-lastMotionAt<620){respond(false,"공격 대기 시간");return;}
   lastMotionAt=now;
   // This is a prototype, not an authoritative anti-cheat sensor verifier.
-  const accepted=packet.gesture==="throw"?magic():swordHit();
+  const accepted=packet.gesture==="throw"?magic():swordHit(packet.style);
   respond(!!accepted,accepted?"":"공격 쿨다운 중");
  }
 });
@@ -678,6 +678,19 @@ window.addEventListener("message",e=>{
  if(e.data?.type==="motion-rpg-pause-input")stopMotionInputs();
 });
 const begin=el('begin');if(begin)begin.addEventListener('click',()=>{active=true;el('intro').classList.add('hidden');if(!worldMode)spawnEnemy();toast('숲에서 몬스터의 흔적을 찾아보세요!');try{if(window.AudioContext)ctx=new AudioContext()}catch(e){}});
-el('dodge').addEventListener('pointerdown',e=>{e.preventDefault();dodge()});el('fire').addEventListener('pointerdown',e=>{e.preventDefault();magic()});el('sword').addEventListener('pointerdown',e=>{e.preventDefault();swordHit()});el('campReturn').addEventListener('click',()=>{bankProgress();if(new URLSearchParams(location.search).get('return')==='preview'){if(window.parent!==window){window.parent.postMessage({type:'motion-rpg-indoor-return',sessionId},location.origin)}else{location.href='./preview.html?from=indoor'}}else{location.href='./index.html?from=indoor'}});window.addEventListener('keydown',e=>{keys[e.code]=true;if(['Space','ArrowLeft','ArrowRight','ArrowDown','ArrowUp'].includes(e.code))e.preventDefault();if(e.code==='Space'&&!e.repeat)magic();if(e.code==='KeyF'&&!e.repeat)swordHit();if((e.code==='ShiftLeft'||e.code==='KeyQ')&&!e.repeat)dodge()});window.addEventListener('keyup',e=>{keys[e.code]=false});document.addEventListener('visibilitychange',()=>{last=performance.now()});window.addEventListener('resize',resize);dragCamera();joystick();requestAnimationFrame(loop);
+el('dodge').addEventListener('pointerdown',e=>{e.preventDefault();dodge()});el('fire').addEventListener('pointerdown',e=>{e.preventDefault();magic()});const meleeButton=el("sword");let meleePointer=null;
+meleeButton.addEventListener("pointerdown",e=>{
+ e.preventDefault();meleePointer={id:e.pointerId,x:e.clientX,y:e.clientY};
+ try{meleeButton.setPointerCapture(e.pointerId);}catch{}
+});
+meleeButton.addEventListener("pointerup",e=>{
+ if(!meleePointer||e.pointerId!==meleePointer.id)return;
+ const dx=e.clientX-meleePointer.x,dy=e.clientY-meleePointer.y;meleePointer=null;
+ const cut=Math.abs(dx)>26&&Math.abs(dx)>Math.abs(dy)?"sweep":dy>27?"overhead":dy< -27?"thrust":null;
+ swordHit(cut);
+});
+meleeButton.addEventListener("pointercancel",()=>{meleePointer=null;});el('campReturn').addEventListener('click',()=>{bankProgress();if(new URLSearchParams(location.search).get('return')==='preview'){if(window.parent!==window){window.parent.postMessage({type:'motion-rpg-indoor-return',sessionId},location.origin)}else{location.href='./preview.html?from=indoor'}}else{location.href='./index.html?from=indoor'}});window.addEventListener('keydown',e=>{keys[e.code]=true;if(['Space','ArrowLeft','ArrowRight','ArrowDown','ArrowUp'].includes(e.code))e.preventDefault();if(e.code==='Space'&&!e.repeat)magic();if(e.code==='KeyF'&&!e.repeat)swordHit("sweep");
+if(e.code==='KeyE'&&!e.repeat)swordHit("overhead");
+if(e.code==='KeyR'&&!e.repeat)swordHit("thrust");if((e.code==='ShiftLeft'||e.code==='KeyQ')&&!e.repeat)dodge()});window.addEventListener('keyup',e=>{keys[e.code]=false});document.addEventListener('visibilitychange',()=>{last=performance.now()});window.addEventListener('resize',resize);dragCamera();joystick();requestAnimationFrame(loop);
 })();
 </script></body></html>
