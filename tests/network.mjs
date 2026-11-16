@@ -55,7 +55,7 @@ const host=createWirelessHost({onStatus:x=>hostStatus.push(x),onMessage:x=>{
 }});
 const controller=createWirelessController({onStatus:x=>controllerStatus.push(x),onMessage:x=>replies.push(x)});
 const room=await host.start();
-assert.match(room,/^mrpg-[a-z2-9]{10}$/);
+assert.match(room,/^mrpg-[0-9]{6}$/);
 assert.equal(host.connected,false);
 assert.equal(await controller.connect(room),room);
 assert.equal(host.connected,true);
