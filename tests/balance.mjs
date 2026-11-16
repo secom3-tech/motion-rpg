@@ -1,10 +1,11 @@
 import assert from "node:assert/strict";
-import { ACTIONS, EVENTS, newGame, beginEncounter, resolveEncounter, advanceGame } from "../src/engine.mjs";
+import { ACTIONS, EVENTS, ITEMS, availableActions, newGame, beginEncounter, resolveEncounter, advanceGame } from "../src/engine.mjs";
 
 assert.equal(new Set(EVENTS.map(e => e.id)).size, EVENTS.length, "Event IDs must be unique");
 assert.equal(new Set(Object.keys(ACTIONS)).size, Object.keys(ACTIONS).length, "Action IDs must be unique");
 assert.equal(EVENTS.length, 12, "The first forest region should contain 12 events");
-assert.ok(EVENTS.every(event => event.actions.length === 2 && event.reward >= 6 && event.reward <= 10));
+assert.ok(EVENTS.every(event => event.actions.length >= 2 && event.reward >= 6 && event.reward <= 10));
+assert.deepEqual(Object.keys(ITEMS).sort(), ["bandage", "map", "torch"]);
 
 // State-machine boundaries: no rewards before an encounter is resolved.
 let state = newGame();
@@ -20,6 +21,23 @@ assert.equal(state.phase, "exploring");
 assert.equal(state.attempts, 1);
 assert.equal(state.lastEvent.action, "push");
 assert.throws(() => resolveEncounter(state, "push"), /No active/);
+
+// Consumables are hidden without stock, become valid when held, and are spent on use.
+let fogRun = { ...newGame(), attempts: 3 };
+fogRun = beginEncounter(fogRun, 8);
+assert.ok(!availableActions(fogRun.currentEvent, fogRun.inventory).includes("torch"));
+assert.throws(() => resolveEncounter(fogRun, "torch"), /Required item/);
+fogRun = { ...newGame(), attempts: 3, inventory: { torch: 1, map: 0, bandage: 0 } };
+fogRun = beginEncounter(fogRun, 8);
+assert.ok(availableActions(fogRun.currentEvent, fogRun.inventory).includes("torch"));
+fogRun = resolveEncounter(fogRun, "torch");
+assert.equal(fogRun.lastEvent.passed, true);
+assert.equal(fogRun.inventory.torch, 0);
+
+let lootRun = { ...newGame(), attempts: 2 };
+lootRun = resolveEncounter(beginEncounter(lootRun, 8), "recover");
+assert.equal(lootRun.lastEvent.gainedItem, "bandage");
+assert.equal(lootRun.inventory.bandage, 1);
 
 // Every event must be reachable once in a 12-minute cycle.
 let coverageRun = newGame();
@@ -50,6 +68,7 @@ for (let seed = 1; seed <= 1000; seed++) {
     assert.ok(run.xp >= prev.xp && run.gold >= prev.gold);
     assert.ok(run.distanceM >= prev.distanceM);
     assert.ok(run.lastEvent.gainedGold <= 10);
+    assert.ok(Object.values(run.inventory).every(count => count >= 0));
     assert.ok(run.history.length <= 6);
   }
   totalSuccess += run.successes;
