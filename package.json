@@ -1,0 +1,9 @@
+{
+  "name": "motion-rpg",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node tests/balance.mjs"
+  }
+}
