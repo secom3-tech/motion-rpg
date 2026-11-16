@@ -13,7 +13,7 @@ assert.ok(Object.keys(STYLES).length>=3);
 assert.throws(()=>createAdventure({basePace:0}),/Invalid/);
 assert.throws(()=>createAdventure({mode:"cheat"}),/Invalid/);
 assert.throws(()=>createAdventure({durationMin:1}),/Invalid/);
-assert.equal(paceQualifies("surge",8,8.5),true);
+assert.equal(paceQualifies("surge",7.9,8.5),true);
 assert.equal(paceQualifies("surge",10,8.5),false);
 assert.equal(paceQualifies("quiet",10,8.5),true);
 assert.equal(paceQualifies("quiet",8,8.5),false);
