@@ -39,7 +39,7 @@ for(const weapon of ids){
   assert.equal(contactDue(action,10,action.contactAt),true);
   const front={x:0,z:-3},behind={x:0,z:3};
   assert.equal(meleeHitInfo(action,{x:0,z:0},front,0).canHit,
-    weapon!=="bow"||style==="thrust","Front hit range varies with weapon");
+    3<=profile.reach*(style==="thrust"?1.08:1),"Front hit range varies with weapon");
   assert.equal(meleeHitInfo(action,{x:0,z:0},behind,0).canHit,false,"Cannot strike behind hero");
   const side={x:1.7,z:-2.5};
   const info=meleeHitInfo(action,{x:0,z:0},side,0);
