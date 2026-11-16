@@ -63,9 +63,9 @@ export const ITEMS = Object.freeze({
 });
 
 export const TRAINING_DRILLS = Object.freeze([
-  { id: "slime-archer", title: "슬라임 사수", task: "표적이 열린 순간 투척으로 반격한다", kind: "throw", reward: 3, actions: ["throw", "dodge"] },
-  { id: "shadow-wolf", title: "그림자 늑대", task: "공격 방향을 읽고 회피해 빈틈을 만든다", kind: "dodge", reward: 3, actions: ["dodge", "guard"] },
-  { id: "iron-guard", title: "철갑 골렘", task: "묵직한 일격을 가드하고 반격 기회를 만든다", kind: "guard", reward: 4, actions: ["guard", "throw"] },
+  { id: "slime-archer", title: "슬라임 사수", task: "표적이 열린 순간 투척으로 반격한다", kind: "throw", hp: 8, attack: 4, reward: 3, actions: ["throw", "dodge"] },
+  { id: "shadow-wolf", title: "그림자 늑대", task: "공격 방향을 읽고 회피해 빈틈을 만든다", kind: "dodge", hp: 10, attack: 5, reward: 3, actions: ["dodge", "guard"] },
+  { id: "iron-guard", title: "철갑 골렘", task: "묵직한 일격을 가드하고 반격 기회를 만든다", kind: "guard", hp: 12, attack: 6, reward: 4, actions: ["guard", "throw"] },
 ]);
 
 export const INDOOR_GAMES = Object.freeze({
@@ -370,7 +370,7 @@ export function beginTraining(state) {
   const drill = TRAINING_DRILLS[state.training.attempts % TRAINING_DRILLS.length];
   const next = { ...state, training: { ...state.training } };
   next.training.phase = "challenge";
-  next.training.currentDrill = { ...drill };
+  next.training.currentDrill = { ...drill, maxHp: drill.hp, hp: drill.hp, turn: 0 };
   return next;
 }
 
@@ -411,6 +411,12 @@ export function resolveTraining(state, action) {
   const drill = state.training.currentDrill;
   if (!availableActions(drill, state.inventory).includes(action)) throw Error("Required item is not available");
   const passed = trainingPassed(drill, action, state.energy);
+  const damage = (passed ? { throw: 4, dodge: 3, guard: 2 }[action] : 1) + ((state.training.inputCount ?? 0) >= 8 ? 1 : 0);
+  const remainingHp = Math.max(0, drill.hp - damage);
+  const incoming = action === "guard" ? 0 : action === "dodge" ? 1 : 2;
+  if (remainingHp > 0) {
+    return { ...state, energy: clamp(state.energy - incoming, 0, 100), training: { ...state.training, currentDrill: { ...drill, hp: remainingHp, turn: drill.turn + 1 } } };
+  }
   const inputBonus = passed && (state.training.inputCount ?? 0) >= 8 ? 2 : 0;
   const gainedXp = passed ? 10 + inputBonus : state.camp.guards > 0 ? 6 : 3;
   const gainedGold = passed ? drill.reward : 0;
@@ -425,7 +431,7 @@ export function resolveTraining(state, action) {
   next.training.successes += passed ? 1 : 0;
   next.training.phase = "ready";
   next.training.currentDrill = null;
-  next.training.lastDrill = { id: drill.id, title: drill.title, task: drill.task, action, passed, gainedXp, gainedGold, inputBonus };
+  next.training.lastDrill = { id: drill.id, title: drill.title, task: drill.task, action, passed, gainedXp, gainedGold, inputBonus, turns: drill.turn + 1 };
   const session = { goal: 3, active: false, startAttempts: state.training.attempts, lastSummary: null, ...(state.training.session ?? {}) };
   if (session.active) {
     const completedDrills = next.training.attempts - session.startAttempts;
