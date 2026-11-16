@@ -3,6 +3,8 @@ import { ACTIONS, EVENTS, newGame, beginEncounter, resolveEncounter, advanceGame
 
 assert.equal(new Set(EVENTS.map(e => e.id)).size, EVENTS.length, "Event IDs must be unique");
 assert.equal(new Set(Object.keys(ACTIONS)).size, Object.keys(ACTIONS).length, "Action IDs must be unique");
+assert.equal(EVENTS.length, 12, "The first forest region should contain 12 events");
+assert.ok(EVENTS.every(event => event.actions.length === 2 && event.reward >= 6 && event.reward <= 10));
 
 // State-machine boundaries: no rewards before an encounter is resolved.
 let state = newGame();
@@ -18,6 +20,16 @@ assert.equal(state.phase, "exploring");
 assert.equal(state.attempts, 1);
 assert.equal(state.lastEvent.action, "push");
 assert.throws(() => resolveEncounter(state, "push"), /No active/);
+
+// Every event must be reachable once in a 12-minute cycle.
+let coverageRun = newGame();
+const encountered = new Set();
+for (let step = 0; step < EVENTS.length; step++) {
+  coverageRun = beginEncounter(coverageRun, 8);
+  encountered.add(coverageRun.currentEvent.id);
+  coverageRun = resolveEncounter(coverageRun, coverageRun.currentEvent.actions[0]);
+}
+assert.equal(encountered.size, EVENTS.length, "All configured events must be reachable");
 
 let totalSuccess = 0;
 const results = [];
@@ -37,7 +49,7 @@ for (let seed = 1; seed <= 1000; seed++) {
     assert.ok(run.energy >= 0 && run.energy <= 100);
     assert.ok(run.xp >= prev.xp && run.gold >= prev.gold);
     assert.ok(run.distanceM >= prev.distanceM);
-    assert.ok(run.lastEvent.gainedGold <= 9);
+    assert.ok(run.lastEvent.gainedGold <= 10);
     assert.ok(run.history.length <= 6);
   }
   totalSuccess += run.successes;

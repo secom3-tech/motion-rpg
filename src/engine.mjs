@@ -3,9 +3,17 @@
 // prescribe real-world movement; pace here is only a mock input.
 export const EVENTS = Object.freeze([
   { id: "wolf", title: "늑대의 추격", task: "기회를 보고 빠르게 거리를 벌려라", kind: "chase", reward: 8, actions: ["push", "steady"] },
-  { id: "trail", title: "숨겨진 오솔길", task: "주변을 살피며 길을 찾아라", kind: "scout", reward: 7, actions: ["search", "steady"] },
+  { id: "hoofprints", title: "낯선 발자국", task: "남겨진 흔적을 따라갈지 판단하라", kind: "scout", reward: 7, actions: ["search", "steady"] },
   { id: "cache", title: "숲속 보급 상자", task: "보급품을 챙겨 다음 구간을 준비하라", kind: "supply", reward: 6, actions: ["recover", "search"] },
   { id: "fog", title: "안개 지대 통과", task: "무리하지 말고 안정적으로 이동하라", kind: "fog", reward: 9, actions: ["steady", "recover"] },
+  { id: "river", title: "얕은 개울", task: "흐름을 읽고 안전한 길을 찾는다", kind: "scout", reward: 8, actions: ["search", "steady"] },
+  { id: "raven", title: "까마귀의 경고", task: "급한 기척에 휘말리지 말고 판단하라", kind: "fog", reward: 7, actions: ["steady", "recover"] },
+  { id: "campfire", title: "꺼진 야영지", task: "남은 흔적에서 쓸 만한 것을 찾아라", kind: "supply", reward: 8, actions: ["search", "recover"] },
+  { id: "boar", title: "멧돼지의 돌진", task: "짧은 위기를 넘기고 길을 확보하라", kind: "chase", reward: 10, actions: ["push", "steady"] },
+  { id: "fireflies", title: "반딧불 길잡이", task: "흩어진 빛을 놓치지 말고 방향을 잡아라", kind: "scout", reward: 9, actions: ["search", "steady"] },
+  { id: "windfall", title: "바람에 쓰러진 나무", task: "잠시 호흡을 고르고 다음 길을 준비하라", kind: "supply", reward: 7, actions: ["recover", "search"] },
+  { id: "shadow", title: "그림자 너머", task: "보이지 않는 길에서도 안정적으로 이동하라", kind: "fog", reward: 10, actions: ["steady", "recover"] },
+  { id: "messenger", title: "숲의 전령", task: "짧은 신호를 놓치지 말고 응답하라", kind: "chase", reward: 9, actions: ["push", "steady"] },
 ]);
 
 export const ACTIONS = Object.freeze({
