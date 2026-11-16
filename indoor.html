@@ -307,6 +307,103 @@ function render(){resize();gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);let
 function loop(t){let dt=Math.min(.05,Math.max(.001,(t-last)/1000||.016));last=t;update(dt);render()}
 function dragCamera(){let pId=null,lx=0,ly=0;const target=cvs;target.addEventListener('pointerdown',e=>{if(!active)return;pId=e.pointerId;lx=e.clientX;ly=e.clientY;target.setPointerCapture(pId)});target.addEventListener('pointermove',e=>{if(e.pointerId!==pId)return;let dx=e.clientX-lx,dy=e.clientY-ly;lx=e.clientX;ly=e.clientY;yaw+=dx*.0042;pitch=Math.max(-.72,Math.min(.57,pitch-dy*.0038))});const stop=e=>{if(e.pointerId===pId)pId=null};target.addEventListener('pointerup',stop);target.addEventListener('pointercancel',stop)}
 function joystick(){const area=el('joy'),stickEl=el('stick');let pid=null;function redraw(e){let r=area.getBoundingClientRect(),dx=(e.clientX-(r.left+r.width/2)),dy=e.clientY-(r.top+r.height/2),m=Math.hypot(dx,dy),lim=r.width*.34;if(m>lim){dx*=lim/m;dy*=lim/m}stick.x=dx/lim;stick.y=dy/lim;stickEl.style.transform=`translate(${dx}px,${dy}px)`}area.addEventListener('pointerdown',e=>{if(!active)return;pid=e.pointerId;area.setPointerCapture(pid);redraw(e)});area.addEventListener('pointermove',e=>{if(e.pointerId===pid)redraw(e)});function end(e){if(e.pointerId!==pid)return;pid=null;stick.x=0;stick.y=0;stickEl.style.transform='translate(0,0)'}area.addEventListener('pointerup',end);area.addEventListener('pointercancel',end)}
+
+/* v0.30 - Optional two-device motion controls.
+ * Peer-to-peer events contain classified actions only (no raw IMU/video).
+ * The local game verifies the channel, room, sequence and anti-spam timing.
+ */
+const motionHost=createWirelessHost({
+ onStatus:state=>{
+  el("linkStatus").textContent=state.message+(state.connected?" · 연결 지연 "+state.latencyMs+"ms":"");
+  el("motionOpen").classList.toggle("connected",state.connected);
+  el("motionOpen").textContent=state.connected?"모션 연결됨":"모션 설정";
+ },
+ onMessage:packet=>{
+  if(packet.type==="diagnostic"){
+   motionHost.send({type:"diagnostic-ack",time:Date.now()});
+   el("remoteStatus").textContent="통신 시험 수신 · 공격은 실행되지 않음";
+   return;
+  }
+  if(!motionHost.connected||!validMotionPacket(packet,motionHost.room))return;
+  if(packet.seq<=lastMotionSequence)return;
+  lastMotionSequence=packet.seq;
+  // This is a prototype, not an authoritative anti-cheat sensor verifier.
+  if(!active||worldMode)return;
+  const now=performance.now();
+  if(now-lastMotionAt<620)return;
+  lastMotionAt=now;
+  const action=packet.gesture==="throw"?"투척":"검격";
+  el("remoteStatus").textContent="S21 "+action+" 수신 · 강도 "+packet.strength+" · "+new Date().toLocaleTimeString("ko-KR");
+  if(packet.gesture==="throw")magic();else swordHit();
+ }
+});
+let lastMotionSequence=-1,lastMotionAt=-Infinity,poseEvents=0;
+const poseCamera=createPoseCamera({
+ video:el("posePreview"),
+ onStatus:state=>{el("poseStatus").textContent=state.message;},
+ onDodge:event=>{
+  poseEvents++;
+  const description=event.direction==="duck"?"앉기":event.direction==="left"?"왼쪽 이동":"오른쪽 이동";
+  if(dodge(event.direction)){
+   el("poseStatus").textContent="카메라 회피 "+description+" 인식 · "+poseEvents+"회";
+  }else{
+   el("poseStatus").textContent="카메라 동작 "+description+" 감지 · 회피 재사용 대기 중";
+  }
+ }
+});
+el("motionOpen").onclick=()=>{el("motionPanel").hidden=false;};
+el("motionClose").onclick=()=>{el("motionPanel").hidden=true;};
+el("motionPanel").addEventListener("pointerdown",e=>{if(e.target===el("motionPanel"))el("motionPanel").hidden=true;});
+window.addEventListener("keydown",e=>{if(e.key==="Escape"&&!el("motionPanel").hidden){el("motionPanel").hidden=true;e.preventDefault();}});
+el("hostStart").onclick=async()=>{
+ el("hostStart").disabled=true;
+ el("linkStatus").textContent="연결 코드를 만들고 있어...";
+ try{
+  const room=await motionHost.start();
+  lastMotionSequence=-1;lastMotionAt=-Infinity;
+  const url=new URL("./controller.html",location.href);
+  url.searchParams.set("room",room);
+  el("controllerLink").href=url.href;
+  el("motionRoom").textContent=room;
+  el("hostStop").disabled=false;
+  el("copyController").disabled=false;
+ }catch(error){
+  el("linkStatus").textContent="연결 생성 실패: "+(error?.message||error)+". 화면 터치 조작은 그대로 사용할 수 있어.";
+  el("hostStart").disabled=false;
+ }
+};
+el("hostStop").onclick=()=>{
+ motionHost.stop();
+ el("hostStart").disabled=false;el("hostStop").disabled=true;
+ el("copyController").disabled=true;el("motionRoom").textContent="연결 전";
+ el("controllerLink").href="./controller.html";
+ lastMotionSequence=-1;
+};
+el("copyController").onclick=async()=>{
+ try{
+  await navigator.clipboard.writeText(el("controllerLink").href);
+  el("linkStatus").textContent="S21 연결 주소를 복사했어. S21에 붙여넣기 하면 코드가 자동 입력돼.";
+ }catch{
+  el("linkStatus").textContent="자동 복사가 불가능해. 위 코드를 S21에 직접 입력하거나 링크를 공유해.";
+ }
+};
+el("cameraStart").onclick=async()=>{
+ el("cameraStart").disabled=true;
+ el("poseStatus").textContent="카메라 권한을 요청하고 있어...";
+ try{
+  await poseCamera.start();
+  el("cameraStop").disabled=false;el("cameraReset").disabled=false;
+ }catch(error){
+  el("cameraStart").disabled=false;
+  el("poseStatus").textContent="카메라 시작 실패: "+(error?.message||error)+". 터치 버튼을 사용할 수 있어.";
+ }
+};
+el("cameraStop").onclick=()=>{
+ poseCamera.stop();
+ el("cameraStart").disabled=false;el("cameraStop").disabled=true;el("cameraReset").disabled=true;
+};
+el("cameraReset").onclick=()=>poseCamera.recalibrate();
+window.addEventListener("pagehide",()=>{poseCamera.stop();motionHost.stop();});
 const begin=el('begin');if(begin)begin.addEventListener('click',()=>{active=true;el('intro').classList.add('hidden');if(!worldMode)spawnEnemy();toast('숲에서 몬스터의 흔적을 찾아보세요!');try{if(window.AudioContext)ctx=new AudioContext()}catch(e){}});
 el('dodge').addEventListener('pointerdown',e=>{e.preventDefault();dodge()});el('fire').addEventListener('pointerdown',e=>{e.preventDefault();magic()});el('sword').addEventListener('pointerdown',e=>{e.preventDefault();swordHit()});el('campReturn').addEventListener('click',()=>{bankProgress();if(new URLSearchParams(location.search).get('return')==='preview'){if(window.parent!==window){window.parent.postMessage({type:'motion-rpg-indoor-return',sessionId},location.origin)}else{location.href='./preview.html?from=indoor'}}else{location.href='./index.html?from=indoor'}});window.addEventListener('keydown',e=>{keys[e.code]=true;if(['Space','ArrowLeft','ArrowRight','ArrowDown','ArrowUp'].includes(e.code))e.preventDefault();if(e.code==='Space'&&!e.repeat)magic();if(e.code==='KeyF'&&!e.repeat)swordHit();if((e.code==='ShiftLeft'||e.code==='KeyQ')&&!e.repeat)dodge()});window.addEventListener('keyup',e=>{keys[e.code]=false});document.addEventListener('visibilitychange',()=>{last=performance.now()});window.addEventListener('resize',resize);dragCamera();joystick();requestAnimationFrame(loop);
 })();
