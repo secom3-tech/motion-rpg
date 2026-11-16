@@ -19,7 +19,7 @@
 </head>
 <body>
 <main>
-  <div class="eyebrow">MOTION RPG · PROTOTYPE 0.13.0</div>
+  <div class="eyebrow">MOTION RPG · PROTOTYPE 0.14.0</div>
   <h1>경계의 숲</h1>
   <div class="muted">실내 전투와 야외 러닝이 하나의 캐릭터로 연결되는 운동 RPG</div>
   <div class="notice"><b>개발용 모의 러닝 화면이야.</b> 실제 GPS·운동 감지·음성은 아직 연결되지 않았다. 페이스와 선택으로 사건 흐름과 보상을 시험한다.<div class="muted" id="saveStatus">이 브라우저에 진행 상황을 자동 저장한다.</div></div>
@@ -46,6 +46,7 @@
   <div class="screen hidden" id="view-indoor"><section class="card">
     <h2>실내 러닝머신 모드</h2>
     <div class="hero"><div class="tree">🏃‍♂️ ▰▰▰</div><strong id="treadmillTitle">러닝머신 대기 중</strong><span class="muted" id="treadmillInfo">속도를 정한 뒤 시작해 봐.</span></div>
+    <div class="muted">러닝 목표 거리</div><div id="treadmillGoals" class="actions" aria-label="러닝 목표 거리"></div><div class="muted">시작 속도</div><div id="treadmillSpeeds" class="actions" aria-label="러닝 시작 속도"></div><div class="result" id="treadmillSummary">목표를 고른 뒤 러닝머신을 시작해 봐.</div>
     <div class="row"><button id="treadmillStart">러닝머신 시작</button><button id="treadmillDown" class="secondary">속도 −</button><button id="treadmillUp" class="secondary">속도 +</button></div>
     <div class="row"><button id="treadmillStop" class="secondary">러닝머신 종료</button></div>
     <div class="muted">시작하면 앱 타이머가 1초 단위로 거리와 시간을 자동 누적한다. 실제 연동 전까지는 설정한 속도를 기준으로 계산한다.</div>
@@ -62,7 +63,7 @@
   <footer>Motion RPG — 기본 규칙과 실험 코드는 GitHub에서 관리 · 실전 GPS 및 운동 처방 기능 미구현</footer>
 </main>
 <script type="module">
-  import { ACTIONS, ITEMS, REGIONS, QUESTS, UPGRADES, availableActions, availableRegions, newGame, adjustTreadmillSpeed, advanceTreadmill, beginEncounter, beginBossEncounter, isBossAvailable, recordIndoorSignal, recordOutdoorSignal, resolveEncounter, beginTraining, resolveTraining, purchaseUpgrade, selectRegion, startTreadmill, stopTreadmill } from "./src/engine.mjs";
+  import { ACTIONS, ITEMS, REGIONS, QUESTS, UPGRADES, availableActions, availableRegions, newGame, adjustTreadmillSpeed, advanceTreadmill, beginEncounter, beginBossEncounter, isBossAvailable, recordIndoorSignal, recordOutdoorSignal, resolveEncounter, beginTraining, resolveTraining, purchaseUpgrade, selectRegion, setTreadmillGoal, setTreadmillSpeed, startTreadmill, stopTreadmill } from "./src/engine.mjs";
   const SAVE_KEY = "motion-rpg-save-v1";
   const $ = id => document.getElementById(id);
   function loadGame() {
@@ -93,7 +94,10 @@
     const outdoorLabel = state.outdoorInput?.source === "treadmill" ? "최근 러닝머신 신호" : "최근 GPS 모의 신호"; $("gpsInfo").textContent = state.outdoorInput ? `${outdoorLabel}: ${state.outdoorInput.distanceM}m / ${state.outdoorInput.durationSec}초 · ${state.outdoorInput.pace.toFixed(1)} 분/km` : "수동 페이스를 사용 중";
     $("motionInfo").textContent = `최근 동작 모의 신호: ${state.training.inputCount ?? 0}회 · 8회 이상이면 훈련 성공 XP +2`;
     $("treadmillTitle").textContent = state.treadmill.active ? `${state.treadmill.speedKmh.toFixed(1)} km/h로 주행 중` : "러닝머신 대기 중";
-    const nextEncounterM = state.treadmill.nextEncounterM ?? 250; $("treadmillInfo").textContent = `누적 ${state.treadmill.distanceM}m · ${Math.floor(state.treadmill.elapsedSec / 60)}분 ${state.treadmill.elapsedSec % 60}초 · 다음 사건 ${Math.max(0, nextEncounterM - state.treadmill.distanceM)}m`;
+    const session = { goalM: 1000, startDistanceM: state.treadmill.distanceM, startElapsedSec: state.treadmill.elapsedSec, startAttempts: state.attempts, lastSummary: null, ...(state.treadmill.session ?? {}) }; const sessionDistance = Math.max(0, state.treadmill.distanceM - session.startDistanceM); const nextEncounterM = state.treadmill.nextEncounterM ?? 250; $("treadmillInfo").textContent = `누적 ${state.treadmill.distanceM}m · ${Math.floor(state.treadmill.elapsedSec / 60)}분 ${state.treadmill.elapsedSec % 60}초 · 다음 사건 ${Math.max(0, nextEncounterM - state.treadmill.distanceM)}m`;
+    $("treadmillGoals").replaceChildren(...[500,1000,2000].map(goal => { const b=document.createElement("button"); b.className="action"; b.disabled=state.treadmill.active || goal===session.goalM; b.innerHTML=`${goal}m ${goal===session.goalM ? "선택됨" : "목표"}<small>완주 보상: +${4 + Math.round(goal / 500) * 2} XP / +${Math.round(goal / 500)} G</small>`; b.onclick=()=>{state=setTreadmillGoal(state,goal);render();}; return b; }));
+    $("treadmillSpeeds").replaceChildren(...[6,8,10,12].map(speed => { const b=document.createElement("button"); b.className="action"; b.disabled=state.treadmill.active || speed===state.treadmill.speedKmh; b.innerHTML=`${speed.toFixed(1)} km/h${speed===state.treadmill.speedKmh ? " 선택됨" : ""}<small>${(60 / speed).toFixed(1)} 분/km</small>`; b.onclick=()=>{state=setTreadmillSpeed(state,speed);render();}; return b; }));
+    $("treadmillSummary").textContent = state.treadmill.active ? `이번 세션 ${sessionDistance}m / ${session.goalM}m · 사건 ${Math.max(0,state.attempts-session.startAttempts)}회` : session.lastSummary ? `최근 세션 ${session.lastSummary.distanceM}m · ${Math.floor(session.lastSummary.elapsedSec/60)}분 ${session.lastSummary.elapsedSec%60}초 · 사건 ${session.lastSummary.encounters}회${session.lastSummary.completed ? ` · 목표 완료 +${session.lastSummary.gainedXp} XP / +${session.lastSummary.gainedGold} G` : " · 목표 미완료"}` : `목표 ${session.goalM}m를 완주하면 +${4 + Math.round(session.goalM / 500) * 2} XP / +${Math.round(session.goalM / 500)} G`;
     $("treadmillStart").disabled = state.treadmill.active || state.phase !== "exploring" || state.training.phase !== "ready"; $("treadmillDown").disabled=!state.treadmill.active; $("treadmillUp").disabled=!state.treadmill.active; $("treadmillStop").disabled=!state.treadmill.active;
     $("shop").replaceChildren(...Object.entries(UPGRADES).map(([id,u]) => { const b=document.createElement("button"); b.className="action"; const owned=state.camp[id]; b.disabled=owned>=u.maxLevel || state.gold<u.cost || state.phase!=="exploring" || state.training.phase!=="ready"; b.innerHTML=`${u.label} · ${owned ? "완료" : u.cost+" G"}<small>${u.description}</small>`; b.onclick=()=>{state=purchaseUpgrade(state,id);render();}; return b; }));
     $("regionInfo").textContent = `현재 지역: ${REGIONS[state.region].label}`;

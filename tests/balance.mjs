@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { ACTIONS, EVENTS, ITEMS, RIDGE_EVENTS, REGIONS, QUESTS, TRAINING_DRILLS, UPGRADES, availableActions, availableRegions, newGame, adjustTreadmillSpeed, advanceTreadmill, beginEncounter, beginBossEncounter, isBossAvailable, recordIndoorSignal, recordOutdoorSignal, resolveEncounter, advanceGame, beginTraining, resolveTraining, purchaseUpgrade, selectRegion, startTreadmill, stopTreadmill } from "../src/engine.mjs";
+import { ACTIONS, EVENTS, ITEMS, RIDGE_EVENTS, REGIONS, QUESTS, TRAINING_DRILLS, UPGRADES, availableActions, availableRegions, newGame, adjustTreadmillSpeed, advanceTreadmill, beginEncounter, beginBossEncounter, isBossAvailable, recordIndoorSignal, recordOutdoorSignal, resolveEncounter, advanceGame, beginTraining, resolveTraining, purchaseUpgrade, selectRegion, setTreadmillGoal, setTreadmillSpeed, startTreadmill, stopTreadmill } from "../src/engine.mjs";
 
 assert.equal(new Set(EVENTS.map(e => e.id)).size, EVENTS.length, "Event IDs must be unique");
 assert.equal(new Set(Object.keys(ACTIONS)).size, Object.keys(ACTIONS).length, "Action IDs must be unique");
@@ -78,6 +78,7 @@ treadmillRun = advanceTreadmill(treadmillRun, 60);
 assert.equal(treadmillRun.treadmill.distanceM, 133);
 assert.equal(treadmillRun.outdoorInput.pace, 7.5);
 assert.equal(treadmillRun.outdoorInput.source, "treadmill");
+assert.throws(() => startTreadmill(treadmillRun, 8), /already active/);
 let secondBySecondRun = startTreadmill(newGame(), 8);
 for (let second = 0; second < 60; second += 1) secondBySecondRun = advanceTreadmill(secondBySecondRun, 1);
 assert.equal(secondBySecondRun.treadmill.distanceM, 133);
@@ -100,6 +101,19 @@ assert.equal(treadmillRun.currentEvent.inputSource, "treadmill");
 assert.equal(treadmillRun.currentEvent.pace, 6.7);
 treadmillRun = stopTreadmill({ ...treadmillRun, phase: "exploring" });
 assert.equal(treadmillRun.treadmill.active, false);
+
+let goalRun = setTreadmillGoal(newGame(), 500);
+goalRun = setTreadmillSpeed(goalRun, 10);
+goalRun = startTreadmill(goalRun, 10);
+goalRun = advanceTreadmill(goalRun, 180);
+goalRun = stopTreadmill({ ...goalRun, phase: "exploring" });
+assert.equal(goalRun.treadmill.session.lastSummary.completed, true);
+assert.equal(goalRun.treadmill.session.lastSummary.distanceM, 500);
+assert.equal(goalRun.treadmill.session.lastSummary.gainedXp, 6);
+assert.equal(goalRun.gold, 1);
+assert.throws(() => setTreadmillGoal(startTreadmill(newGame(), 8), 500), /Stop/);
+assert.equal(startTreadmill(setTreadmillSpeed(newGame(), 12)).treadmill.speedKmh, 12);
+assert.throws(() => setTreadmillSpeed(newGame(), 7), /Invalid/);
 
 // Gold has a deterministic use and upgrades affect their advertised systems.
 let campRun = { ...newGame(), gold: 120 };

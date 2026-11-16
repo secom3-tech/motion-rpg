@@ -85,7 +85,7 @@ export function newGame() {
     region: "forest", regionAttempts: { forest: 0, ridge: 0 }, unlockedRegions: ["forest"],
     quests: { forest: { attempts: 0, successes: 0, bossDefeated: false }, ridge: { attempts: 0, successes: 0, bossDefeated: false } },
     outdoorInput: null,
-    treadmill: { active: false, speedKmh: 8, distanceM: 0, distanceExactM: 0, elapsedSec: 0, nextEncounterM: 250 }
+    treadmill: { active: false, speedKmh: 8, distanceM: 0, distanceExactM: 0, elapsedSec: 0, nextEncounterM: 250, session: { active: false, goalM: 1000, startDistanceM: 0, startElapsedSec: 0, startAttempts: 0, lastSummary: null } }
   };
 }
 
@@ -140,10 +140,28 @@ export function recordOutdoorSignal(state, distanceM, durationSec) {
 }
 
 // Treadmill adapter: a future timer or BLE FTMS feed can call advanceTreadmill.
-export function startTreadmill(state, speedKmh = 8) {
+export function startTreadmill(state, speedKmh = state.treadmill.speedKmh) {
+  if (state.treadmill.active) throw Error("Treadmill is already active");
   const speed = Number(speedKmh);
   if (!Number.isFinite(speed) || speed < 3 || speed > 14) throw Error("Invalid treadmill speed");
-  return { ...state, treadmill: { ...state.treadmill, active: true, speedKmh: Number(speed.toFixed(1)) } };
+  const previousSession = state.treadmill.session ?? {};
+  const session = { goalM: 1000, ...previousSession, active: true, startDistanceM: state.treadmill.distanceM, startElapsedSec: state.treadmill.elapsedSec, startAttempts: state.attempts, lastSummary: null };
+  return { ...state, treadmill: { ...state.treadmill, active: true, speedKmh: Number(speed.toFixed(1)), session } };
+}
+
+export function setTreadmillGoal(state, goalM) {
+  if (state.treadmill.active) throw Error("Stop the treadmill before changing the goal");
+  const goal = Number(goalM);
+  if (![500, 1000, 2000].includes(goal)) throw Error("Invalid treadmill goal");
+  const session = { goalM: 1000, ...(state.treadmill.session ?? {}), goalM: goal };
+  return { ...state, treadmill: { ...state.treadmill, session } };
+}
+
+export function setTreadmillSpeed(state, speedKmh) {
+  if (state.treadmill.active) throw Error("Stop the treadmill before changing the speed preset");
+  const speed = Number(speedKmh);
+  if (![6, 8, 10, 12].includes(speed)) throw Error("Invalid treadmill speed preset");
+  return { ...state, treadmill: { ...state.treadmill, speedKmh: speed } };
 }
 
 export function adjustTreadmillSpeed(state, deltaKmh) {
@@ -172,7 +190,20 @@ export function advanceTreadmill(state, durationSec = 60) {
 }
 
 export function stopTreadmill(state) {
-  return { ...state, treadmill: { ...state.treadmill, active: false } };
+  if (!state.treadmill.active) throw Error("Treadmill is not active");
+  const session = { goalM: 1000, startDistanceM: state.treadmill.distanceM, startElapsedSec: state.treadmill.elapsedSec, startAttempts: state.attempts, ...(state.treadmill.session ?? {}) };
+  const distanceM = Math.max(0, state.treadmill.distanceM - session.startDistanceM);
+  const elapsedSec = Math.max(0, state.treadmill.elapsedSec - session.startElapsedSec);
+  const encounters = Math.max(0, state.attempts - session.startAttempts);
+  const completed = distanceM >= session.goalM;
+  const gainedXp = completed ? 4 + Math.round(session.goalM / 500) * 2 : 0;
+  const gainedGold = completed ? Math.round(session.goalM / 500) : 0;
+  const lastSummary = { distanceM, elapsedSec, encounters, goalM: session.goalM, completed, gainedXp, gainedGold };
+  const next = { ...state, treadmill: { ...state.treadmill, active: false, session: { ...session, active: false, lastSummary } } };
+  next.xp += gainedXp;
+  next.gold += gainedGold;
+  next.level = 1 + Math.floor(next.xp / 100);
+  return next;
 }
 
 export function isBossAvailable(state, regionId = state.region) {
