@@ -156,7 +156,7 @@ function applyEnemyHit(){
  el("status").textContent="적의 공격에 맞았다! 위치를 바꾸거나 회피하세요.";
  toast("피격 -"+taken);beep(105,.23,"sawtooth",.11);
  if(heroHp<=0){
-  active=false;bankProgress();el("attackBanner").hidden=true;el("retryWrap").hidden=false;el("attackCue").classList.remove("warning");
+  active=false;enemy.impactUntil=0;bankProgress();el("attackBanner").hidden=true;el("retryWrap").hidden=false;el("attackCue").classList.remove("warning");
   el("status").textContent="기력이 소진됐다. 마을로 돌아가 정비하세요.";
   toast("전투 패배 · 마을로 돌아가세요");
  }
@@ -387,7 +387,17 @@ function updateEnemy(dt){
  el("distance").textContent=Math.round(distance2d(enemy,camera))+" m";
  el("cross").classList.toggle("aim",radiusAiming());
 }
-function update(dt){if(!el("motionPanel").hidden||document.hidden)return;clock+=dt;if(!active)return;let f=forward(),forwardX=Math.sin(yaw),forwardZ=-Math.cos(yaw),rightX=Math.cos(yaw),rightZ=Math.sin(yaw),mx=stick.x+(keys.KeyD||keys.ArrowRight?1:0)-(keys.KeyA||keys.ArrowLeft?1:0),my=stick.y+(keys.KeyS||keys.ArrowDown?1:0)-(keys.KeyW||keys.ArrowUp?1:0);let len=Math.hypot(mx,my);if(len>1){mx/=len;my/=len}let speed=4.0;camera.x+=(forwardX*-my+rightX*mx)*speed*dt;camera.z+=(forwardZ*-my+rightZ*mx)*speed*dt;camera.x=Math.max(-22,Math.min(22,camera.x));camera.z=Math.max(-31,Math.min(7,camera.z));camera.y=1.7+(len>.02?Math.sin(clock*10)*.045:Math.sin(clock*1.5)*.015)-((lastDodgeKind==="duck"&&clock<dodgeVisualUntil)?0.36:0);weaponKick=Math.max(0,weaponKick-dt*3.2);el("dodge").disabled=clock<dodgeCooldown;el("dodgeInfo").textContent=clock<dodgeCooldown?"회피 재사용 "+(dodgeCooldown-clock).toFixed(1)+"초":"경고 시 회피/Q · Shift";
+function update(dt){if(!el("motionPanel").hidden||document.hidden)return;clock+=dt;if(!active)return;let f=forward(),forwardX=Math.sin(yaw),forwardZ=-Math.cos(yaw),rightX=Math.cos(yaw),rightZ=Math.sin(yaw),mx=stick.x+(keys.KeyD||keys.ArrowRight?1:0)-(keys.KeyA||keys.ArrowLeft?1:0),my=stick.y+(keys.KeyS||keys.ArrowDown?1:0)-(keys.KeyW||keys.ArrowUp?1:0);let len=Math.hypot(mx,my);if(len>1){mx/=len;my/=len}let speed=4.0;camera.x+=(forwardX*-my+rightX*mx)*speed*dt;camera.z+=(forwardZ*-my+rightZ*mx)*speed*dt;camera.x=Math.max(-22,Math.min(22,camera.x));camera.z=Math.max(-31,Math.min(7,camera.z));
+if(!enemy.dead){
+ const dx=camera.x-enemy.x,dz=camera.z-enemy.z;
+ const dist=Math.hypot(dx,dz),minDist=enemy.kind===4?1.9:enemy.kind===3?1.5:1.48;
+ if(dist<minDist){
+  const ax=dist>.001?dx/dist:Math.sin(yaw),az=dist>.001?dz/dist:-Math.cos(yaw);
+  camera.x=Math.max(-22,Math.min(22,enemy.x+ax*minDist));
+  camera.z=Math.max(-31,Math.min(7,enemy.z+az*minDist));
+ }
+}
+camera.y=1.7+(len>.02?Math.sin(clock*10)*.045:Math.sin(clock*1.5)*.015)-((lastDodgeKind==="duck"&&clock<dodgeVisualUntil)?0.36:0);weaponKick=Math.max(0,weaponKick-dt*3.2);el("dodge").disabled=clock<dodgeCooldown;el("dodgeInfo").textContent=clock<dodgeCooldown?"회피 재사용 "+(dodgeCooldown-clock).toFixed(1)+"초":"경고 시 회피/Q · Shift";
 updateEnemy(dt);
 for(let i=projectiles.length-1;i>=0;i--){let p=projectiles[i];p.age+=dt;p.x+=p.vx*dt;p.y+=p.vy*dt;p.z+=p.vz*dt;p.life-=dt;let dist=Math.hypot(p.x-camera.x,p.y-camera.y,p.z-camera.z);if(p.life<=0||dist>p.targetDist){if(p.on&&!enemy.dead){damage(p.damage)}else if(!p.on)toast('빗나갔습니다');projectiles.splice(i,1)}}
 for(let i=sparks.length-1;i>=0;i--){let s=sparks[i];s.t+=dt;s.x+=s.vx*dt;s.y+=s.vy*dt;s.z+=s.vz*dt;s.vy-=6*dt;if(s.t>s.life)sparks.splice(i,1)}}
