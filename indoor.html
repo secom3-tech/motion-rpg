@@ -38,7 +38,7 @@ const camera={x:0,y:1.7,z:5.5};const stick={x:0,y:0};let W=innerWidth,H=innerHei
 el('gearHud').textContent=equippedWeapon+" · 장착 중";
 function showHero(){el('heroHpText').textContent="기력 "+heroHp+" / "+stats.maxHp;el('heroHp').style.width=Math.max(0,heroHp/stats.maxHp*100)+"%";}
 showHero();
-function dodge(){if(!active||clock<dodgeCooldown)return;dodgeUntil=clock+.72;dodgeCooldown=clock+2.2;weaponKick=.3;el("dodgeInfo").textContent="회피 중";toast("회피!");beep(420,.10,"sine",.07);}
+function dodge(){if(!active||clock<dodgeCooldown)return;dodgeUntil=clock+1.05;dodgeCooldown=clock+2.2;weaponKick=.3;el("dodgeInfo").textContent="회피 중";toast("회피!");beep(420,.10,"sine",.07);}
 function toast(t){const e=el('toast');e.classList.remove('show');void e.offsetWidth;e.textContent=t;e.classList.add('show')}
 function rnd(seed){let state=seed>>>0;return()=>((state=(state*1664525+1013904223)>>>0)/4294967296)}const rand=rnd(14722);const colors={forest:[.28,.59,.38],bark:[.39,.34,.30],moss:[.3,.6,.34],mint:[.46,.93,.63],stone:[.56,.67,.65],sand:[.49,.56,.42]};
 function shader(type,src){const s=gl.createShader(type);gl.shaderSource(s,src);gl.compileShader(s);if(!gl.getShaderParameter(s,gl.COMPILE_STATUS))throw Error(gl.getShaderInfoLog(s));return s}
