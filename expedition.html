@@ -72,7 +72,7 @@ footer{font-size:12px;color:#9bb6a5;line-height:1.6;padding:15px 3px}
 import {createAdventure,startAdventure,advanceAdventure,endAdventure,summarizeAdventure,settleAdventure,paceRequirement} from "./src/expedition.mjs";
 const $=id=>document.getElementById(id);
 const SAVE_KEY="motion-rpg-save-v1";
-let session=null, mode=null, timer=null, watch=null, wakeLock=null, paused=false, speedFactor=12, shown=0, claimId=null, settled=false;
+let session=null, mode=null, timer=null, watch=null, wakeLock=null, paused=false, speedFactor=12, lastSpoken='', claimId=null, settled=false;
 let gpsLast=null,gpsDistance=0,gpsFixTime=0,gpsPace=NaN,gpsStatus="GPS 연결 전",gpsSamples=[],gpsRecentMotion=false;
 const timestamp=()=>Date.now();
 const round=(n,p=0)=>Number(n).toFixed(p);
@@ -84,9 +84,7 @@ function talk(text){
 }
 function announceNew(){
  if(!session)return;
- const arr=session.announcements;
- for(const a of arr.slice(shown)){talk(a.head+". "+a.detail)}
- shown=arr.length;
+ if(session.lastAnnouncement!==lastSpoken){lastSpoken=session.lastAnnouncement;talk(lastSpoken)}
 }
 function refreshLog(){
  const records=session?session.events.slice(-10):[];
@@ -140,14 +138,14 @@ function finish(){
 }
 function step(dt,pace){
  if(!session||paused||session.phase==="complete")return;
- const before=session.announcements.length;
+ const before=session.lastAnnouncement;
  try{session=advanceAdventure(session,dt,pace)}catch(e){gpsStatus="처리 오류: "+e.message;return}
- if(session.announcements.length>before)announceNew();
+ if(session.lastAnnouncement!==before)announceNew();
  render();
  if(session.phase==="complete")finish();
 }
 function start(modeName){
- stopHardware();mode=modeName;paused=false;settled=false;shown=0;gpsLast=null;gpsDistance=0;gpsFixTime=0;gpsPace=NaN;gpsSamples=[];gpsRecentMotion=false;
+ stopHardware();mode=modeName;paused=false;settled=false;lastSpoken="";gpsLast=null;gpsDistance=0;gpsFixTime=0;gpsPace=NaN;gpsSamples=[];gpsRecentMotion=false;
  claimId="runner-"+timestamp().toString(36)+"-"+Math.random().toString(36).slice(2,10);
  let level=1;try{const shared=JSON.parse(localStorage.getItem(SAVE_KEY)||"null");if(shared?.level)level=shared.level}catch(e){}
  const basePace=Number($("base").value);
@@ -186,7 +184,7 @@ function onFix(position){
   const dt=(fix.time-gpsLast.time)/1000;
   const d=haversine(gpsLast,fix);
   if(dt>=1&&dt<=30&&d/dt<7.2){
-   if(d>=3){gpsDistance+=d;gpsRecentMotion=true;const sample=dt/60/(d/1000);
+   if(d>=1.5){gpsDistance+=d;gpsRecentMotion=true;const sample=dt/60/(d/1000);
      if(sample>=3&&sample<=25)gpsSamples=[...gpsSamples,sample].slice(-5);
      if(gpsSamples.length){const sorted=[...gpsSamples].sort((a,b)=>a-b);gpsPace=sorted[Math.floor(sorted.length/2)]}
    }else gpsRecentMotion=false;
