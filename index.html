@@ -19,7 +19,7 @@
 </head>
 <body>
 <main>
-  <div class="eyebrow">MOTION RPG · PROTOTYPE 0.14.0</div>
+  <div class="eyebrow">MOTION RPG · PROTOTYPE 0.15.1</div>
   <h1>경계의 숲</h1>
   <div class="muted">실내 전투와 야외 러닝이 하나의 캐릭터로 연결되는 운동 RPG</div>
   <div class="notice"><b>개발용 모의 러닝 화면이야.</b> 실제 GPS·운동 감지·음성은 아직 연결되지 않았다. 페이스와 선택으로 사건 흐름과 보상을 시험한다.<div class="muted" id="saveStatus">이 브라우저에 진행 상황을 자동 저장한다.</div></div>
@@ -64,7 +64,7 @@
   <footer>Motion RPG — 기본 규칙과 실험 코드는 GitHub에서 관리 · 실전 GPS 및 운동 처방 기능 미구현</footer>
 </main>
 <script type="module">
-  import { ACTIONS, ITEMS, REGIONS, QUESTS, UPGRADES, availableActions, availableRegions, newGame, adjustTreadmillSpeed, advanceTreadmill, beginEncounter, beginBossEncounter, isBossAvailable, recordIndoorSignal, recordOutdoorSegment, recordOutdoorSignal, resolveEncounter, beginTraining, resolveTraining, purchaseUpgrade, selectRegion, setTreadmillGoal, setTreadmillSpeed, startOutdoorSession, startTreadmill, stopOutdoorSession, stopTreadmill } from "./src/engine.mjs";
+  import { ACTIONS, ITEMS, REGIONS, QUESTS, UPGRADES, availableActions, availableRegions, newGame, adjustTreadmillSpeed, advanceTreadmill, beginEncounter, beginBossEncounter, isBossAvailable, recordIndoorSignal, recordOutdoorSegment, recordOutdoorSignal, resolveEncounter, beginTraining, resolveTraining, purchaseUpgrade, selectRegion, setTreadmillGoal, setTreadmillSpeed, startOutdoorSession, startTreadmill, stopOutdoorSession, stopTreadmill } from "./src/engine.mjs?v=0.15.1";
   const SAVE_KEY = "motion-rpg-save-v1";
   const $ = id => document.getElementById(id);
   function loadGame() {
