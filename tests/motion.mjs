@@ -6,6 +6,7 @@ import {spawnSync} from "node:child_process";
 import {motionSample,gestureThreshold,createGestureDetector,dominantAxis,validMotionPacket}
  from "../src/motion-core.mjs";
 import {poseMeasurements,classifyMovement,createPoseTracker} from "../src/pose-core.mjs";
+import {VISION_SOURCES,loadPoseModel} from "../src/pose-camera.mjs";
 import {cleanRoom,randomRoom} from "../src/peer-bridge.mjs";
 import {dodgeMatches} from "../src/combat-spatial.mjs";
 
@@ -85,6 +86,26 @@ assert.equal(cleanRoom("mrpg-short"),null);
 assert.equal(cleanRoom("482613"),"mrpg-482613");
 assert.equal(cleanRoom("  482 613  "),"mrpg-482613");
 assert.equal(cleanRoom("mrpg-fhuzfw8yk2"),"mrpg-fhuzfw8yk2");
+
+
+const fallbackAttempts=[];
+const fakeModel={detectForVideo(){return {landmarks:[]}},close(){}};
+const fakeSdk={default:{
+ FilesetResolver:{forVisionTasks:async wasm=>({wasm})},
+ PoseLandmarker:{createFromOptions:async resolver=>{assert.ok(resolver.wasm.includes("/wasm"));return fakeModel}}
+}};
+const loaded=await loadPoseModel({
+ importer:async url=>{
+  fallbackAttempts.push(url);
+  if(fallbackAttempts.length===1)throw Error("Primary CDN unavailable");
+  return fakeSdk;
+ },
+ report:()=>{}
+});
+assert.equal(loaded.model,fakeModel,"Camera should recover by trying a different package endpoint");
+assert.equal(fallbackAttempts.length,2);
+assert.ok(VISION_SOURCES.length>=3);
+await assert.rejects(loadPoseModel({importer:async()=>{throw Error("Offline")}}),/모든 자세 인식 모듈/);
 
 // 5. Browser integration smoke.
 const arena=fs.readFileSync(new URL("../indoor.html",import.meta.url),"utf8");
