@@ -19,7 +19,7 @@
 </head>
 <body>
 <main>
-  <div class="eyebrow">MOTION RPG · PROTOTYPE 0.4.1</div>
+  <div class="eyebrow">MOTION RPG · PROTOTYPE 0.5.0</div>
   <h1>경계의 숲</h1>
   <div class="muted">실내 전투와 야외 러닝이 하나의 캐릭터로 연결되는 운동 RPG</div>
   <div class="notice"><b>개발용 모의 러닝 화면이야.</b> 실제 GPS·운동 감지·음성은 아직 연결되지 않았다. 페이스와 선택으로 사건 흐름과 보상을 시험한다.<div class="muted" id="saveStatus">이 브라우저에 진행 상황을 자동 저장한다.</div></div>
@@ -29,6 +29,7 @@
   <section class="card"><h2>탐험 가방</h2><div class="stats">
     <div class="stat"><span>횃불</span><b id="torch">0</b></div><div class="stat"><span>지도 조각</span><b id="map">0</b></div><div class="stat"><span>붕대</span><b id="bandage">0</b></div>
   </div><div class="muted">보급 사건에서 획득한 물품은 해당 유형의 사건에서 선택지로 나타난다.</div></section>
+  <section class="card"><h2>캠프 강화</h2><div class="muted">골드를 써서 야외 탐험과 실내 훈련에 지속 효과를 더한다.</div><div id="shop" class="actions" aria-label="캠프 강화"></div></section>
   <section class="card">
     <h2>야외 러닝 시뮬레이션</h2>
     <div class="hero"><div class="tree" id="scene">🌲 🌳 🌲</div><strong id="phaseTitle">탐험 대기 중</strong><span class="muted" id="phaseHint">페이스를 정한 뒤 다음 구간으로 이동해 봐.</span></div>
@@ -49,7 +50,7 @@
   <footer>Motion RPG — 기본 규칙과 실험 코드는 GitHub에서 관리 · 실전 GPS 및 운동 처방 기능 미구현</footer>
 </main>
 <script type="module">
-  import { ACTIONS, ITEMS, availableActions, newGame, beginEncounter, resolveEncounter, beginTraining, resolveTraining } from "./src/engine.mjs";
+  import { ACTIONS, ITEMS, UPGRADES, availableActions, newGame, beginEncounter, resolveEncounter, beginTraining, resolveTraining, purchaseUpgrade } from "./src/engine.mjs";
   const SAVE_KEY = "motion-rpg-save-v1";
   const $ = id => document.getElementById(id);
   function loadGame() {
@@ -57,7 +58,7 @@
     try {
       const saved = JSON.parse(localStorage.getItem(SAVE_KEY) || "null");
       if (!saved || typeof saved !== "object") return blank;
-      return { ...blank, ...saved, inventory: { ...blank.inventory, ...saved.inventory }, training: { ...blank.training, ...saved.training } };
+      return { ...blank, ...saved, inventory: { ...blank.inventory, ...saved.inventory }, training: { ...blank.training, ...saved.training }, camp: { ...blank.camp, ...saved.camp } };
     } catch { return blank; }
   }
   let state = loadGame();
@@ -66,6 +67,7 @@
     saveGame(); $("saveStatus").textContent = "이 브라우저에 진행 상황을 자동 저장 중 · 처음부터를 누르면 저장도 초기화된다.";
     for (const [id,value] of [["level",state.level],["xp",state.xp+" XP"],["gold",state.gold+" G"],["energy",state.energy],["distance",state.distanceM+" m"],["time",state.elapsedMin+" 분"]]) $(id).textContent = value;
     for (const item of Object.keys(ITEMS)) $(item).textContent = state.inventory[item];
+    $("shop").replaceChildren(...Object.entries(UPGRADES).map(([id,u]) => { const b=document.createElement("button"); b.className="action"; const owned=state.camp[id]; b.disabled=owned>=u.maxLevel || state.gold<u.cost || state.phase!=="exploring" || state.training.phase!=="ready"; b.innerHTML=`${u.label} · ${owned ? "완료" : u.cost+" G"}<small>${u.description}</small>`; b.onclick=()=>{state=purchaseUpgrade(state,id);render();}; return b; }));
     const encountering = state.phase === "encounter"; const trainingActive = state.training.phase === "challenge"; $("start").disabled = encountering || trainingActive; $("pace").disabled = encountering || trainingActive; $("trainingStart").disabled = encountering || trainingActive; $("actions").classList.toggle("hidden",!encountering); $("trainingActions").classList.toggle("hidden",!trainingActive);
     if (encountering) {
       const e = state.currentEvent; $("phaseTitle").textContent = e.title; $("phaseHint").textContent = e.task; $("scene").textContent = e.kind === "chase" ? "🐺 🌲 🏃" : e.kind === "supply" ? "📦 🌲 ✨" : e.kind === "fog" ? "🌫️ 🌲 🌫️" : "🗺️ 🌿 🔎";

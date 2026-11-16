@@ -40,6 +40,12 @@ export const TRAINING_DRILLS = Object.freeze([
   { id: "recovery", title: "회복 루틴", task: "다음 도전을 위한 흐름을 정리한다", kind: "recovery", reward: 2, actions: ["recover", "form"] },
 ]);
 
+export const UPGRADES = Object.freeze({
+  lantern: { label: "작은 랜턴", cost: 30, maxLevel: 1, description: "횃불을 사용할 때 소모하지 않는다" },
+  surveyMap: { label: "탐험 지도", cost: 40, maxLevel: 1, description: "탐색 사건 성공 시 +2 G" },
+  guards: { label: "훈련 보호대", cost: 50, maxLevel: 1, description: "실내 훈련 실패 시 +6 XP" },
+});
+
 const clamp = (x, min, max) => Math.max(min, Math.min(max, x));
 const isValidPace = pace => Number.isFinite(Number(pace));
 
@@ -49,7 +55,8 @@ export function newGame() {
     level: 1, successes: 0, attempts: 0, phase: "exploring",
     inventory: { torch: 0, map: 0, bandage: 0 },
     currentEvent: null, lastEvent: null, history: [],
-    training: { phase: "ready", attempts: 0, successes: 0, currentDrill: null, lastDrill: null }
+    training: { phase: "ready", attempts: 0, successes: 0, currentDrill: null, lastDrill: null },
+    camp: { lantern: 0, surveyMap: 0, guards: 0 }
   };
 }
 
@@ -97,14 +104,14 @@ export function resolveEncounter(state, action) {
   if (!availableActions(event, state.inventory).includes(action)) throw Error("Required item is not available");
   const passed = eventPassed(event, action, event.pace);
   const gainedXp = passed ? 14 : 5;
-  const gainedGold = passed ? event.reward : 0;
+  const gainedGold = passed ? event.reward + (event.kind === "scout" ? state.camp.surveyMap * 2 : 0) : 0;
   const next = { ...state };
   next.energy = clamp(next.energy + energyChange(action, event.pace), 0, 100);
   next.xp += gainedXp;
   next.gold += gainedGold;
   next.inventory = { ...state.inventory };
   const usedItem = ACTIONS[action].item;
-  if (usedItem) next.inventory[usedItem] -= 1;
+  if (usedItem && !(usedItem === "torch" && state.camp.lantern > 0)) next.inventory[usedItem] -= 1;
   const gainedItem = passed ? event.loot ?? null : null;
   if (gainedItem) next.inventory[gainedItem] += 1;
   next.level = 1 + Math.floor(next.xp / 100);
@@ -124,6 +131,18 @@ export function advanceGame(state, paceInput, action = "steady") {
     ? action
     : availableActions(encounter.currentEvent, encounter.inventory)[0];
   return resolveEncounter(encounter, selectedAction);
+}
+
+export function purchaseUpgrade(state, upgradeId) {
+  const upgrade = UPGRADES[upgradeId];
+  if (!upgrade) throw Error("Unknown upgrade");
+  if (state.phase !== "exploring" || state.training.phase !== "ready") throw Error("Finish the active challenge first");
+  if (state.camp[upgradeId] >= upgrade.maxLevel) throw Error("Upgrade is already at maximum level");
+  if (state.gold < upgrade.cost) throw Error("Not enough gold");
+  const next = { ...state, camp: { ...state.camp } };
+  next.gold -= upgrade.cost;
+  next.camp[upgradeId] += 1;
+  return next;
 }
 
 function trainingPassed(drill, action, energy) {
@@ -151,11 +170,11 @@ export function resolveTraining(state, action) {
   const drill = state.training.currentDrill;
   if (!availableActions(drill, state.inventory).includes(action)) throw Error("Required item is not available");
   const passed = trainingPassed(drill, action, state.energy);
-  const gainedXp = passed ? 10 : 3;
+  const gainedXp = passed ? 10 : state.camp.guards > 0 ? 6 : 3;
   const gainedGold = passed ? drill.reward : 0;
   const usedItem = ACTIONS[action].item;
   const next = { ...state, inventory: { ...state.inventory }, training: { ...state.training } };
-  if (usedItem) next.inventory[usedItem] -= 1;
+  if (usedItem && !(usedItem === "torch" && state.camp.lantern > 0)) next.inventory[usedItem] -= 1;
   next.energy = clamp(next.energy + (action === "recover" ? 5 : action === "form" ? -1 : action === "focus" ? -2 : 0), 0, 100);
   next.xp += gainedXp;
   next.gold += gainedGold;

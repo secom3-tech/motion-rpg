@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { ACTIONS, EVENTS, ITEMS, TRAINING_DRILLS, availableActions, newGame, beginEncounter, resolveEncounter, advanceGame, beginTraining, resolveTraining } from "../src/engine.mjs";
+import { ACTIONS, EVENTS, ITEMS, TRAINING_DRILLS, UPGRADES, availableActions, newGame, beginEncounter, resolveEncounter, advanceGame, beginTraining, resolveTraining, purchaseUpgrade } from "../src/engine.mjs";
 
 assert.equal(new Set(EVENTS.map(e => e.id)).size, EVENTS.length, "Event IDs must be unique");
 assert.equal(new Set(Object.keys(ACTIONS)).size, Object.keys(ACTIONS).length, "Action IDs must be unique");
@@ -7,6 +7,7 @@ assert.equal(EVENTS.length, 12, "The first forest region should contain 12 event
 assert.ok(EVENTS.every(event => event.actions.length >= 2 && event.reward >= 6 && event.reward <= 10));
 assert.deepEqual(Object.keys(ITEMS).sort(), ["bandage", "map", "torch"]);
 assert.equal(TRAINING_DRILLS.length, 3, "Indoor training needs three rotating drills");
+assert.equal(Object.keys(UPGRADES).length, 3, "Camp needs three starter upgrades");
 
 // State-machine boundaries: no rewards before an encounter is resolved.
 let state = newGame();
@@ -51,6 +52,18 @@ assert.equal(trainingRun.inventory.torch, 0);
 assert.equal(trainingRun.training.lastDrill.passed, true);
 assert.equal(trainingRun.xp, 10);
 assert.throws(() => resolveTraining(trainingRun, "torch"), /No active/);
+
+// Gold has a deterministic use and upgrades affect their advertised systems.
+let campRun = { ...newGame(), gold: 120 };
+campRun = purchaseUpgrade(campRun, "lantern");
+campRun = purchaseUpgrade(campRun, "surveyMap");
+campRun = purchaseUpgrade(campRun, "guards");
+assert.equal(campRun.gold, 0);
+assert.deepEqual(campRun.camp, { lantern: 1, surveyMap: 1, guards: 1 });
+assert.throws(() => purchaseUpgrade(campRun, "lantern"), /maximum/);
+let scoutRun = { ...campRun, attempts: 1 };
+scoutRun = resolveEncounter(beginEncounter(scoutRun, 8), "search");
+assert.equal(scoutRun.lastEvent.gainedGold, EVENTS[1].reward + 2);
 
 // Every event must be reachable once in a 12-minute cycle.
 let coverageRun = newGame();
