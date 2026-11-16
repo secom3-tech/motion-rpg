@@ -82,7 +82,8 @@ export function createWirelessHost({onStatus=()=>{},onMessage=()=>{}}={}){
   conn=null;peer=null;room="";lastHeartbeat=0;
   status("연결 대기 중지",false);
  }
- return {start,stop,get room(){return room},get connected(){return !!conn?.open},get latencyMs(){return latestPing}};
+ function send(data){if(!active||!conn?.open)return false;try{conn.send(data);return true}catch{return false}}
+ return {start,stop,send,get room(){return room},get connected(){return !!conn?.open},get latencyMs(){return latestPing}};
 }
 export function createWirelessController({onStatus=()=>{},onMessage=()=>{}}={}){
  let peer=null,conn=null,active=false,room="",watch=null,lastSeen=0;
