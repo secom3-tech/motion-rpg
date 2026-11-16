@@ -85,7 +85,7 @@ export function newGame() {
     region: "forest", regionAttempts: { forest: 0, ridge: 0 }, unlockedRegions: ["forest"],
     quests: { forest: { attempts: 0, successes: 0, bossDefeated: false }, ridge: { attempts: 0, successes: 0, bossDefeated: false } },
     outdoorInput: null,
-    treadmill: { active: false, speedKmh: 8, distanceM: 0, distanceExactM: 0, elapsedSec: 0 }
+    treadmill: { active: false, speedKmh: 8, distanceM: 0, distanceExactM: 0, elapsedSec: 0, nextEncounterM: 250 }
   };
 }
 
@@ -161,9 +161,14 @@ export function advanceTreadmill(state, durationSec = 60) {
   const distanceM = state.treadmill.speedKmh * 1000 * duration / 3600;
   const previousDistance = Number.isFinite(state.treadmill.distanceExactM) ? state.treadmill.distanceExactM : state.treadmill.distanceM;
   const distanceExactM = previousDistance + distanceM;
-  const treadmill = { ...state.treadmill, distanceM: Math.round(distanceExactM), distanceExactM, elapsedSec: state.treadmill.elapsedSec + Math.round(duration) };
+  const roundedDistance = Math.round(distanceExactM);
+  const scheduledDistance = Number.isFinite(state.treadmill.nextEncounterM) ? state.treadmill.nextEncounterM : 250;
+  const crossedEncounterMarker = roundedDistance >= scheduledDistance;
+  const nextEncounterM = crossedEncounterMarker ? (Math.floor(roundedDistance / 250) + 1) * 250 : scheduledDistance;
+  const treadmill = { ...state.treadmill, distanceM: roundedDistance, distanceExactM, elapsedSec: state.treadmill.elapsedSec + Math.round(duration), nextEncounterM };
   const pace = Number((60 / treadmill.speedKmh).toFixed(1));
-  return { ...state, treadmill, outdoorInput: { source: "treadmill", distanceM: Math.round(distanceM), durationSec: Math.round(duration), pace } };
+  const next = { ...state, treadmill, outdoorInput: { source: "treadmill", distanceM: Math.round(distanceM), durationSec: Math.round(duration), pace } };
+  return crossedEncounterMarker && next.phase === "exploring" && next.training.phase === "ready" ? beginEncounter(next, pace) : next;
 }
 
 export function stopTreadmill(state) {
