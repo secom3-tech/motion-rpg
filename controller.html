@@ -73,7 +73,7 @@ function onMotion(e){
   else setStatus("회전 "+Math.round(result.rotation||0)+"°/s · 가속도 "+result.linear.toFixed(1)+" · "+(wireless.connected?"무선 연결됨":"연결 전 로컬 시험 중"));
   sampleTime=now;
  }
- if(!result.gesture)return;
+ if(calibrating||!result.gesture)return;
  count++;$("count").textContent=count;
  const packet={type:"gesture",gesture:result.gesture.type,strength:result.gesture.strength,time:now,seq:++seq,session:wireless.room};
  const sent=wireless.send(packet);
@@ -117,7 +117,7 @@ $("calibrate").onclick=()=>{
   if(!axis){setStatus("회전 변화가 충분하지 않아. 다시 설정해 줘.");return;}
   axes[mode]=axis;
   try{localStorage.setItem("motion-rpg-s21-axes",JSON.stringify(axes));}catch{}
-  syncSettings();setStatus(axis.toUpperCase()+"축 동작 설정 완료");
+  syncSettings();detector.reset();setStatus(axis.toUpperCase()+"축 동작 설정 완료 · 잠시 멈춘 뒤 시작");
  },3000);
 };
 $("clearAxis").onclick=()=>{
