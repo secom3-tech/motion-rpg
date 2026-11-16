@@ -329,8 +329,66 @@ let s=1+Math.sin(clock*1.8)*.05;enemyPart(lowSphere,ex,.066,ez,1.58*s,.022,1.46*
 }
 function radiusAiming(){if(enemy.dead)return false;let e=[enemy.x-camera.x,1.24-camera.y,enemy.z-camera.z];let len=Math.hypot(...e);let fw=[Math.sin(yaw)*Math.cos(pitch),Math.sin(pitch),-Math.cos(yaw)*Math.cos(pitch)];let p=e[0]*fw[0]+e[1]*fw[1]+e[2]*fw[2];return p>0&&Math.sqrt(Math.max(0,len*len-p*p))<1.56}
 function forward(){return [Math.sin(yaw)*Math.cos(pitch),Math.sin(pitch),-Math.cos(yaw)*Math.cos(pitch)]}
-function magic(){if(!active||!el("motionPanel").hidden||clock-lastFire<.60+stats.attackDelay)return false;lastFire=clock;weaponKick=1.0;let f=forward(),on=radiusAiming(),d=Math.hypot(enemy.x-camera.x,enemy.z-camera.z),targ=on?d:14;const px=camera.x+Math.cos(yaw)*.47,py=camera.y-.34,pz=camera.z+Math.sin(yaw)*.47;projectiles.push({x:px,y:py,z:pz,vx:f[0]*22,vy:f[1]*22,vz:f[2]*22,life:.8,age:0,on,damage:Math.round((26+Math.floor(rand()*15))*stats.magic),targetDist:targ});el('screenFx').classList.remove('flash');void el('screenFx').offsetWidth;el('screenFx').classList.add('flash');if(on)el('instruction').style.opacity='0';beep(620,.12,'sine',.075);return true;}
-function swordHit(){if(!active||!el("motionPanel").hidden||clock-lastFire<.48+stats.attackDelay)return false;lastFire=clock;weaponKick=.6;el('slashFx').classList.remove('go');void el('slashFx').offsetWidth;el('slashFx').classList.add('go');let d=Math.hypot(enemy.x-camera.x,enemy.z-camera.z);if(d<5.0&&radiusAiming()){damage(Math.round((34+Math.floor(rand()*15))*stats.slash));}else{toast('검격 사거리 밖! 가까이 이동하세요');}beep(210,.14,'triangle',.11);return true;}
+function attackFeedback(text){
+ const element=el("attackFeedback");
+ element.textContent=text;element.classList.remove("go");void element.offsetWidth;element.classList.add("go");
+}
+function magic(){
+ if(!active||!el("motionPanel").hidden||worldMode||clock-lastFire<.60+stats.attackDelay
+    ||meleeAction||rangedAction)return false;
+ lastFire=clock;weaponKick=.48;
+ const duration=equipped.weapon==="bow"?.50:equipped.weapon==="staff"?.52:.42;
+ rangedAction={weapon:equipped.weapon,startAt:clock,duration,releaseAt:clock+duration*.57,endsAt:clock+duration,released:false};
+ attackFeedback(names.ranged+" 준비");
+ return true;
+}
+function swordHit(style=null){
+ if(!active||!el("motionPanel").hidden||worldMode||clock-lastFire<.48+stats.attackDelay
+    ||meleeAction||rangedAction)return false;
+ meleeAction=createMeleeAction(equipped.weapon,style,clock);
+ lastFire=clock;weaponKick=.7;
+ const descriptions={sweep:"가로 베기",overhead:"세로 내려찍기",thrust:"찌르기"};
+ const meleeLabel=equipped.weapon==="bow"?"활로 밀치기":equipped.weapon==="axe"?"도끼 "+descriptions[meleeAction.style]:descriptions[meleeAction.style];
+ attackFeedback(meleeLabel);
+ beep(equipped.weapon==="axe"?160:equipped.weapon==="greatsword"?200:310,.12,"triangle",.07);
+ return true;
+}
+function launchPlayerProjectile(action){
+ const f=forward(),on=radiusAiming();
+ const d=Math.hypot(enemy.x-camera.x,enemy.z-camera.z),kind=projectileProfile(action.weapon);
+ const px=camera.x+Math.cos(yaw)*.34,py=camera.y-.21,pz=camera.z+Math.sin(yaw)*.34;
+ projectiles.push({x:px,y:py,z:pz,vx:f[0]*kind.speed,vy:f[1]*kind.speed,vz:f[2]*kind.speed,
+  kind:kind.kind,heading:Math.atan2(f[0],f[2]),speed:kind.speed,
+  life:.9,age:0,traveled:0,on,targetDist:on?d:16,
+  damage:Math.round((26+Math.floor(rand()*15))*stats.magic)});
+ el("screenFx").classList.remove("flash");void el("screenFx").offsetWidth;el("screenFx").classList.add("flash");
+ beep(action.weapon==="bow"?400:action.weapon==="staff"?710:520,.18,"sine",.075);
+ if(on)el("instruction").style.opacity="0";
+}
+function updatePlayerActions(){
+ if(meleeAction){
+  if(!meleeAction.damageDone&&clock>=meleeAction.contactAt){
+   meleeAction.damageDone=true;
+   const hit=meleeHitInfo(meleeAction,camera,enemy,yaw);
+   if(!enemy.dead&&hit.canHit){
+    const strength=weaponProfile(meleeAction.weapon).damage;
+    const multiplier=meleeAction.style==="overhead"?1.16:meleeAction.style==="thrust"?.95:1;
+    const amount=Math.round((34+Math.floor(rand()*15))*stats.slash*strength*multiplier);
+    damage(amount,meleeAction.weapon);
+   }else{
+    toast("공격 빗나감 · 방향 또는 거리 확인");
+   }
+  }
+  if(clock>=meleeAction.endsAt)meleeAction=null;
+ }
+ if(rangedAction){
+  if(!rangedAction.released&&clock>=rangedAction.releaseAt){
+   rangedAction.released=true;
+   launchPlayerProjectile(rangedAction);
+  }
+  if(clock>=rangedAction.endsAt)rangedAction=null;
+ }
+}
 function bankProgress(){try{localStorage.setItem(RESULT_KEY,JSON.stringify({kills,score,sessionId,updatedAt:Date.now()}))}catch(e){}}
 function damage(n){if(enemy.dead)return;enemy.hp=Math.max(0,enemy.hp-n);el('enemyHP').style.width=(enemy.hp/enemy.max*100)+'%';let x=enemy.x,y=1.4,z=enemy.z;for(let i=0;i<16;i++){let p=(rand()-.5)*6,t=rand()*6.28,s=.65+rand()*2.6;sparks.push({x,y,z,vx:Math.cos(t)*s,vy:rand()*3.7,vz:Math.sin(t)*s,r:.04+rand()*.07,life:.4+rand()*.5,t:0,col:[.67+rand()*.23,1,.49+rand()*.35]})}toast('✦ '+n+' 데미지');beep(165,.12,'triangle',.11);if(enemy.hp<=0){enemy.dead=true;enemy.windup=0;enemy.impactUntil=0;el('attackBanner').hidden=true;enemy.respawn=1.6;score+=80+enemy.kind*20;kills++;heroHp=Math.min(stats.maxHp,heroHp+5);showHero();bankProgress();el('score').textContent=String(score).padStart(3,'0');el('enemyHud').style.opacity='0';el('stage').textContent=String(kills+1).padStart(2,'0');el('status').textContent='마력체 격파! 마을로 돌아가면 보상을 수령한다';setTimeout(()=>toast('마력체 격파 · 마을 보상 저장!'),350);beep(830,.25,'sine',.1)}}
 function spawnEnemy(){enemy.kind=kills%5;enemy.max=100+Math.floor(kills*23)+(enemy.kind===4?110:enemy.kind===3?26:0);enemy.hp=enemy.max;const playerHeading=Math.atan2(Math.sin(yaw),-Math.cos(yaw));const position=spawnAroundPlayer(camera,playerHeading,rand);enemy.x=position.x;enemy.z=position.z;enemy.facing=angleToTarget(enemy,camera);enemy.speed=(enemy.kind===3?2.35:enemy.kind===4?1.15:1.24)+Math.min(kills*.04,.5);enemy.attackTimer=2.5;enemy.windup=0;enemy.windupTotal=0;enemy.impactUntil=0;enemy.impactDuration=.54;enemy.attackStyle="slam";enemy.dead=false;enemy.name=['이끼 슬라임','달빛 슬라임','불꽃 슬라임','그림자 늑대','유적 골렘'][enemy.kind];el('monName').textContent=['🌿 ','🌙 ','🔥 ','🐺 ','🪨 '][enemy.kind]+enemy.name;el('enemyHP').style.width='100%';el('enemyHud').style.opacity='1';el('status').textContent='수풀에서 '+enemy.name+'이(가) 등장했다. 주변을 살펴보세요.';el('attackCue').className='';el('attackCue').textContent='적의 방향을 살펴보세요';el('attackBanner').hidden=true;toast(enemy.name+' 출현!')}
