@@ -25,5 +25,9 @@ assert.ok(html.includes("data-town=\"guild\"")&&html.includes("data-town=\"smith
 assert.ok(html.includes("townTalk(\"guild\")")&&html.includes("./src/avatar.mjs"));
 assert.ok(html.includes("data-outfit=\"hunter\""));
 assert.ok(html.includes("모험가 장비실"));
+for(const id of ["craftBench","craftList","craftMaterials","craftStatus","claimCombat","combatStats"])assert.ok(html.includes('id="'+id+'"'),"Missing crafting UI "+id);
+assert.ok(html.includes("claimIndoorBattle")&&html.includes("craftGear")&&html.includes("equipGear"));
+assert.ok(html.includes("./src/gear-game.mjs"),"Missing integrated progression module");
+
 
 console.log("PREVIEW SMOKE PASS: module syntax, unique IDs, references and main modes");
