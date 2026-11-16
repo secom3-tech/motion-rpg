@@ -1,0 +1,210 @@
+<!doctype html>
+<html lang="ko"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0b1818">
+<title>경계의 숲 | 음성 러닝 모험</title>
+<style>
+:root{font-family:system-ui,-apple-system,"Noto Sans KR",sans-serif;color:#eef7ec;background:#091412;color-scheme:dark}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(circle at 70% -15%,#2d674b55,transparent 40%),linear-gradient(160deg,#0b1d19,#081116);min-height:100vh}
+main{width:min(790px,100%);margin:auto;padding:18px 15px 90px}
+header{display:flex;justify-content:space-between;gap:12px;align-items:center;padding:8px 0 14px}
+a{color:#bcebd0;text-decoration:none}small,.muted{color:#a9c0b4}small{line-height:1.6}.eyebrow{font-size:12px;letter-spacing:.17em;color:#9ee4bf;font-weight:800}
+h1{font-size:clamp(29px,7vw,47px);letter-spacing:-.055em;margin:5px 0}h2{font-size:19px;margin:0 0 13px;letter-spacing:-.03em}
+.panel{padding:19px;border:1px solid #416955a6;background:#10241fda;border-radius:20px;margin:14px 0;box-shadow:0 14px 40px #0002}
+.notice{padding:13px;border:1px solid #698a5c6e;background:#32452742;border-radius:12px;font-size:14px;line-height:1.6}
+.scene{background:radial-gradient(circle at 50% 40%,#4b816555,transparent 47%),linear-gradient(145deg,#173b31,#17392f 55%,#0b1b1b);border-radius:18px;min-height:205px;padding:18px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;position:relative;overflow:hidden;border:1px solid #99d6a533}
+.scene:after{content:"";position:absolute;bottom:0;left:0;right:0;height:60px;background:linear-gradient(transparent,#0b1c19bb);pointer-events:none}
+.forest{font-size:53px;filter:drop-shadow(0 9px 7px #0008);line-height:1.25;letter-spacing:5px}.eventname{font-size:24px;font-weight:900;z-index:2;margin:10px 0 5px}.eventhint{z-index:2;color:#d8edda;max-width:390px;line-height:1.5}
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.stat{padding:14px;background:#19372d;border-radius:13px;border:1px solid #47745766}.stat span{font-size:12px;color:#accbb8;display:block}.stat strong{font-size:25px;display:block;margin:2px 0 0}
+.formgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:13px}label{font-size:13px;color:#c9e4d2;display:block;margin-bottom:6px}select,input[type=range]{width:100%}select{border:1px solid #659b73b0;border-radius:11px;padding:12px;background:#172c28;color:#f0fff3;font:inherit}input[type=range]{accent-color:#adeb99;margin:9px 0}
+button{border:0;border-radius:12px;font-size:15px;padding:13px 16px;background:linear-gradient(110deg,#b2f3a3,#7addbb);color:#092017;font-weight:900;cursor:pointer;min-height:47px}
+button.alt{background:#234537;color:#f0fff2;border:1px solid #78b78c99}button:disabled{opacity:.35;cursor:not-allowed}
+.row{display:flex;flex-wrap:wrap;gap:9px;margin:14px 0}.row>*{flex:1 1 120px}
+.hidden{display:none!important}
+#stage{font-weight:900;font-size:15px;color:#b5f1ce}
+.track{height:12px;border-radius:20px;background:#081c14;border:1px solid #598168;overflow:hidden;margin:14px 0}
+.track>i{height:100%;display:block;width:0;background:linear-gradient(90deg,#80cfa4,#dfeda5);transition:width .2s}
+#narration{line-height:1.7;font-size:15px;min-height:75px;padding:14px;background:#0a1b18;border-radius:13px;border:1px solid #5b887050}
+.log{list-style:none;padding:0;margin:0;max-height:240px;overflow:auto}.log li{border-bottom:1px solid #43645240;padding:10px 2px;font-size:14px;color:#bdd7c8;line-height:1.5}
+.status{font-size:13px;color:#b3cfbe;margin:12px 0;line-height:1.6}
+.mode-pill{font-size:11px;border:1px solid #6e9c7b;border-radius:99px;padding:5px 9px;color:#c9edcf}
+#stopBtn{background:#533735;border:1px solid #ac706a;color:#ffe4dc}
+#result{padding:18px;border:1px solid #91c49773;border-radius:16px;background:#243e2e;font-size:15px;line-height:1.8}
+footer{font-size:12px;color:#9bb6a5;line-height:1.6;padding:15px 3px}
+@media(min-width:610px){.grid{grid-template-columns:repeat(4,minmax(0,1fr))}.forest{font-size:70px}}
+</style></head>
+<body><main>
+<header><a href="./index.html">〈 마을로 돌아가기</a><span class="mode-pill">AUDIO EXPEDITION · BETA</span></header>
+<div class="eyebrow">MOTION RPG / OUTDOOR</div>
+<h1>경계의 숲: 추격</h1>
+<p class="muted">이어폰으로 사건을 듣고, 실제 달리기 속도로 대응하는 오디오 모험.</p>
+<div class="notice">게임 속 위험은 가상이야. 실제 도로·사람·장애물을 먼저 확인하고 무리하게 뛰지 마. 추격도 전력질주를 요구하지 않아. 안전하지 않으면 속도를 낮추거나 일시정지해.</div>
+<section class="panel" id="setup">
+<h2>원정 준비</h2>
+<div class="formgrid">
+<div><label for="base">내 편한 페이스 (분/km)</label><select id="base"><option value="6">6:00</option><option value="7">7:00</option><option value="8">8:00</option><option value="8.5" selected>8:30</option><option value="9.5">9:30</option><option value="11">11:00</option><option value="13">13:00</option><option value="14.5">14:30</option></select></div>
+<div><label for="duration">원정 시간</label><select id="duration"><option value="12">12분 (짧은 원정)</option><option value="20" selected>20분 (기본)</option><option value="30">30분 (장거리)</option></select></div>
+<div><label for="style">전투 성향</label><select id="style"><option value="scout">정찰 · 은신 특화</option><option value="vanguard">선봉 · 추격 특화</option><option value="guardian">수호 · 안정성 특화</option></select></div>
+<div><label for="tts">음성 안내</label><select id="tts"><option value="on" selected>켜기 (이어폰 권장)</option><option value="off">끄기</option></select></div>
+</div>
+<div class="row"><button id="gpsStart">📍 GPS 실전 원정 시작</button><button id="demoStart" class="alt">🧪 책상에서 시뮬레이션</button></div>
+<p class="status">GPS 모드에서는 실제 위치 변화로 거리와 속도를 측정해. 데모는 보상 없는 시뮬레이션이야. 처음에는 데모로 음성과 사건 흐름을 확인해 봐.</p>
+</section>
+<section class="panel hidden" id="play">
+<div class="scene" aria-live="polite"><div class="forest">🌳 🌲 🌳</div><div class="eventname" id="title">경계의 숲</div><div class="eventhint" id="subtitle">출발 준비</div></div>
+<div class="row"><span id="stage">탐험 중</span><span class="status" id="remaining"></span></div>
+<div class="track"><i id="progress"></i></div>
+<div class="grid">
+<div class="stat"><span>진행 시간</span><strong id="time">00:00</strong></div>
+<div class="stat"><span>이동 거리</span><strong id="distance">0 m</strong></div>
+<div class="stat"><span>현재 페이스</span><strong id="currentPace">—</strong></div>
+<div class="stat"><span>성공 / 실패</span><strong id="score">0 / 0</strong></div>
+</div>
+<div class="status" id="gpsStatus">GPS 대기</div>
+<div id="narration" role="status" aria-live="polite">원정 시작</div>
+<div class="row" id="demoControls"><div style="flex:2"><label for="demoPace">테스트 페이스: <b id="demoPaceLabel">8.5</b> 분/km</label><input type="range" id="demoPace" min="5" max="16" step=".5" value="8.5"></div><button class="alt" id="speedToggle">시뮬레이션 12배속</button></div>
+<div class="row"><button class="alt" id="repeatBtn">🔊 음성 다시 듣기</button><button class="alt" id="pauseBtn">⏸ 일시정지</button><button id="stopBtn">■ 원정 종료</button></div>
+</section>
+<section class="panel hidden" id="endPanel"><h2>원정 결과</h2><div id="result"></div><div class="row"><button id="againBtn">새 원정 시작</button><a class="alt" style="padding:13px 16px;border:1px solid #78b78c99;border-radius:12px;text-align:center" href="./index.html">마을 복귀</a></div></section>
+<section class="panel"><h2>모험 기록</h2><ul id="log" class="log"><li>아직 모험을 시작하지 않았어.</li></ul></section>
+<footer>GPS 측정치는 야외 환경에 따라 오차가 있어. 화면 켜짐 유지 요청이 실패하거나 시스템이 절전하면 기록이 중단될 수 있어. 모바일 웹의 GPS·음성 출력은 기기별 실전 검증 전 단계야. 데모는 캐릭터 보상에 반영되지 않아.</footer>
+<script type="module">
+import {createAdventure,startAdventure,advanceAdventure,endAdventure,summarizeAdventure,settleAdventure,paceRequirement} from "./src/expedition.mjs";
+const $=id=>document.getElementById(id);
+const SAVE_KEY="motion-rpg-save-v1";
+let session=null, mode=null, timer=null, watch=null, wakeLock=null, paused=false, speedFactor=12, shown=0, claimId=null, settled=false;
+let gpsLast=null,gpsDistance=0,gpsFixTime=0,gpsPace=NaN,gpsStatus="GPS 연결 전",gpsSamples=[],gpsRecentMotion=false;
+const timestamp=()=>Date.now();
+const round=(n,p=0)=>Number(n).toFixed(p);
+const formatTime=n=>String(Math.floor(n/60)).padStart(2,"0")+":"+String(Math.floor(n%60)).padStart(2,"0");
+function setVisible(id,show){$(id).classList.toggle("hidden",!show)}
+function talk(text){
+ if($("tts").value!=="on"||!("speechSynthesis" in window))return;
+ try{speechSynthesis.cancel();const msg=new SpeechSynthesisUtterance(text);msg.lang="ko-KR";msg.rate=1.04;msg.pitch=1.01;speechSynthesis.speak(msg);}catch(e){}
+}
+function announceNew(){
+ if(!session)return;
+ const arr=session.announcements;
+ for(const a of arr.slice(shown)){talk(a.head+". "+a.detail)}
+ shown=arr.length;
+}
+function refreshLog(){
+ const records=session?session.events.slice(-10):[];
+ $("log").replaceChildren(...(records.length?records.slice().reverse().map(e=>{const li=document.createElement("li");li.textContent=(e.passed?"✓ 성공 · ":"✕ 실패 · ")+e.modifier+" "+e.name+" · "+e.earnedXp+" XP / "+e.earnedGold+" G";return li;}):[Object.assign(document.createElement("li"),{textContent:"아직 모험 기록이 없어."})]));
+}
+function render(){
+ if(!session)return;
+ const phase=session.phase;
+ $("title").textContent=phase==="challenge"?session.event.name:phase==="recovery"?"휴식과 재정비":phase==="complete"?"원정 종료":"경계의 숲 탐험";
+ const requirement=session.event?paceRequirement(session.event.kind,session.basePace):null;
+ $("subtitle").textContent=session.event?session.event.line+" · "+requirement.label:phase==="recovery"?"페이스를 편하게 낮추고 주변을 살펴봐.":phase==="complete"?"마을로 돌아갈 시간이야.":"다음 사건을 기다리며 편안하게 움직여.";
+ $("stage").textContent=phase==="challenge"?"⚔️ 돌발 사건 · "+session.event.modifier:phase==="recovery"?"🫧 회복":phase==="complete"?"🏁 완료":"🌲 탐험";
+ $("remaining").textContent="남은 시간 "+formatTime(Math.max(0,session.durationSec-session.elapsedSec));
+ $("progress").style.width=round(session.elapsedSec/session.durationSec*100,1)+"%";
+ $("time").textContent=formatTime(session.elapsedSec);
+ $("distance").textContent=Math.round(session.distanceM)+" m";
+ $("currentPace").textContent=mode==="demo"?Number($("demoPace").value).toFixed(1):Number.isFinite(gpsPace)?gpsPace.toFixed(1):"—";
+ $("score").textContent=session.success+" / "+session.fail;
+ $("narration").textContent=session.lastAnnouncement;
+ $("gpsStatus").textContent=mode==="demo"?"모의 입력 · 실제 GPS 미사용 · 보상 없음":gpsStatus;
+ $("pauseBtn").textContent=paused?"▶ 재개":"⏸ 일시정지";
+ refreshLog();
+}
+function stopHardware(){
+ if(timer){clearInterval(timer);timer=null}
+ if(watch!==null){navigator.geolocation.clearWatch(watch);watch=null}
+ if(wakeLock){wakeLock.release().catch(()=>{});wakeLock=null}
+ if("speechSynthesis" in window)speechSynthesis.cancel();
+}
+async function wake(){if(!("wakeLock" in navigator))return;try{wakeLock=await navigator.wakeLock.request("screen")}catch(e){gpsStatus+=" · 화면 켜짐 유지 실패"}}
+function finish(){
+ if(!session||settled)return;
+ settled=true;stopHardware();
+ if(session.phase!=="complete")session=endAdventure(session);
+ // Demo does not write to character. GPS only on completed real-world movement.
+ let rewardMessage=mode==="demo"?"연습 모드: 캐릭터 보상 없음.":"GPS 기록 확인 필요: 아직 보상 없음.";
+ if(mode==="gps"){
+  try{
+   const game=JSON.parse(localStorage.getItem(SAVE_KEY)||"null");
+   if(game&&typeof game==="object"){
+    const award=settleAdventure(game,session,claimId);
+    if(award.awarded){localStorage.setItem(SAVE_KEY,JSON.stringify(award.state));rewardMessage="마을 캐릭터에 경험치와 전리품을 반영했어."}
+    else rewardMessage="보상 조건(3분·200m 이상의 GPS 이동)을 충족하지 못해 지급하지 않았어.";
+   }else rewardMessage="마을 캐릭터 저장 정보가 없어. 마을을 먼저 열고 다시 시작해.";
+  }catch(e){rewardMessage="저장 오류로 보상이 반영되지 않았어."}
+ }
+ const s=summarizeAdventure(session);
+ $("result").textContent="거리 "+s.distanceM+"m · 시간 "+formatTime(s.elapsedSec)+" · 성공 "+s.success+" / 실패 "+s.fail+" · 경험치 "+s.xp+" XP · 골드 "+s.gold+" G · "+rewardMessage;
+ setVisible("play",false);setVisible("endPanel",true);render();
+ talk("원정이 종료됐습니다. 성공 "+s.success+"회, 실패 "+s.fail+"회. "+rewardMessage);
+}
+function step(dt,pace){
+ if(!session||paused||session.phase==="complete")return;
+ const before=session.announcements.length;
+ try{session=advanceAdventure(session,dt,pace)}catch(e){gpsStatus="처리 오류: "+e.message;return}
+ if(session.announcements.length>before)announceNew();
+ render();
+ if(session.phase==="complete")finish();
+}
+function start(modeName){
+ stopHardware();mode=modeName;paused=false;settled=false;shown=0;gpsLast=null;gpsDistance=0;gpsFixTime=0;gpsPace=NaN;gpsSamples=[];gpsRecentMotion=false;
+ claimId="runner-"+timestamp().toString(36)+"-"+Math.random().toString(36).slice(2,10);
+ let level=1;try{const shared=JSON.parse(localStorage.getItem(SAVE_KEY)||"null");if(shared?.level)level=shared.level}catch(e){}
+ const basePace=Number($("base").value);
+ session=startAdventure(createAdventure({mode:modeName,basePace,style:$("style").value,durationMin:Number($("duration").value),level,seed:(timestamp()>>>0)||17}));
+ $("demoPace").value=basePace;$("demoPaceLabel").textContent=basePace.toFixed(1);
+ setVisible("setup",false);setVisible("play",true);setVisible("endPanel",false);setVisible("demoControls",mode==="demo");
+ gpsStatus=mode==="demo"?"시뮬레이션 모드": "GPS 위치 연결 중";
+ announceNew();render();void wake();
+ if(mode==="demo"){
+  // 12x mode: each 250ms tick advances three seconds.
+  timer=setInterval(()=>step(speedFactor===12?3:1,Number($("demoPace").value)),250);
+ }else{
+  if(!navigator.geolocation){gpsStatus="이 브라우저는 GPS를 지원하지 않아.";paused=true;render();return;}
+  watch=navigator.geolocation.watchPosition(onFix,err=>{gpsStatus=err.code===1?"GPS 접근 권한을 허용해줘.":"GPS 신호에 문제가 있어. 신호가 돌아오면 계속해.";render();},{enableHighAccuracy:true,maximumAge:0,timeout:15000});
+  timer=setInterval(()=>{
+   if(paused||!session||session.phase==="complete")return;
+   if(!gpsFixTime||timestamp()-gpsFixTime>15000){gpsStatus="GPS 신호 대기 중 · 진행 일시 보류";render();return;}
+   // GPS pace cannot be invented: a stopped player fails the movement challenge.
+   const pace=(gpsRecentMotion&&Number.isFinite(gpsPace))?gpsPace:60;
+   step(1,pace);
+   session.distanceM=Math.round(gpsDistance*10)/10;
+   render();
+  },1000);
+ }
+}
+function haversine(a,b){
+ const R=6371000,rad=Math.PI/180,lat1=a.latitude*rad,lat2=b.latitude*rad,dLat=lat2-lat1,dLon=(b.longitude-a.longitude)*rad;
+ const v=Math.sin(dLat/2)**2+Math.cos(lat1)*Math.cos(lat2)*Math.sin(dLon/2)**2;return R*2*Math.asin(Math.min(1,Math.sqrt(v)));
+}
+function onFix(position){
+ const c=position.coords,now=position.timestamp||timestamp();
+ if(c.accuracy>45){gpsStatus="GPS 정확도 "+Math.round(c.accuracy)+"m · 좀 더 열린 곳에서 기다려줘.";render();return;}
+ const fix={latitude:c.latitude,longitude:c.longitude,time:now};
+ gpsFixTime=timestamp();
+ if(gpsLast){
+  const dt=(fix.time-gpsLast.time)/1000;
+  const d=haversine(gpsLast,fix);
+  if(dt>=1&&dt<=30&&d/dt<7.2){
+   if(d>=3){gpsDistance+=d;gpsRecentMotion=true;const sample=dt/60/(d/1000);
+     if(sample>=3&&sample<=25)gpsSamples=[...gpsSamples,sample].slice(-5);
+     if(gpsSamples.length){const sorted=[...gpsSamples].sort((a,b)=>a-b);gpsPace=sorted[Math.floor(sorted.length/2)]}
+   }else gpsRecentMotion=false;
+  }else if(dt>30){gpsSamples=[];gpsPace=NaN;gpsRecentMotion=false}
+ }
+ gpsLast=fix;
+ gpsStatus="GPS 연결 · 정확도 "+Math.round(c.accuracy)+"m · 누적 "+Math.round(gpsDistance)+"m";
+ render();
+}
+$("gpsStart").onclick=()=>start("gps");
+$("demoStart").onclick=()=>start("demo");
+$("demoPace").oninput=()=>$("demoPaceLabel").textContent=Number($("demoPace").value).toFixed(1);
+$("speedToggle").onclick=()=>{speedFactor=speedFactor===12?4:12;$("speedToggle").textContent="시뮬레이션 "+speedFactor+"배속"};
+$("pauseBtn").onclick=()=>{paused=!paused;gpsLast=null;gpsRecentMotion=false;gpsSamples=[];gpsPace=NaN;render();talk(paused?"원정 일시정지":"원정을 재개한다")};
+$("stopBtn").onclick=finish;
+$("repeatBtn").onclick=()=>{if(session)talk(session.lastAnnouncement)};
+$("againBtn").onclick=()=>{stopHardware();setVisible("setup",true);setVisible("play",false);setVisible("endPanel",false);session=null};
+document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible"&&session&&session.phase!=="complete")void wake()});
+window.addEventListener("pagehide",stopHardware);
+</script>
+</main></body></html>
