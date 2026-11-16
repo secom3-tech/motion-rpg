@@ -36,9 +36,25 @@
 .town-dialogue b{color:#bdebb9;display:block;margin-bottom:3px}
 @media(max-width:620px){.town-facilities{grid-template-columns:1fr 1fr}.town-facility{min-height:142px}}
 @media(max-width:390px){.town-facility strong{font-size:14px}.town-facility{padding:14px}}
+
+#craftBench{margin:16px 0;border:1px solid #759b8585;border-radius:19px;background:linear-gradient(140deg,#1b382c,#0c2529);padding:18px}
+.material-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:9px;margin:13px 0}
+.material-grid .mat{background:#0e2927;border:1px solid #6d8e7259;border-radius:11px;padding:10px 11px;font-size:11px;color:#b6c9b4;line-height:1.6}
+.material-grid .mat b{display:block;font-size:19px;color:#ecfce5}
+.craft-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:10px}
+.craft-row{border:1px solid #74948066;border-radius:14px;padding:13px;background:#153128}
+.craft-row strong{display:block;font-size:14px;margin:0 0 4px}
+.craft-row p{margin:0;color:#b6cbbb;font-size:11px;line-height:1.55;min-height:34px}
+.craft-row small{display:block;margin:7px 0;font-size:11px;color:#cde8cb}
+.craft-row button{padding:8px 13px;font-size:12px;font-weight:850;min-height:34px;border:1px solid #acddaa;background:#b4e5a9;border-radius:11px;color:#162e24}
+.craft-row button:disabled{background:#2c4c3b;color:#adbdac;border:1px solid #52735a}
+#craftStatus{padding:13px;background:#0b292a;border:1px solid #7ca18a73;border-radius:12px;color:#e4f2df;font-size:12px;line-height:1.65;min-height:52px}
+.combat-info{display:flex;flex-wrap:wrap;gap:9px;margin:13px 0;color:#d5eecf;font-size:12px}
+.combat-info span{border:1px solid #88b39379;border-radius:30px;padding:5px 10px;background:#142d29}
+@media(max-width:520px){.material-grid{grid-template-columns:1fr 1fr}.craft-list{grid-template-columns:1fr}}
 </style></head>
 <body><div class="app">
-<header class="top"><div class="mark">MOTION RPG <em> / 경계의 숲</em></div><div class="version">전체 콘셉트 시안 · 0.27</div></header>
+<header class="top"><div class="mark">MOTION RPG <em> / 경계의 숲</em></div><div class="version">통합 플레이 빌드 · 0.28</div></header>
 <nav class="menu" aria-label="게임 화면"><button data-view="village" class="active">마을</button><button data-view="run">야외 탐험</button><button data-view="indoor">실내 전투</button><button data-view="character">모험가</button></nav>
 <section class="page active" id="page-village">
  <div class="stage"><canvas id="village3d" aria-label="입체감 있는 숲과 마을 풍경, 장비를 착용한 모험가"></canvas><div class="village-hero-name">마을의 모험가<small>장비 시착 중</small></div><div class="stage-copy"><div class="eyebrow">THE BORDERWOOD</div><h1>경계의 숲<br>모험의 시작</h1><p>작은 숲마을을 거점으로 미지의 길을 탐험하고, 전투와 발견을 통해 성장한다.</p></div><div class="stage-bottom"><button class="cta" data-go="run">숲으로 탐험하기</button><button class="cta alt" data-go="indoor">실내 전투 시작</button><button class="cta alt" data-go="character">장비 · 성장</button></div></div>
@@ -69,14 +85,14 @@
   <div class="section-title"><h2>최근 사건</h2><span id="runRewards" class="tiny">전리품 0개</span></div><ol class="feed" id="runFeed"><li>아직 시작하지 않았어.</li></ol>
  </div>
 </section>
-<section class="page" id="page-indoor"><div class="mark">INDOOR ACTION RPG</div><h1 style="font-size:30px;margin:9px 0">숲의 전투</h1><p class="intro">실내에서도 <b>몸을 움직여 몬스터와 싸우는 1인칭 3D 게임</b>을 목표로 해. 아래는 기존 전투 시제품을 연결한 화면이야. 투척·검격 센서는 아직 별도로 연결해야 해.</p>
-<div class="indoor-stage"><iframe id="indoorFrame" title="기존 3D 실내 전투 프로토타입" loading="lazy"></iframe></div><div class="controls"><a class="cta" href="./indoor.html" target="_blank" rel="noopener">3D 전투 전체화면 열기</a><button id="restartIndoor" class="cta alt">전투 화면 다시 불러오기</button></div>
-<div class="msg">원래 실내 전투는 훈련장 미션이 아니라 같은 숲 세계에서의 실제 전투야. 몬스터 체력·보스·검격·투척·회피·장비 성장 요소는 앞으로 동일한 세계와 연결해 완성할 예정이야.</div></section>
+<section class="page" id="page-indoor"><div class="mark">INDOOR ACTION RPG</div><h1 style="font-size:30px;margin:9px 0">숲의 전투</h1><p class="intro"><b>1인칭 3D 전투</b>에 적의 반격·회피·기력·장비 공격력과 방어력을 연결했어. 신체 센서 입력은 앞으로 통합할 예정이야.</p>
+<div class="indoor-stage"><iframe id="indoorFrame" title="기존 3D 실내 전투 프로토타입" loading="lazy"></iframe></div><div class="controls"><a class="cta" href="./indoor.html?return=preview" target="_blank" rel="noopener">3D 전투 전체화면 열기</a><button id="restartIndoor" class="cta alt">전투 화면 다시 불러오기</button></div>
+<div class="msg">적이 공격을 예고하면 회피 버튼이나 Q/Shift로 대응해. 사냥을 마치고 마을로 돌아오면 결과를 정산하고 재료로 장비를 제작할 수 있어. 센서 동작 연동은 아직 개발 중이야.</div></section>
 <section class="page" id="page-character"><div class="mark">CHARACTER & PROGRESSION</div><h1 style="font-size:30px;margin:9px 0">모험가의 성장</h1><p class="intro">숲의 전투와 야외 러닝은 별개 게임이 아니라 같은 캐릭터를 성장시키는 다른 방법이야. 저장된 진행 상황을 확인해 봐.</p>
-<div class="section-title"><h2>내 캐릭터 · 장비 외형 미리보기</h2><span class="badge">외형 연동 시안</span></div>
+<div class="section-title"><h2>내 캐릭터 · 장비 외형 미리보기</h2><span class="badge">실전 장비 · 제작 가능</span></div>
 <div class="loadout-layout">
  <div class="avatar-display"><canvas id="avatarCanvas" aria-label="장비를 착용한 모험가 전신 일러스트"></canvas><div class="avatar-title"><span class="badge">ADVENTURER</span><span class="badge">장비 변경 즉시 반영</span></div><div class="avatar-caption">마을 화면에도 같은 장비 외형이 표시돼</div></div>
- <div class="loadout-panel"><h2>모험가 장비실</h2><p class="gear-intro">숲을 누비는 사냥꾼·모험가 복장이 기본이야. 무기·머리·갑옷·보조장비를 조합해서 캐릭터 외형을 바꿀 수 있어.</p>
+ <div class="loadout-panel"><h2>모험가 장비실</h2><p class="gear-intro">숲 모험가 장비를 제작해 장착하면 실제 전투에도 능력치가 반영돼. 아래 메뉴는 자유롭게 외형을 미리 보는 <b>시착 기능</b>이야.</p>
   <div class="gear-list">
    <label><span>무기</span><select id="gear-weapon"></select></label>
    <label><span>투구 · 머리장식</span><select id="gear-head"></select></label>
@@ -85,9 +101,19 @@
   </div>
   <div class="gear-presets"><button data-outfit="hunter">숲 사냥꾼</button><button data-outfit="beginner">여행 모험가</button><button data-outfit="scout">숲 정찰병</button><button data-outfit="knight">철갑 기사</button><button data-outfit="mage">숲의 마도사</button></div>
   <div class="gear-status" id="gearStatus" role="status" aria-live="polite">착용 장비를 불러오는 중이야.</div>
-  <p class="gear-disclaimer">현재는 <b>외형 시착 전용</b>이야. 장비를 실제로 얻거나 소유한 것으로 처리되지 않고, 전투 능력치와 게임 보상에도 영향을 주지 않아. 선택한 외형은 이 브라우저에만 별도로 저장돼.</p>
+  <p class="gear-disclaimer">시착은 보유 장비를 바꾸지 않아. 아래에서 골드와 재료를 사용해 제작하고 <b>실제 장착</b>해야 전투 능력치가 달라져.</p>
  </div>
 </div>
+<section id="craftBench" aria-label="장비 제작과 전리품">
+ <div class="flex"><h2 style="font-size:21px;margin:0">숲마을 대장간 · 장비 제작</h2><span class="badge">전투 보상으로 성장</span></div>
+ <p class="gear-intro">실내 3D 사냥이나 야외 GPS 원정에서 골드와 제작 재료를 획득해 장비를 만들 수 있어. 고급 장비는 레벨과 보스 격파가 필요해.</p>
+ <div class="combat-info" id="combatStats"></div>
+ <div class="material-grid" id="craftMaterials"></div>
+ <div id="craftStatus" role="status" aria-live="polite">제작 재료를 확인하는 중...</div>
+ <div class="controls"><button id="claimCombat" class="primary">전투 결과 정산</button><button id="startCombat" class="cta alt">3D 몬스터 사냥</button></div>
+ <div class="section-title"><h2 style="font-size:17px">제작 · 장착 목록</h2><span class="tiny">필요 재료와 레벨을 확인해</span></div>
+ <div class="craft-list" id="craftList"></div>
+</section>
 <div class="grid"><div class="card"><div class="stat" id="cLevel">1<small>레벨</small></div></div><div class="card"><div class="stat" id="cXp">0 XP<small>경험치</small></div></div><div class="card"><div class="stat" id="cGold">0 G<small>골드</small></div></div></div><div class="section-title"><h2>탐험 가방</h2></div><div class="grid"><div class="card"><div class="stat" id="cTorch">0<small>횃불</small></div></div><div class="card"><div class="stat" id="cMap">0<small>지도 조각</small></div></div><div class="card"><div class="stat" id="cBandage">0<small>붕대</small></div></div></div>
 <div class="section-title"><h2>앞으로 연결할 성장 요소</h2></div><div class="slots"><div class="slot"><b>무기와 장비 제작</b><p>희귀한 재료, 검·활·마법 도구, 상황별 장비 선택. 반복 횟수보다 전투 전략과 숙련도에 의미가 있어야 해.</p></div><div class="slot"><b>다양한 몬스터와 돌발 이벤트</b><p>사건을 조합해 같은 숲을 반복해도 새로운 경험을 제공하고, 더 어려운 적과 도전 목표를 열어.</p></div></div>
 <div class="msg">원정 시뮬레이션의 보상은 실제 캐릭터에 반영되지 않아. 실전 모드의 장기 보상과 악용 방지는 추후 검증이 필요해.</div></section>
@@ -96,13 +122,14 @@
 <script type="module">
 import {createAdventure,startAdventure,advanceAdventure,endAdventure,summarizeAdventure,settleAdventure} from "./src/expedition.mjs";
 import {GEAR,DEFAULT_LOADOUT,SAMPLE_SETS,sanitizeLoadout,describeLoadout,drawAvatar} from "./src/avatar.mjs";
-import {QUESTS,REGIONS} from "./src/engine.mjs";
+import {QUESTS,REGIONS,newGame} from "./src/engine.mjs";
+import {MATERIALS,RECIPES,normalizeRpgGear,gearRequirement,craftGear,equipGear,combatStats,claimIndoorBattle,addExpeditionMaterials} from "./src/gear-game.mjs";
 const $=id=>document.getElementById(id);
 const pages=["village","run","indoor","character"];
-function go(page){if(!pages.includes(page))return;pages.forEach(x=>$("page-"+x).classList.toggle("active",x===page));document.querySelectorAll("[data-view]").forEach(b=>b.classList.toggle("active",b.dataset.view===page));if(page==="indoor"&&!$("indoorFrame").src)$("indoorFrame").src="./indoor.html";if(page==="village"){drawVillage();townTalk("guild");}if(page==="character"){drawEquipment();}if(page==="character"||page==="village")syncCharacter();window.scrollTo({top:0,behavior:"smooth"});}
+function go(page){if(!pages.includes(page))return;pages.forEach(x=>$("page-"+x).classList.toggle("active",x===page));document.querySelectorAll("[data-view]").forEach(b=>b.classList.toggle("active",b.dataset.view===page));if(page==="indoor"&&!$("indoorFrame").src)$("indoorFrame").src="./indoor.html?return=preview";if(page==="village"){drawVillage();townTalk("guild");}if(page==="character"){drawEquipment();}if(page==="character"||page==="village")syncCharacter();window.scrollTo({top:0,behavior:"smooth"});}
 document.querySelectorAll("[data-view]").forEach(b=>b.onclick=()=>go(b.dataset.view));
 document.querySelectorAll("[data-go]").forEach(b=>b.onclick=()=>go(b.dataset.go));
-$("restartIndoor").onclick=()=>$("indoorFrame").src="./indoor.html?reload="+Date.now();
+$("restartIndoor").onclick=()=>$("indoorFrame").src="./indoor.html?return=preview&reload="+Date.now();
 function townTalk(type){
  const s=sharedCharacter();
  const r=typeof s.region==="string"&&QUESTS[s.region]?s.region:"forest";
