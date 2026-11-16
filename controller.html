@@ -32,7 +32,7 @@
 </main>
 <script type="module">
 import {createGestureDetector,motionSample,dominantAxis} from "./src/motion-core.mjs";
-import {createWirelessController,cleanRoom} from "./src/peer-bridge.mjs";
+import {createWirelessController,cleanRoom} from "./src/peer-bridge.mjs?v=0.31";
 const $=id=>document.getElementById(id);
 let active=false,count=0,mode="throw",sensitivity=3,calibrating=false,calibration=[],sampleTime=0,seq=0,received=0,sensorEvents=0,sensorStartedAt=0;
 try{sensitivity=Math.max(1,Math.min(5,Number(localStorage.getItem("motion-rpg-s21-sensitivity")||3)));}catch{}
