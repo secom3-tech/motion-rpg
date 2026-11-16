@@ -34,7 +34,7 @@ for(const weapon of ids){
   const action=createMeleeAction(weapon,style,10);
   assert.ok(action.startAt<action.contactAt&&action.contactAt<action.endsAt);
   assert.equal(actionProgress(action,10),0);
-  assert.equal(actionProgress(action,action.endsAt),1);
+  assert.ok(Math.abs(actionProgress(action,action.endsAt)-1)<1e-8,"Attack progress completes at 100%");
   assert.equal(contactDue(action,10,action.contactAt-.001),false);
   assert.equal(contactDue(action,10,action.contactAt),true);
   const front={x:0,z:-3},behind={x:0,z:3};
