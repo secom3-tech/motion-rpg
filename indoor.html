@@ -177,6 +177,7 @@ function spawnEnemy(){enemy.kind=kills%5;enemy.max=100+Math.floor(kills*23)+(ene
 let ctx=null;function beep(freq,time,type='sine',vol=.065){try{if(!ctx)ctx=new(window.AudioContext||window.webkitAudioContext)();const o=ctx.createOscillator(),g=ctx.createGain();o.type=type;o.frequency.setValueAtTime(freq,ctx.currentTime);o.frequency.exponentialRampToValueAtTime(Math.max(70,freq*.55),ctx.currentTime+time);g.gain.setValueAtTime(.0001,ctx.currentTime);g.gain.exponentialRampToValueAtTime(vol,ctx.currentTime+.02);g.gain.exponentialRampToValueAtTime(.0001,ctx.currentTime+time);o.connect(g);g.connect(ctx.destination);o.start();o.stop(ctx.currentTime+time+.02)}catch(e){}}
 function resize(){const n=Math.min(window.devicePixelRatio||1,1.7);if(W!==innerWidth||H!==innerHeight||dpr!==n){W=innerWidth;H=innerHeight;dpr=n;cvs.width=Math.round(W*dpr);cvs.height=Math.round(H*dpr);gl.viewport(0,0,cvs.width,cvs.height)}}
 function updateEnemy(dt){
+ if(worldMode)return;
  if(enemy.dead){
   enemy.respawn-=dt;
   if(enemy.respawn<=0)spawnEnemy();
