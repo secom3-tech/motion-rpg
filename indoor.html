@@ -62,12 +62,24 @@
 #retryWrap strong{font-size:18px;color:#e8f4db;display:block;margin-bottom:6px}
 #retryWrap p{font-size:12px;color:#b6d3c3;line-height:1.7}
 #retryCombat{border:1px solid #bdf1ad;border-radius:12px;background:#b8e9a9;color:#183122;padding:12px 20px;font-size:15px;font-weight:900}
+
+#attackBanner{position:fixed;top:20%;left:50%;transform:translateX(-50%);width:min(270px,58vw);z-index:15;pointer-events:none;text-align:center;padding:9px 12px 11px;border-radius:15px;border:2px solid #fca56a;background:linear-gradient(135deg,#542a24d9,#3d1f24ee);box-shadow:0 8px 28px #4a10118c}
+#attackBanner[hidden]{display:none}
+#attackBanner b{display:block;font-size:clamp(13px,3.2vw,19px);font-weight:950;letter-spacing:.03em;color:#fff8e0;text-shadow:0 2px 4px #0009}
+#attackBanner small{display:block;margin-top:6px;font-size:11px;color:#ffddd0;font-weight:850}
+#attackBanner.slam{border-color:#f8c773;background:linear-gradient(135deg,#51382bc9,#402326ed)}
+#attackBanner.sweep{border-color:#fd6c73;background:linear-gradient(135deg,#572b36d9,#391c2fe8)}
+.attackMeter{height:5px;border-radius:99px;background:#150f15a8;overflow:hidden;margin-top:7px}
+.attackMeter i{display:block;width:100%;height:100%;background:linear-gradient(90deg,#ffa65c,#ffe4a3);transition:width .08s linear}
+#attackBanner.sweep .attackMeter i{background:linear-gradient(90deg,#e95272,#ffd5b0)}
+@media(max-width:560px){#attackBanner{top:23%;width:min(260px,62vw);padding:7px 9px}#attackBanner b{font-size:13px}}
 </style></head><body>
 <div id="sky"></div><canvas id="game"></canvas><div id="vignette"></div><div id="bottomShade"></div><div id="screenFx"></div><div id="slashFx"></div>
 <div class="ui" id="brand"><div id="sigil">✦</div><div><h1>Motion RPG</h1><p>INDOOR COMBAT · ALPHA</p></div></div>
 <div class="ui" id="hudR"><button id="motionOpen" title="S21 무선 연결과 폴드6 카메라 인식 설정">모션 설정</button><button id="campReturn">마을 복귀</button><div id="roundtag">⚔️ WAVE <span id="stage">01</span></div><div id="scorecard" class="glass"><small>획득한 정수</small><strong>✦ <span id="score">000</span></strong></div></div>
 <div class="ui" id="location"><span>FOREST RIFT</span>경계의 숲 · 균열 지대<br><small id="status" style="opacity:.85">마력체가 앞을 가로막는다</small></div>
 <div class="ui" id="enemyHud"><div id="enemyName"><span class="label" id="monName">🌿 이끼 슬라임</span><span class="dist" id="distance">12 m</span></div><div id="barwrap"><div id="enemyHP"></div></div><div id="attackCue" role="status" aria-live="polite">적의 움직임을 살펴보세요</div></div>
+<div id="attackBanner" hidden aria-live="off"><b id="attackBannerText">공격 준비</b><div class="attackMeter"><i id="attackBannerMeter"></i></div><small id="attackBannerHint"></small></div>
 <div class="ui glass" id="playerHud"><b id="gearHud">숲 사냥꾼</b><div id="heroHpText">기력 100 / 100</div><div id="heroHpWrap"><div id="heroHp"></div></div><small id="dodgeInfo">적의 경고에 맞춰 회피</small></div><div id="cross"><div class="ring"></div></div><div class="ui" id="instruction">화면을 드래그하면 시야가 움직입니다</div><div id="toast"></div><div id="hitFx" aria-hidden="true"></div><div id="damageNumber" aria-hidden="true"></div>
 <div class="ui" id="controls"><div id="moveArea"><div id="joy"><div id="stick">✦</div></div><span>이동 · 키보드 WASD</span></div><div id="actions"><button class="action" id="dodge" aria-label="회피"><span class="icon">↪</span><b>회피</b></button><button class="action" id="sword" aria-label="근접 휘두르기"><span class="icon">⚔️</span><b>근접 휘두르기</b></button><button class="action" id="fire" aria-label="마법 투척"><span class="icon">✨</span><b>마법 투척</b></button></div></div><div id="footerNote">중앙 조준점으로 적을 맞혀라 · 투척은 원거리 / 근접은 가까이에서</div>
 <div id="intro"><div id="introCard"><div class="emblem">✦ 🧙 ✦</div><h2>숲의 균열</h2><p>경계의 숲에서 새어 나온 마력체를 조준하고<br><b>마법 투척</b> 또는 <b>근접 휘두르기</b>로 격파해 봐.<br>몬스터의 반격 경고에 맞춰 회피하면서 싸우자. 장착한 장비의 공격력과 방어력이 반영된다.</p><button id="begin">균열에 진입하기</button><small>드래그: 시야 이동 · 왼쪽 원: 이동 · 오른쪽: 공격<br>오른쪽 상단 [모션 설정]에서 S21 무선 무기와 전면 카메라 회피를 연결할 수 있어</small></div></div>
@@ -98,13 +110,14 @@
 <script type="module">
 import {combatStats,normalizeRpgGear} from "./src/gear-game.mjs";
 import {GEAR} from "./src/avatar.mjs";
+import {attackArea,attackWindup,attackVisualState,warningFootprint} from "./src/attack-visual.mjs";
 import {createWirelessHost} from "./src/peer-bridge.mjs?v=0.31";
 import {validMotionPacket} from "./src/motion-core.mjs";
 import {createPoseCamera} from "./src/pose-camera.mjs?v=0.31";
 import {ATTACKS,angleToTarget,turnToTarget,strikeInfo,spawnAroundPlayer,distance2d,dodgeMatches} from "./src/combat-spatial.mjs";
 (()=>{'use strict';
 const cvs=document.getElementById('game'),gl=cvs.getContext('webgl',{antialias:true,alpha:true,premultipliedAlpha:false,powerPreference:'high-performance'})||cvs.getContext('experimental-webgl');
-const el=id=>document.getElementById(id),RESULT_KEY='motion-rpg-indoor-result-v1',worldMode=new URLSearchParams(location.search).get('mode')==='world';if(worldMode){document.title='Motion RPG · 경계의 숲';el('brand').innerHTML='<div id="sigil">✦</div><div><h1>경계의 숲</h1><p>MOTION RPG · WORLD</p></div>';el('enemyHud').style.display='none';el('location').innerHTML='<span>VILLAGE GATE</span>숲 입구 마을<br><small style="opacity:.85">오늘의 원정을 선택하세요</small>';el('introCard').innerHTML='<div class="emblem">✦ 🌲 ✦</div><h2>경계의 숲</h2><p>마을을 거점으로 숲을 달리고,<br>발견한 마력체를 사냥하며 성장한다.</p><div id="worldMenu"><a href="./index.html?view=outdoor">🌲 숲 탐험 시작</a><a href="./index.html?view=indoor" class="secondary">🏃 러닝머신 원정</a><a href="./index.html" class="secondary">🏘️ 마을 정리</a></div><small>사냥 전투는 숲에서 마력체를 발견했을 때 시작된다</small>'}let active=false,last=0,clock=0,yaw=0,pitch=-0.032,weaponKick=0,impactTint=0,score=0,kills=0,projectiles=[],sparks=[],flares=[],enemy={x:.1,z:-7.2,hp:100,max:100,bob:0,dead:worldMode,respawn:0,name:'이끼 슬라임',speed:0.25,kind:0,attackTimer:2.5,windup:0,facing:0};
+const el=id=>document.getElementById(id),RESULT_KEY='motion-rpg-indoor-result-v1',worldMode=new URLSearchParams(location.search).get('mode')==='world';if(worldMode){document.title='Motion RPG · 경계의 숲';el('brand').innerHTML='<div id="sigil">✦</div><div><h1>경계의 숲</h1><p>MOTION RPG · WORLD</p></div>';el('enemyHud').style.display='none';el('location').innerHTML='<span>VILLAGE GATE</span>숲 입구 마을<br><small style="opacity:.85">오늘의 원정을 선택하세요</small>';el('introCard').innerHTML='<div class="emblem">✦ 🌲 ✦</div><h2>경계의 숲</h2><p>마을을 거점으로 숲을 달리고,<br>발견한 마력체를 사냥하며 성장한다.</p><div id="worldMenu"><a href="./index.html?view=outdoor">🌲 숲 탐험 시작</a><a href="./index.html?view=indoor" class="secondary">🏃 러닝머신 원정</a><a href="./index.html" class="secondary">🏘️ 마을 정리</a></div><small>사냥 전투는 숲에서 마력체를 발견했을 때 시작된다</small>'}let active=false,last=0,clock=0,yaw=0,pitch=-0.032,weaponKick=0,impactTint=0,score=0,kills=0,projectiles=[],sparks=[],flares=[],enemy={x:.1,z:-7.2,hp:100,max:100,bob:0,dead:worldMode,respawn:0,name:'이끼 슬라임',speed:0.25,kind:0,attackTimer:2.5,windup:0,windupTotal:0,impactUntil:0,impactDuration:.5,attackStyle:"slam",facing:0};
 const shared=(()=>{try{return JSON.parse(localStorage.getItem("motion-rpg-save-v1")||"null")||{}}catch{return{}}})();
 const equipped=normalizeRpgGear(shared).equipped,stats=combatStats(shared);
 const equippedWeapon=GEAR.weapon.find(item=>item.id===equipped.weapon)?.name||"기본 장비";
@@ -143,7 +156,7 @@ function applyEnemyHit(){
  el("status").textContent="적의 공격에 맞았다! 위치를 바꾸거나 회피하세요.";
  toast("피격 -"+taken);beep(105,.23,"sawtooth",.11);
  if(heroHp<=0){
-  active=false;bankProgress();el("retryWrap").hidden=false;el("attackCue").classList.remove("warning");
+  active=false;bankProgress();el("attackBanner").hidden=true;el("retryWrap").hidden=false;el("attackCue").classList.remove("warning");
   el("status").textContent="기력이 소진됐다. 마을로 돌아가 정비하세요.";
   toast("전투 패배 · 마을로 돌아가세요");
  }
@@ -243,8 +256,8 @@ function forward(){return [Math.sin(yaw)*Math.cos(pitch),Math.sin(pitch),-Math.c
 function magic(){if(!active||!el("motionPanel").hidden||clock-lastFire<.60+stats.attackDelay)return false;lastFire=clock;weaponKick=1.0;let f=forward(),on=radiusAiming(),d=Math.hypot(enemy.x-camera.x,enemy.z-camera.z),targ=on?d:14;const px=camera.x+Math.cos(yaw)*.47,py=camera.y-.34,pz=camera.z+Math.sin(yaw)*.47;projectiles.push({x:px,y:py,z:pz,vx:f[0]*22,vy:f[1]*22,vz:f[2]*22,life:.8,age:0,on,damage:Math.round((26+Math.floor(rand()*15))*stats.magic),targetDist:targ});el('screenFx').classList.remove('flash');void el('screenFx').offsetWidth;el('screenFx').classList.add('flash');if(on)el('instruction').style.opacity='0';beep(620,.12,'sine',.075);return true;}
 function swordHit(){if(!active||!el("motionPanel").hidden||clock-lastFire<.48+stats.attackDelay)return false;lastFire=clock;weaponKick=.6;el('slashFx').classList.remove('go');void el('slashFx').offsetWidth;el('slashFx').classList.add('go');let d=Math.hypot(enemy.x-camera.x,enemy.z-camera.z);if(d<5.0&&radiusAiming()){damage(Math.round((34+Math.floor(rand()*15))*stats.slash));}else{toast('검격 사거리 밖! 가까이 이동하세요');}beep(210,.14,'triangle',.11);return true;}
 function bankProgress(){try{localStorage.setItem(RESULT_KEY,JSON.stringify({kills,score,sessionId,updatedAt:Date.now()}))}catch(e){}}
-function damage(n){if(enemy.dead)return;enemy.hp=Math.max(0,enemy.hp-n);el('enemyHP').style.width=(enemy.hp/enemy.max*100)+'%';let x=enemy.x,y=1.4,z=enemy.z;for(let i=0;i<16;i++){let p=(rand()-.5)*6,t=rand()*6.28,s=.65+rand()*2.6;sparks.push({x,y,z,vx:Math.cos(t)*s,vy:rand()*3.7,vz:Math.sin(t)*s,r:.04+rand()*.07,life:.4+rand()*.5,t:0,col:[.67+rand()*.23,1,.49+rand()*.35]})}toast('✦ '+n+' 데미지');beep(165,.12,'triangle',.11);if(enemy.hp<=0){enemy.dead=true;enemy.respawn=1.6;score+=80+enemy.kind*20;kills++;heroHp=Math.min(stats.maxHp,heroHp+5);showHero();bankProgress();el('score').textContent=String(score).padStart(3,'0');el('enemyHud').style.opacity='0';el('stage').textContent=String(kills+1).padStart(2,'0');el('status').textContent='마력체 격파! 마을로 돌아가면 보상을 수령한다';setTimeout(()=>toast('마력체 격파 · 마을 보상 저장!'),350);beep(830,.25,'sine',.1)}}
-function spawnEnemy(){enemy.kind=kills%5;enemy.max=100+Math.floor(kills*23)+(enemy.kind===4?110:enemy.kind===3?26:0);enemy.hp=enemy.max;const playerHeading=Math.atan2(Math.sin(yaw),-Math.cos(yaw));const position=spawnAroundPlayer(camera,playerHeading,rand);enemy.x=position.x;enemy.z=position.z;enemy.facing=angleToTarget(enemy,camera);enemy.speed=(enemy.kind===3?2.35:enemy.kind===4?1.15:1.24)+Math.min(kills*.04,.5);enemy.attackTimer=2.5;enemy.windup=0;enemy.attackStyle="slam";enemy.dead=false;enemy.name=['이끼 슬라임','달빛 슬라임','불꽃 슬라임','그림자 늑대','유적 골렘'][enemy.kind];el('monName').textContent=['🌿 ','🌙 ','🔥 ','🐺 ','🪨 '][enemy.kind]+enemy.name;el('enemyHP').style.width='100%';el('enemyHud').style.opacity='1';el('status').textContent='수풀에서 '+enemy.name+'이(가) 등장했다. 주변을 살펴보세요.';el('attackCue').className='';el('attackCue').textContent='적의 방향을 살펴보세요';toast(enemy.name+' 출현!')}
+function damage(n){if(enemy.dead)return;enemy.hp=Math.max(0,enemy.hp-n);el('enemyHP').style.width=(enemy.hp/enemy.max*100)+'%';let x=enemy.x,y=1.4,z=enemy.z;for(let i=0;i<16;i++){let p=(rand()-.5)*6,t=rand()*6.28,s=.65+rand()*2.6;sparks.push({x,y,z,vx:Math.cos(t)*s,vy:rand()*3.7,vz:Math.sin(t)*s,r:.04+rand()*.07,life:.4+rand()*.5,t:0,col:[.67+rand()*.23,1,.49+rand()*.35]})}toast('✦ '+n+' 데미지');beep(165,.12,'triangle',.11);if(enemy.hp<=0){enemy.dead=true;enemy.windup=0;enemy.impactUntil=0;el('attackBanner').hidden=true;enemy.respawn=1.6;score+=80+enemy.kind*20;kills++;heroHp=Math.min(stats.maxHp,heroHp+5);showHero();bankProgress();el('score').textContent=String(score).padStart(3,'0');el('enemyHud').style.opacity='0';el('stage').textContent=String(kills+1).padStart(2,'0');el('status').textContent='마력체 격파! 마을로 돌아가면 보상을 수령한다';setTimeout(()=>toast('마력체 격파 · 마을 보상 저장!'),350);beep(830,.25,'sine',.1)}}
+function spawnEnemy(){enemy.kind=kills%5;enemy.max=100+Math.floor(kills*23)+(enemy.kind===4?110:enemy.kind===3?26:0);enemy.hp=enemy.max;const playerHeading=Math.atan2(Math.sin(yaw),-Math.cos(yaw));const position=spawnAroundPlayer(camera,playerHeading,rand);enemy.x=position.x;enemy.z=position.z;enemy.facing=angleToTarget(enemy,camera);enemy.speed=(enemy.kind===3?2.35:enemy.kind===4?1.15:1.24)+Math.min(kills*.04,.5);enemy.attackTimer=2.5;enemy.windup=0;enemy.windupTotal=0;enemy.impactUntil=0;enemy.impactDuration=.54;enemy.attackStyle="slam";enemy.dead=false;enemy.name=['이끼 슬라임','달빛 슬라임','불꽃 슬라임','그림자 늑대','유적 골렘'][enemy.kind];el('monName').textContent=['🌿 ','🌙 ','🔥 ','🐺 ','🪨 '][enemy.kind]+enemy.name;el('enemyHP').style.width='100%';el('enemyHud').style.opacity='1';el('status').textContent='수풀에서 '+enemy.name+'이(가) 등장했다. 주변을 살펴보세요.';el('attackCue').className='';el('attackCue').textContent='적의 방향을 살펴보세요';el('attackBanner').hidden=true;toast(enemy.name+' 출현!')}
 let ctx=null;function beep(freq,time,type='sine',vol=.065){try{if(!ctx)ctx=new(window.AudioContext||window.webkitAudioContext)();const o=ctx.createOscillator(),g=ctx.createGain();o.type=type;o.frequency.setValueAtTime(freq,ctx.currentTime);o.frequency.exponentialRampToValueAtTime(Math.max(70,freq*.55),ctx.currentTime+time);g.gain.setValueAtTime(.0001,ctx.currentTime);g.gain.exponentialRampToValueAtTime(vol,ctx.currentTime+.02);g.gain.exponentialRampToValueAtTime(.0001,ctx.currentTime+time);o.connect(g);g.connect(ctx.destination);o.start();o.stop(ctx.currentTime+time+.02)}catch(e){}}
 function resize(){const n=Math.min(window.devicePixelRatio||1,1.7);if(W!==innerWidth||H!==innerHeight||dpr!==n){W=innerWidth;H=innerHeight;dpr=n;cvs.width=Math.round(W*dpr);cvs.height=Math.round(H*dpr);gl.viewport(0,0,cvs.width,cvs.height)}}
 function updateEnemy(dt){
@@ -256,7 +269,7 @@ function updateEnemy(dt){
  }
  const attack=ATTACKS[enemy.kind]||ATTACKS[0];
  const previousDist=distance2d(enemy,camera);
- if(enemy.windup<=0){
+ if(enemy.windup<=0&&clock>=enemy.impactUntil){
   // A monster may turn toward the hero, but does not swivel instantly.
   // During the attack telegraph its heading freezes, leaving a real flank.
   enemy.facing=turnToTarget(enemy.facing,angleToTarget(enemy,camera),attack.turnSpeed*dt);
@@ -266,8 +279,17 @@ function updateEnemy(dt){
   const cue=el("attackCue");
   cue.className="warning";
   cue.textContent="⚠ "+enemy.name+" · "+(enemy.attackStyle==="sweep"?"가로 공격 → 앉기":"내려찍기 → 좌우 회피")+" · "+Math.max(0,enemy.windup).toFixed(1)+"초";
+  const banner=el("attackBanner");
+  banner.hidden=false;banner.className=enemy.attackStyle;
+  el("attackBannerText").textContent=enemy.attackStyle==="sweep"?"가로 휘두르기":"내려찍기";
+  el("attackBannerHint").textContent=enemy.attackStyle==="sweep"?"앉기 · 사거리 이탈":"좌우 회피 · 적 뒤로 이동";
+  el("attackBannerMeter").style.width=Math.max(0,100*enemy.windup/enemy.windupTotal).toFixed(0)+"%";
   if(enemy.windup<=0){
-   const outcome=strikeInfo(enemy,camera,attack.range,attack.arc);
+   enemy.impactDuration=.54;enemy.impactUntil=clock+enemy.impactDuration;
+   el("attackBanner").hidden=true;
+   showEnemyStrike();
+   const area=attackArea(attack,enemy.attackStyle);
+   const outcome=strikeInfo(enemy,camera,area.range,area.arc);
    if(outcome.canHit&&!evadeMatchesAttack()){
     applyEnemyHit();
     if(active){el("status").textContent="공격을 맞았다. 적의 방향과 타이밍을 살펴보세요.";}
@@ -279,6 +301,8 @@ function updateEnemy(dt){
    enemy.attackTimer=2.1+Math.max(0,1-kills*.025);
    cue.className="missed";cue.textContent="적의 공격 종료 · 빈틈이 생겼다";
   }
+ }else if(clock<enemy.impactUntil){
+  // Hold the locked attack facing and pose through its visible follow-through.
  }else{
   const chaseStop=enemy.kind===4?3.45:enemy.kind===3?2.7:2.6;
   if(previousDist>chaseStop){
@@ -294,8 +318,9 @@ function updateEnemy(dt){
   if(strike.canHit){
    enemy.attackTimer-=dt;
    if(enemy.attackTimer<=0){
-    enemy.windup=Math.max(1.12,attack.windup);
     enemy.attackStyle=rand()<.5?"sweep":"slam";
+    enemy.windupTotal=attackWindup(attack,enemy.attackStyle,enemy.kind);
+    enemy.windup=enemy.windupTotal;
     el("attackCue").className="warning";
     el("attackCue").textContent="⚠ "+enemy.name+" · "+(enemy.attackStyle==="sweep"?"가로 공격! 앉기":"내려찍기! 좌우 회피");
     el("status").textContent=enemy.attackStyle==="sweep"?"가로 베기를 준비한다! 몸을 낮추거나 공격 범위에서 벗어나세요.":"정면 찍기 공격! 좌우로 피하거나 적 뒤로 이동하세요.";
