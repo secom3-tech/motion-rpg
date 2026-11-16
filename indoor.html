@@ -73,14 +73,21 @@
 .attackMeter i{display:block;width:100%;height:100%;background:linear-gradient(90deg,#ffa65c,#ffe4a3);transition:width .08s linear}
 #attackBanner.sweep .attackMeter i{background:linear-gradient(90deg,#e95272,#ffd5b0)}
 @media(max-width:560px){#attackBanner{top:23%;width:min(260px,62vw);padding:7px 9px}#attackBanner b{font-size:13px}}
+
+#weaponCanvas{position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:4;display:block}
+#weaponStatus{position:fixed;top:calc(48% + 49px);left:50%;transform:translateX(-50%);z-index:5;font-size:11px;font-weight:800;line-height:1.2;white-space:nowrap;pointer-events:none;color:#d8f5e1;text-shadow:0 2px 6px #102c2d}
+#attackFeedback{position:fixed;left:50%;top:36%;transform:translateX(-50%);z-index:7;pointer-events:none;font-weight:900;color:#ffd9b5;text-shadow:0 2px 10px #392c2c;font-size:16px;opacity:0}
+#attackFeedback.go{animation:weaponFeedback .6s ease-out}
+@keyframes weaponFeedback{0%{opacity:1;transform:translate(-50%,8px)}100%{opacity:0;transform:translate(-50%,-20px)}}
+@media(max-width:580px){#weaponStatus{top:calc(48% + 43px);font-size:10px}#attackFeedback{font-size:13px}}
 </style></head><body>
-<div id="sky"></div><canvas id="game"></canvas><div id="vignette"></div><div id="bottomShade"></div><div id="screenFx"></div><div id="slashFx"></div>
+<div id="sky"></div><canvas id="game"></canvas><div id="vignette"></div><div id="bottomShade"></div><div id="screenFx"></div><canvas id="weaponCanvas" aria-hidden="true"></canvas>
 <div class="ui" id="brand"><div id="sigil">✦</div><div><h1>Motion RPG</h1><p>INDOOR COMBAT · ALPHA</p></div></div>
 <div class="ui" id="hudR"><button id="motionOpen" title="S21 무선 연결과 폴드6 카메라 인식 설정">모션 설정</button><button id="campReturn">마을 복귀</button><div id="roundtag">⚔️ WAVE <span id="stage">01</span></div><div id="scorecard" class="glass"><small>획득한 정수</small><strong>✦ <span id="score">000</span></strong></div></div>
 <div class="ui" id="location"><span>FOREST RIFT</span>경계의 숲 · 균열 지대<br><small id="status" style="opacity:.85">마력체가 앞을 가로막는다</small></div>
 <div class="ui" id="enemyHud"><div id="enemyName"><span class="label" id="monName">🌿 이끼 슬라임</span><span class="dist" id="distance">12 m</span></div><div id="barwrap"><div id="enemyHP"></div></div><div id="attackCue" role="status" aria-live="polite">적의 움직임을 살펴보세요</div></div>
 <div id="attackBanner" hidden aria-live="off"><b id="attackBannerText">공격 준비</b><div class="attackMeter"><i id="attackBannerMeter"></i></div><small id="attackBannerHint"></small></div>
-<div class="ui glass" id="playerHud"><b id="gearHud">숲 사냥꾼</b><div id="heroHpText">기력 100 / 100</div><div id="heroHpWrap"><div id="heroHp"></div></div><small id="dodgeInfo">적의 경고에 맞춰 회피</small></div><div id="cross"><div class="ring"></div></div><div class="ui" id="instruction">화면을 드래그하면 시야가 움직입니다</div><div id="toast"></div><div id="hitFx" aria-hidden="true"></div><div id="damageNumber" aria-hidden="true"></div>
+<div class="ui glass" id="playerHud"><b id="gearHud">숲 사냥꾼</b><div id="heroHpText">기력 100 / 100</div><div id="heroHpWrap"><div id="heroHp"></div></div><small id="dodgeInfo">적의 경고에 맞춰 회피</small></div><div id="cross"><div class="ring"></div></div><div class="ui" id="instruction">화면을 드래그하면 시야가 움직입니다</div><div id="weaponStatus">무기 준비 중</div><div id="attackFeedback"></div><div id="toast"></div><div id="hitFx" aria-hidden="true"></div><div id="damageNumber" aria-hidden="true"></div>
 <div class="ui" id="controls"><div id="moveArea"><div id="joy"><div id="stick">✦</div></div><span>이동 · 키보드 WASD</span></div><div id="actions"><button class="action" id="dodge" aria-label="회피"><span class="icon">↪</span><b>회피</b></button><button class="action" id="sword" aria-label="근접 휘두르기"><span class="icon">⚔️</span><b>근접 휘두르기</b></button><button class="action" id="fire" aria-label="마법 투척"><span class="icon">✨</span><b>마법 투척</b></button></div></div><div id="footerNote">중앙 조준점으로 적을 맞혀라 · 투척은 원거리 / 근접은 가까이에서</div>
 <div id="intro"><div id="introCard"><div class="emblem">✦ 🧙 ✦</div><h2>숲의 균열</h2><p>경계의 숲에서 새어 나온 마력체를 조준하고<br><b>마법 투척</b> 또는 <b>근접 휘두르기</b>로 격파해 봐.<br>몬스터의 반격 경고에 맞춰 회피하면서 싸우자. 장착한 장비의 공격력과 방어력이 반영된다.</p><button id="begin">균열에 진입하기</button><small>드래그: 시야 이동 · 왼쪽 원: 이동 · 오른쪽: 공격<br>오른쪽 상단 [모션 설정]에서 S21 무선 무기와 전면 카메라 회피를 연결할 수 있어</small></div></div>
 <div id="err"></div><div id="retryWrap" hidden><strong>기력이 소진됐어</strong><p>S21 연결은 유지돼. 바로 재도전하면 새 연결 코드를 입력할 필요 없어.</p><button id="retryCombat">기력 회복 · 다시 싸우기</button></div>
@@ -110,6 +117,8 @@
 <script type="module">
 import {combatStats,normalizeRpgGear} from "./src/gear-game.mjs";
 import {GEAR} from "./src/avatar.mjs";
+import {weaponProfile,normalizeMeleeStyle,createMeleeAction,actionProgress,meleeHitInfo,projectileProfile} from "./src/player-combat.mjs?v=0.33";
+import {drawFirstPersonWeapon} from "./src/weapon-view.mjs?v=0.33";
 import {attackArea,attackWindup,attackVisualState,warningFootprint} from "./src/attack-visual.mjs?v=0.32";
 import {createWirelessHost} from "./src/peer-bridge.mjs?v=0.31";
 import {validMotionPacket} from "./src/motion-core.mjs";
@@ -123,8 +132,23 @@ const equipped=normalizeRpgGear(shared).equipped,stats=combatStats(shared);
 const equippedWeapon=GEAR.weapon.find(item=>item.id===equipped.weapon)?.name||"기본 장비";
 const sessionId="arena-"+Date.now()+"-"+Math.random().toString(36).slice(2,11);
 let heroHp=stats.maxHp,dodgeUntil=0,dodgeCooldown=0,lastDodgeKind="button",dodgeVisualUntil=0;
+let meleeAction=null,rangedAction=null;
+const weaponCanvas=el("weaponCanvas"),weaponCtx=weaponCanvas.getContext("2d",{alpha:true});
 const camera={x:0,y:1.7,z:5.5};const stick={x:0,y:0};let W=innerWidth,H=innerHeight,dpr=1,prevToast=null,moveTouch=false,lastFire=-999;const keys={};
-el('gearHud').textContent=equippedWeapon+" · 장착 중";if(equipped.weapon==="bow"){el('fire').querySelector('b').textContent="사냥 화살";el('fire').querySelector('.icon').textContent="🏹";}else if(equipped.weapon==="staff"){el('fire').querySelector('b').textContent="정령 마법";}else if(equipped.weapon==="axe"){el('sword').querySelector('b').textContent="도끼 공격";el('sword').querySelector('.icon').textContent="🪓";}
+el('gearHud').textContent=equippedWeapon+" · 장착 중";
+const weaponNames={
+ sword:{melee:"검격",ranged:"검기",icon:"⚔️",projectile:"✨"},
+ greatsword:{melee:"장검 베기",ranged:"푸른 검기",icon:"🗡️",projectile:"❄️"},
+ axe:{melee:"도끼 내려찍기",ranged:"대지 충격",icon:"🪓",projectile:"🔥"},
+ bow:{melee:"활 밀치기",ranged:"사냥 화살",icon:"↣",projectile:"🏹"},
+ staff:{melee:"지팡이 찌르기",ranged:"정령 마법",icon:"🪄",projectile:"💠"}
+};
+const names=weaponNames[equipped.weapon]||weaponNames.sword;
+el("sword").querySelector("b").textContent=names.melee;
+el("sword").querySelector(".icon").textContent=names.icon;
+el("fire").querySelector("b").textContent=names.ranged;
+el("fire").querySelector(".icon").textContent=names.projectile;
+el("weaponStatus").textContent=equipped.weapon==="bow"?"활 사격 · 근접은 밀치기":"가로 베기 F · 내려찍기 E · 찌르기 R";
 function showHero(){el('heroHpText').textContent="기력 "+heroHp+" / "+stats.maxHp;el('heroHp').style.width=Math.max(0,heroHp/stats.maxHp*100)+"%";}
 showHero();
 function dodge(direction="button"){
