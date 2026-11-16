@@ -74,3 +74,13 @@ export function spawnAroundPlayer(player,heading,random=Math.random,bounds={minX
  const p=landmarks.find(p=>distance2d(player,p)>=10)||landmarks[landmarks.length-1];
  return {x:p.x,z:p.z,heading:angleToTarget(player,p),distance:distance2d(player,p),ambush:true};
 }
+
+/** Valid physical response for each telegraphed strike.
+ * Touch fallback remains universal while camera gestures have to match.
+ */
+export function dodgeMatches(attackStyle,direction){
+ if(direction==="button")return true;
+ if(attackStyle==="sweep")return direction==="duck";
+ if(attackStyle==="slam")return direction==="left"||direction==="right";
+ return false;
+}
