@@ -150,8 +150,8 @@ function townTalk(type){
 }
 document.querySelectorAll("[data-town]").forEach(b=>b.addEventListener("click",()=>townTalk(b.dataset.town)));
 $("townAction").onclick=()=>go("run");
-function sharedCharacter(){try{return JSON.parse(localStorage.getItem("motion-rpg-save-v1")||"null")||{}}catch{return{}}}
-function syncCharacter(){const s=sharedCharacter();$("homeLevel").innerHTML=(s.level||1)+"<small>레벨</small>";$("homeXp").innerHTML=(s.xp||0)+"<small>누적 경험치</small>";$("homeGold").innerHTML=(s.gold||0)+"<small>골드</small>";$("cLevel").innerHTML=(s.level||1)+"<small>레벨</small>";$("cXp").innerHTML=(s.xp||0)+" XP<small>경험치</small>";$("cGold").innerHTML=(s.gold||0)+" G<small>골드</small>";const bag=s.inventory||{};$("cTorch").innerHTML=(bag.torch||0)+"<small>횃불</small>";$("cMap").innerHTML=(bag.map||0)+"<small>지도 조각</small>";$("cBandage").innerHTML=(bag.bandage||0)+"<small>붕대</small>";}
+function sharedCharacter(){try{const s=JSON.parse(localStorage.getItem("motion-rpg-save-v1")||"null");return s&&typeof s==="object"&&!Array.isArray(s)?s:newGame();}catch{return newGame();}}
+function syncCharacter(){const s=sharedCharacter();$("homeLevel").innerHTML=(s.level||1)+"<small>레벨</small>";$("homeXp").innerHTML=(s.xp||0)+"<small>누적 경험치</small>";$("homeGold").innerHTML=(s.gold||0)+"<small>골드</small>";$("cLevel").innerHTML=(s.level||1)+"<small>레벨</small>";$("cXp").innerHTML=(s.xp||0)+" XP<small>경험치</small>";$("cGold").innerHTML=(s.gold||0)+" G<small>골드</small>";const bag=s.inventory||{};$("cTorch").innerHTML=(bag.torch||0)+"<small>횃불</small>";$("cMap").innerHTML=(bag.map||0)+"<small>지도 조각</small>";$("cBandage").innerHTML=(bag.bandage||0)+"<small>붕대</small>";renderCrafting();}
 // Temporary preview loadout, deliberately separate from the real RPG save.
 const EQUIPMENT_KEY="motion-rpg-preview-equipment-v1";
 function loadPreviewGear(){try{return sanitizeLoadout(JSON.parse(localStorage.getItem(EQUIPMENT_KEY)||"null"));}catch{return {...DEFAULT_LOADOUT};}}
@@ -173,6 +173,82 @@ function savePreviewGear(){
  updateGearStatus();drawVillage();
  if($("page-character").classList.contains("active"))drawEquipment();
 }
+
+const SAVE_KEY="motion-rpg-save-v1",INDOOR_KEY="motion-rpg-indoor-result-v1";
+function saveCharacter(s){localStorage.setItem(SAVE_KEY,JSON.stringify(s));}
+function updateEquippedVisual(s){
+ loadout=sanitizeLoadout(normalizeRpgGear(s).equipped);
+ for(const slot of Object.keys(gearSlots))$("gear-"+slot).value=loadout[slot];
+ savePreviewGear();
+}
+function gearLabel(slot,id){return GEAR[slot].find(e=>e.id===id)?.name||id;}
+function showCraftMessage(str){$("craftStatus").textContent=str;}
+function renderCrafting(){
+ const state=sharedCharacter(),gear=normalizeRpgGear(state),stats=combatStats(state);
+ $("craftMaterials").replaceChildren(...Object.entries(MATERIALS).map(([id,mat])=>{
+  const div=document.createElement("div");div.className="mat";const b=document.createElement("b");b.textContent=gear.materials[id];div.append(b,document.createTextNode(mat.name));return div;
+ }));
+ const info=[
+  "근접 공격 ×"+stats.slash.toFixed(2),
+  "원거리 공격 ×"+stats.magic.toFixed(2),
+  "기력 "+stats.maxHp,
+  "피해 감소 "+Math.round(stats.defence*100)+"%"
+ ];
+ $("combatStats").replaceChildren(...info.map(t=>{const x=document.createElement("span");x.textContent=t;return x;}));
+ const all=Object.entries(GEAR).flatMap(([slot,items])=>items.map(item=>({...item,slot})));
+ $("craftList").replaceChildren(...all.map(item=>{
+  const owned=gear.owned.includes(item.id);
+  const equipped=gear.equipped[item.slot]===item.id;
+  const recipe=RECIPES.find(r=>r.id===item.id);
+  const test=recipe?gearRequirement(state,item.id):{ok:false,reason:"시작 장비"};
+  const row=document.createElement("div");row.className="craft-row";
+  const name=document.createElement("strong");name.textContent=item.name;
+  const desc=document.createElement("p");desc.textContent=recipe?.description||"기본 지급 장비";
+  const req=document.createElement("small");req.textContent=recipe?
+   "골드 "+recipe.price+" · "+Object.entries(recipe.materials).filter(([,n])=>n>0).map(([id,n])=>MATERIALS[id].name+" "+n).join(" / ")+(recipe.minLevel>1?" · Lv."+recipe.minLevel:"")+(recipe.boss?" · 보스 격파":""):
+   "초기 장비 · 지급 완료";
+  const button=document.createElement("button");
+  button.textContent=equipped?"장착 중":owned?"장착":"제작";
+  button.disabled=equipped||(!owned&&!test.ok);
+  button.setAttribute("aria-label",item.name+" "+button.textContent);
+  const hint=document.createElement("small");hint.textContent=owned?(equipped?"현재 실전 장비":"보유 중"):test.reason;
+  button.onclick=()=>{
+   try{
+    const current=sharedCharacter();
+    const updated=owned?equipGear(current,item.id):craftGear(current,item.id);
+    saveCharacter(updated);updateEquippedVisual(updated);syncCharacter();
+    showCraftMessage((owned?"장착 완료: ":"제작 완료: ")+item.name+". 실내 전투에 반영돼.");
+   }catch(error){showCraftMessage("진행할 수 없어: "+error.message);}
+  };
+  row.append(name,desc,req,button,hint);return row;
+ }));
+ if(!$("craftStatus").dataset.touched){
+  $("craftStatus").textContent="실전 장착: "+Object.entries(gear.equipped).map(([slot,id])=>gearLabel(slot,id)).join(" · ")+". 전투를 통해 재료를 획득해.";
+ }
+}
+function claimPendingBattle(){
+ let result;try{result=JSON.parse(localStorage.getItem(INDOOR_KEY)||"null");}catch{localStorage.removeItem(INDOOR_KEY);return false;}
+ if(!result)return false;
+ const claim=claimIndoorBattle(sharedCharacter(),result);
+ localStorage.removeItem(INDOOR_KEY);
+ if(claim.awarded){
+  saveCharacter(claim.state);
+  showCraftMessage("전투 정산: 몬스터 "+claim.kills+"마리, 경험치 +"+claim.xp+", 골드 +"+claim.gold+". 제작 재료가 도착했어.");
+  $("craftStatus").dataset.touched="yes";
+  updateEquippedVisual(claim.state);syncCharacter();
+  return true;
+ }
+ showCraftMessage("정산할 새 전투 기록이 없어. "+(claim.reason||""));
+ return false;
+}
+$("claimCombat").onclick=()=>{if(!claimPendingBattle())showCraftMessage("새로운 전투 보상이 없어. 몬스터 사냥 후 마을로 복귀해.");};
+$("startCombat").onclick=()=>go("indoor");
+window.addEventListener("message",e=>{
+ if(e.origin!==location.origin||e.data?.type!=="motion-rpg-indoor-return"||e.source!==$("indoorFrame").contentWindow)return;
+ claimPendingBattle();
+ $("indoorFrame").src="./indoor.html?return=preview&reload="+Date.now();
+ go("village");
+});
 for(const slot of Object.keys(gearSlots)){
  const select=$("gear-"+slot);
  for(const item of GEAR[slot]){
@@ -202,7 +278,7 @@ function resetTimers(){if(timer)clearInterval(timer);timer=null;if(watchId!==nul
 function start(mode){resetTimers();let baseline=Number($("base").value);if(!Number.isFinite(baseline)||baseline<5||baseline>15){alert("기준 페이스는 5~15분/km 중에서 설정해.");return;}session=createAdventure({mode,basePace:baseline,durationMin:Number($("duration").value),style:$("style").value,seed:seed++,level:Number(sharedCharacter().level)||1});session=startAdventure(session);runId=String(Date.now())+"-"+String(seed);$("runMode").textContent=mode==="gps"?"실제 GPS 시험 모드":mode==="treadmill"?"러닝머신 속도 입력 모드":"실내 모의 체험";notifyNew(null);syncRun();if(mode==="demo"){timer=setInterval(()=>{if(session.phase==="complete"){resetTimers();return;}stepGame(8,paceForGame());},900);}else if(mode==="treadmill"){timer=setInterval(()=>{if(session.phase==="complete"){resetTimers();return;}stepGame(1,60/clamp(Number($("tmSpeed").value)||7,3,16));},1000);}else startGeo();}
 function stepGame(sec,pace){if(!session||session.phase==="complete")return;const old=session;session=advanceAdventure(session,sec,pace);notifyNew(old);syncRun();}
 function stop(){if(!session)return;const old=session;session=endAdventure(session);resetTimers();notifyNew(old);syncRun();}
-function finishRun(){resetTimers();if(!session)return;const sum=summarizeAdventure(session);const tail="성공 "+sum.success+"회 · 실패 "+sum.fail+"회 · "+sum.xp+" 경험치 · "+sum.gold+" 골드.";if(session.mode==="gps"){const char=sharedCharacter();if(char&&Object.keys(char).length){const r=settleAdventure(char,session,runId);if(r.awarded){localStorage.setItem("motion-rpg-save-v1",JSON.stringify(r.state));message("원정 종료 · 마을에 보상 전달",tail+" 캐릭터에 정산했어.");syncCharacter();}else message("원정 종료",tail+" 보상 인정 조건을 충족하지 못했어.");}else message("원정 종료",tail+" 캐릭터 저장 자료가 없어 이번 원정은 정산하지 않았어.");}else message("시뮬레이션 종료",tail+" 연습 모드이므로 실제 보상은 없어.");}
+function finishRun(){resetTimers();if(!session)return;const sum=summarizeAdventure(session);const tail="성공 "+sum.success+"회 · 실패 "+sum.fail+"회 · "+sum.xp+" 경험치 · "+sum.gold+" 골드.";if(session.mode==="gps"){const char=sharedCharacter();if(char&&Object.keys(char).length){const r=settleAdventure(char,session,runId);if(r.awarded){const rewards=addExpeditionMaterials(r.state,session,runId);saveCharacter(rewards.awarded?rewards.state:r.state);message("원정 종료 · 마을에 보상 전달",tail+" 캐릭터에 정산했어.");syncCharacter();}else message("원정 종료",tail+" 보상 인정 조건을 충족하지 못했어.");}else message("원정 종료",tail+" 캐릭터 저장 자료가 없어 이번 원정은 정산하지 않았어.");}else message("시뮬레이션 종료",tail+" 연습 모드이므로 실제 보상은 없어.");}
 $("startDemo").onclick=()=>start("demo");$("startGps").onclick=()=>start("gps");$("startTreadmill").onclick=()=>start("treadmill");$("stopRun").onclick=stop;
 $("skipMinute").onclick=()=>{if(session?.mode!=="demo"||session.phase==="complete")return;for(let i=0;i<6&&session.phase!=="complete";i++)stepGame(10,paceForGame());};
 $("skipEnd").onclick=()=>{if(session?.mode!=="demo"||session.phase==="complete")return;let loops=0;while(session.phase!=="complete"&&loops++<250)stepGame(10,paceForGame());};
@@ -216,5 +292,5 @@ function box(x,y,size,color){const z=size*.36;poly([[x-z,y-size],[x+size,y-size]
 function tree(x,y,s){ctx.fillStyle="#413f2c";ctx.fillRect(x-s*.09,y-s*.6,s*.18,s*.6);poly([[x,y-s*1.9],[x-s*.63,y-s*.6],[x+s*.61,y-s*.6]],"#17483f");poly([[x,y-s*2.35],[x-s*.55,y-s*1.18],[x+s*.56,y-s*1.18]],"#25664f");poly([[x,y-s*2.65],[x-s*.42,y-s*1.75],[x+s*.42,y-s*1.75]],"#36785a");}
 function house(x,y,s,roof){box(x-s*.45,y,s,"#9b9e7b");poly([[x-s*1.0,y-s],[x-s*.1,y-s*1.85],[x+s*1.05,y-s]],roof);ctx.fillStyle="#322f2a";ctx.fillRect(x-s*.12,y-s*.55,s*.3,s*.55);ctx.fillStyle="#e4bb75";ctx.fillRect(x-s*.62,y-s*.65,s*.25,s*.23);}
 function drawVillage(){const width=cvs.clientWidth||880,height=cvs.clientHeight||490;if(!width||!height)return;const ratio=Math.min(2,window.devicePixelRatio||1);if(cvs.width!==Math.round(width*ratio)||cvs.height!==Math.round(height*ratio)){cvs.width=Math.round(width*ratio);cvs.height=Math.round(height*ratio)}ctx.setTransform(ratio,0,0,ratio,0,0);w=width;h=height;const g=ctx.createLinearGradient(0,0,0,h);g.addColorStop(0,"#87b7ba");g.addColorStop(.51,"#d5d7a2");g.addColorStop(.53,"#638d6e");g.addColorStop(1,"#244a35");ctx.fillStyle=g;ctx.fillRect(0,0,w,h);const cy=h*.53;ctx.fillStyle="#3c7662";for(let i=0;i<9;i++){const x=i*w/8;poly([[x-w*.18,cy],[x+w*.16,cy],[x,cy-h*.19]],i%2?"#538376":"#5a9184");}poly([[w*.48,cy],[w*.58,cy],[w*.9,h],[w*.24,h]],"#b1a87c");poly([[w*.49,cy],[w*.52,cy],[w*.64,h],[w*.54,h]],"#d0c494");for(let i=0;i<8;i++){const depth=i/8;const y=cy+Math.pow(depth,1.45)*h*.54;let s=8+depth*54;tree(w*(.05+depth*.18),y,s);tree(w*(.96-depth*.17),y,s*.92)}house(w*.68,cy+h*.34,w*.125,"#5c5142");house(w*.31,cy+h*.28,w*.10,"#67503c");house(w*.82,cy+h*.12,w*.07,"#534c3f");for(let i=0;i<10;i++){let a=i/9,yy=cy+Math.pow(a,1.3)*h*.52,xx=w*(.34-a*.1);ctx.strokeStyle="#afad78";ctx.lineWidth=2+a*2;ctx.beginPath();ctx.moveTo(xx,yy);ctx.lineTo(xx+15+a*22,yy);ctx.stroke();}ctx.fillStyle="#ffffff36";for(let i=0;i<35;i++){let x=(i*127%997)/997*w,y=cy+(i*79%491)/491*h*.4;ctx.fillRect(x,y,1.2,1.2);}drawAvatar(ctx,w*.77,h*.84,Math.max(.53,Math.min(1.05,w/970)),loadout);}
-window.addEventListener("resize",()=>{drawVillage();if($("page-character").classList.contains("active"))drawEquipment();});drawVillage();syncRun();
+window.addEventListener("resize",()=>{drawVillage();if($("page-character").classList.contains("active"))drawEquipment();});drawVillage();syncRun();claimPendingBattle();
 </script></body></html>
