@@ -33,19 +33,68 @@
 @keyframes hpWarning{0%,100%{filter:none}25%,65%{filter:brightness(2.2) sepia(1) saturate(5) hue-rotate(300deg)}}
 @keyframes cuePulse{from{opacity:.55;transform:scale(.98)}to{opacity:1;transform:scale(1.03)}}
 @media(prefers-reduced-motion:reduce){#game.hitShake,#hitFx.hit,#damageNumber.hit,#heroHpWrap.hit{animation-duration:.14s}#attackCue.warning{animation:none}}
+
+#motionOpen{pointer-events:auto;min-width:72px;min-height:36px;padding:7px 10px;border-radius:13px;border:1px solid #93ccbd9a;background:#123e3cbd;color:#e5ffde;font-size:11px;font-weight:800}
+#motionOpen.connected{border-color:#d3f7b0;background:#245c45}
+#motionPanel{position:fixed;inset:0;z-index:40;overflow-y:auto;overscroll-behavior:contain;background:#071a1aeb;backdrop-filter:blur(15px);padding:18px max(14px,calc((100vw - 560px)/2));pointer-events:auto}
+#motionPanel[hidden]{display:none}
+.motionDialog{margin:auto;max-width:580px;border:1px solid #9ac7a078;border-radius:23px;background:linear-gradient(150deg,#173732,#0b2027);padding:20px;box-shadow:0 30px 90px #0008}
+.motionTop{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
+.motionTop h2{font-size:22px;margin:4px 0 12px}
+.motionTop small{color:#b1dcb1;letter-spacing:.15em;font-weight:800}
+.motionLead{font-size:12px;color:#bbd2c5;line-height:1.8;margin:8px 0 16px}
+.motionSection{padding:16px 12px;margin:13px 0;border:1px solid #729c8c74;border-radius:15px;background:#092b2aa5}
+.motionSection h3{font-size:16px;color:#d4efc9;margin:0 0 8px}
+.motionSection p{font-size:12px;line-height:1.7;color:#c1d7c7;margin:0 0 12px}
+.motionRow{display:flex;gap:6px;flex-wrap:wrap}
+.motionRow button,.motionTop button{pointer-events:auto;min-height:38px;padding:9px 12px;font-size:12px;font-weight:800;background:#b8e9b4;border:1px solid #c6e8bc;color:#133026;border-radius:11px}
+.motionRow button.subtle,.motionTop button.subtle{background:#1d4542;color:#d8f3e9;border-color:#729c90}
+.motionRow button:disabled{opacity:.40}
+.roomCode{font-variant-numeric:tabular-nums;letter-spacing:.15em;color:#caffaf;font-size:21px;font-weight:900;background:#071f25;border:1px dashed #86b89b;padding:11px;border-radius:12px;margin:10px 0;text-align:center;user-select:all}
+#controllerLink{color:#b6eeef;text-decoration:underline;font-size:12px}
+.motionInfo{font-size:12px;color:#c6ddcf;line-height:1.7;margin:9px 0 0}
+#posePreview{display:block;margin:12px 0;width:min(230px,100%);max-height:150px;object-fit:cover;transform:scaleX(-1);border-radius:12px;border:1px solid #a5ca9a86;background:#031d23}
+#hudR{z-index:12}
+@media(max-width:580px){#motionPanel{padding:6px}.motionDialog{border-radius:12px;padding:13px}.motionTop h2{font-size:18px}.roomCode{font-size:17px}#hudR{right:8px;gap:4px}#motionOpen{min-width:57px;padding:6px 6px;font-size:10px}}
 </style></head><body>
 <div id="sky"></div><canvas id="game"></canvas><div id="vignette"></div><div id="bottomShade"></div><div id="screenFx"></div><div id="slashFx"></div>
 <div class="ui" id="brand"><div id="sigil">✦</div><div><h1>Motion RPG</h1><p>INDOOR COMBAT · ALPHA</p></div></div>
-<div class="ui" id="hudR"><button id="campReturn">마을 복귀</button><div id="roundtag">⚔️ WAVE <span id="stage">01</span></div><div id="scorecard" class="glass"><small>획득한 정수</small><strong>✦ <span id="score">000</span></strong></div></div>
+<div class="ui" id="hudR"><button id="motionOpen" title="S21 무선 연결과 폴드6 카메라 인식 설정">모션 설정</button><button id="campReturn">마을 복귀</button><div id="roundtag">⚔️ WAVE <span id="stage">01</span></div><div id="scorecard" class="glass"><small>획득한 정수</small><strong>✦ <span id="score">000</span></strong></div></div>
 <div class="ui" id="location"><span>FOREST RIFT</span>경계의 숲 · 균열 지대<br><small id="status" style="opacity:.85">마력체가 앞을 가로막는다</small></div>
 <div class="ui" id="enemyHud"><div id="enemyName"><span class="label" id="monName">🌿 이끼 슬라임</span><span class="dist" id="distance">12 m</span></div><div id="barwrap"><div id="enemyHP"></div></div><div id="attackCue" role="status" aria-live="polite">적의 움직임을 살펴보세요</div></div>
 <div class="ui glass" id="playerHud"><b id="gearHud">숲 사냥꾼</b><div id="heroHpText">기력 100 / 100</div><div id="heroHpWrap"><div id="heroHp"></div></div><small id="dodgeInfo">적의 경고에 맞춰 회피</small></div><div id="cross"><div class="ring"></div></div><div class="ui" id="instruction">화면을 드래그하면 시야가 움직입니다</div><div id="toast"></div><div id="hitFx" aria-hidden="true"></div><div id="damageNumber" aria-hidden="true"></div>
 <div class="ui" id="controls"><div id="moveArea"><div id="joy"><div id="stick">✦</div></div><span>이동 · 키보드 WASD</span></div><div id="actions"><button class="action" id="dodge" aria-label="회피"><span class="icon">↪</span><b>회피</b></button><button class="action" id="sword" aria-label="근접 휘두르기"><span class="icon">⚔️</span><b>근접 휘두르기</b></button><button class="action" id="fire" aria-label="마법 투척"><span class="icon">✨</span><b>마법 투척</b></button></div></div><div id="footerNote">중앙 조준점으로 적을 맞혀라 · 투척은 원거리 / 근접은 가까이에서</div>
-<div id="intro"><div id="introCard"><div class="emblem">✦ 🧙 ✦</div><h2>숲의 균열</h2><p>경계의 숲에서 새어 나온 마력체를 조준하고<br><b>마법 투척</b> 또는 <b>근접 휘두르기</b>로 격파해 봐.<br>몬스터의 반격 경고에 맞춰 회피하면서 싸우자. 장착한 장비의 공격력과 방어력이 반영된다.</p><button id="begin">균열에 진입하기</button><small>드래그: 시야 이동 · 왼쪽 원: 이동 · 오른쪽: 공격<br>다음 단계에서 S21 투척·근접과 폴드6 회피를 연결한다</small></div></div>
+<div id="intro"><div id="introCard"><div class="emblem">✦ 🧙 ✦</div><h2>숲의 균열</h2><p>경계의 숲에서 새어 나온 마력체를 조준하고<br><b>마법 투척</b> 또는 <b>근접 휘두르기</b>로 격파해 봐.<br>몬스터의 반격 경고에 맞춰 회피하면서 싸우자. 장착한 장비의 공격력과 방어력이 반영된다.</p><button id="begin">균열에 진입하기</button><small>드래그: 시야 이동 · 왼쪽 원: 이동 · 오른쪽: 공격<br>오른쪽 상단 [모션 설정]에서 S21 무선 무기와 전면 카메라 회피를 연결할 수 있어</small></div></div>
 <div id="err"></div>
+<div id="motionPanel" hidden role="dialog" aria-modal="true" aria-label="실전 모션 입력 설정">
+ <div class="motionDialog">
+  <div class="motionTop"><div><small>MOTION RPG / v0.30</small><h2>실전 모션 전투 설정</h2></div><button id="motionClose" class="subtle">게임으로 돌아가기</button></div>
+  <p class="motionLead">폴드6에서는 3D 전투와 전면 카메라 회피를 사용하고, S21에서는 실제 휘두르기·투척 동작을 전송해. 둘 다 선택 기능이야.</p>
+  <section class="motionSection">
+   <h3>① S21 무기 컨트롤러 연결</h3>
+   <p>여기서 연결 코드를 만들고, S21에서 아래 주소를 열어 코드를 입력해.</p>
+   <div class="motionRow"><button id="hostStart">연결 코드 만들기</button><button id="hostStop" class="subtle" disabled>연결 종료</button><button id="copyController" class="subtle" disabled>연결 주소 복사</button></div>
+   <div class="roomCode" id="motionRoom">연결 전</div>
+   <a id="controllerLink" href="./controller.html" target="_blank" rel="noopener">S21 컨트롤러 화면</a>
+   <div class="motionInfo" id="linkStatus" role="status" aria-live="polite">S21 연결 대기 · 무선 통신은 외부 PeerJS 중계 서버를 사용해.</div>
+   <div class="motionInfo" id="remoteStatus">검격/투척 입력: 없음</div>
+  </section>
+  <section class="motionSection">
+   <h3>② 폴드6 카메라 회피</h3>
+   <p>휴대폰을 세로로 고정하고 약 1.5~2.5m 앞에서 상반신과 허리가 모두 보이게 서 있어. 처음 2초는 가만히 서서 기준 자세를 잡고, <b>좌우로 몸을 피하거나 앉는 동작</b>으로 회피해.</p>
+   <div class="motionRow"><button id="cameraStart">카메라 자세 인식 켜기</button><button id="cameraStop" class="subtle" disabled>카메라 끄기</button><button id="cameraReset" class="subtle" disabled>자세 기준 재설정</button></div>
+   <video id="posePreview" muted autoplay playsinline title="폴드6 전면 카메라 미리보기"></video>
+   <div class="motionInfo" id="poseStatus" role="status" aria-live="polite">카메라 대기 · 기기 밖으로 영상이 전송되지 않아.</div>
+  </section>
+  <p class="motionLead">모션 인식이 불안정하면 <b>터치 버튼으로 계속 전투</b>할 수 있어. 폰을 실제로 던지지 말고 주변에 사람·물건이 없는지 확인해. GitHub Pages 외에 무료 WebRTC 연결 서버와 카메라 인식 모델 다운로드가 필요하므로 인터넷 연결이 필요해.</p>
+ </div>
+</div>
 <script type="module">
 import {combatStats,normalizeRpgGear} from "./src/gear-game.mjs";
 import {GEAR} from "./src/avatar.mjs";
+import {createWirelessHost} from "./src/peer-bridge.mjs";
+import {validMotionPacket} from "./src/motion-core.mjs";
+import {createPoseCamera} from "./src/pose-camera.mjs";
 import {ATTACKS,angleToTarget,turnToTarget,strikeInfo,spawnAroundPlayer,distance2d} from "./src/combat-spatial.mjs";
 (()=>{'use strict';
 const cvs=document.getElementById('game'),gl=cvs.getContext('webgl',{antialias:true,alpha:true,premultipliedAlpha:false,powerPreference:'high-performance'})||cvs.getContext('experimental-webgl');
