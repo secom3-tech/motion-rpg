@@ -64,5 +64,7 @@ for(const str of [
  "function renderBeast(ex,ey,ez,visual)",'id="attackBanner"','id="attackBannerMeter"'
 ])assert.ok(html.includes(str),"Missing visible attack integration: "+str);
 assert.ok(html.includes("if(enemy.windup<=0&&clock>=enemy.impactUntil)"),"Facing may not turn during impact");
+assert.ok(html.includes("if(dist<minDist)"),"Player should not be able to walk through monster body");
+assert.ok(html.includes("enemy.impactUntil=0;bankProgress()"),"Defeat should not leave an attack effect frozen");
 assert.ok(html.includes("if(!el(\"motionPanel\").hidden||document.hidden)return;"),"Attack timer must pause while setting up motion");
 console.log("ATTACK VISUAL TEST PASS: five monsters, two patterns, matching marker cones and timed poses");
