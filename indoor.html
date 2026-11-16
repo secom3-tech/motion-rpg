@@ -103,7 +103,7 @@ const shared=(()=>{try{return JSON.parse(localStorage.getItem("motion-rpg-save-v
 const equipped=normalizeRpgGear(shared).equipped,stats=combatStats(shared);
 const equippedWeapon=GEAR.weapon.find(item=>item.id===equipped.weapon)?.name||"기본 장비";
 const sessionId="arena-"+Date.now()+"-"+Math.random().toString(36).slice(2,11);
-let heroHp=stats.maxHp,dodgeUntil=0,dodgeCooldown=0,lastDodgeKind="button";
+let heroHp=stats.maxHp,dodgeUntil=0,dodgeCooldown=0,lastDodgeKind="button",dodgeVisualUntil=0;
 const camera={x:0,y:1.7,z:5.5};const stick={x:0,y:0};let W=innerWidth,H=innerHeight,dpr=1,prevToast=null,moveTouch=false,lastFire=0;const keys={};
 el('gearHud').textContent=equippedWeapon+" · 장착 중";if(equipped.weapon==="bow"){el('fire').querySelector('b').textContent="사냥 화살";el('fire').querySelector('.icon').textContent="🏹";}else if(equipped.weapon==="staff"){el('fire').querySelector('b').textContent="정령 마법";}else if(equipped.weapon==="axe"){el('sword').querySelector('b').textContent="도끼 공격";el('sword').querySelector('.icon').textContent="🪓";}
 function showHero(){el('heroHpText').textContent="기력 "+heroHp+" / "+stats.maxHp;el('heroHp').style.width=Math.max(0,heroHp/stats.maxHp*100)+"%";}
@@ -111,7 +111,12 @@ showHero();
 function dodge(direction="button"){
  if(!active||clock<dodgeCooldown)return false;
  lastDodgeKind=["left","right","duck"].includes(direction)?direction:"button";
- dodgeUntil=clock+1.05;dodgeCooldown=clock+2.2;weaponKick=.3;
+ dodgeUntil=clock+1.05;dodgeCooldown=clock+2.2;dodgeVisualUntil=clock+.65;weaponKick=.3;
+ if(lastDodgeKind==="left"||lastDodgeKind==="right"){
+  const side=lastDodgeKind==="left"?-1:1;
+  camera.x=Math.max(-22,Math.min(22,camera.x+side*Math.cos(yaw)*.72));
+  camera.z=Math.max(-31,Math.min(7,camera.z+side*Math.sin(yaw)*.72));
+ }
  el("dodgeInfo").textContent=lastDodgeKind==="duck"?"몸 낮추기!":lastDodgeKind==="button"?"버튼 회피!":"좌우 회피!";
  toast("회피!");beep(420,.10,"sine",.07);return true;
 }
@@ -299,7 +304,7 @@ function updateEnemy(dt){
  el("distance").textContent=Math.round(distance2d(enemy,camera))+" m";
  el("cross").classList.toggle("aim",radiusAiming());
 }
-function update(dt){clock+=dt;if(!active)return;let f=forward(),forwardX=Math.sin(yaw),forwardZ=-Math.cos(yaw),rightX=Math.cos(yaw),rightZ=Math.sin(yaw),mx=stick.x+(keys.KeyD||keys.ArrowRight?1:0)-(keys.KeyA||keys.ArrowLeft?1:0),my=stick.y+(keys.KeyS||keys.ArrowDown?1:0)-(keys.KeyW||keys.ArrowUp?1:0);let len=Math.hypot(mx,my);if(len>1){mx/=len;my/=len}let speed=4.0;camera.x+=(forwardX*-my+rightX*mx)*speed*dt;camera.z+=(forwardZ*-my+rightZ*mx)*speed*dt;camera.x=Math.max(-22,Math.min(22,camera.x));camera.z=Math.max(-31,Math.min(7,camera.z));camera.y=1.7+(len>.02?Math.sin(clock*10)*.045:Math.sin(clock*1.5)*.015);weaponKick=Math.max(0,weaponKick-dt*3.2);el("dodge").disabled=clock<dodgeCooldown;el("dodgeInfo").textContent=clock<dodgeCooldown?"회피 재사용 "+(dodgeCooldown-clock).toFixed(1)+"초":"경고 시 회피/Q · Shift";
+function update(dt){clock+=dt;if(!active)return;let f=forward(),forwardX=Math.sin(yaw),forwardZ=-Math.cos(yaw),rightX=Math.cos(yaw),rightZ=Math.sin(yaw),mx=stick.x+(keys.KeyD||keys.ArrowRight?1:0)-(keys.KeyA||keys.ArrowLeft?1:0),my=stick.y+(keys.KeyS||keys.ArrowDown?1:0)-(keys.KeyW||keys.ArrowUp?1:0);let len=Math.hypot(mx,my);if(len>1){mx/=len;my/=len}let speed=4.0;camera.x+=(forwardX*-my+rightX*mx)*speed*dt;camera.z+=(forwardZ*-my+rightZ*mx)*speed*dt;camera.x=Math.max(-22,Math.min(22,camera.x));camera.z=Math.max(-31,Math.min(7,camera.z));camera.y=1.7+(len>.02?Math.sin(clock*10)*.045:Math.sin(clock*1.5)*.015)-(lastDodgeKind==="duck"&&clock<dodgeVisualUntil?.36:0);weaponKick=Math.max(0,weaponKick-dt*3.2);el("dodge").disabled=clock<dodgeCooldown;el("dodgeInfo").textContent=clock<dodgeCooldown?"회피 재사용 "+(dodgeCooldown-clock).toFixed(1)+"초":"경고 시 회피/Q · Shift";
 updateEnemy(dt);
 for(let i=projectiles.length-1;i>=0;i--){let p=projectiles[i];p.age+=dt;p.x+=p.vx*dt;p.y+=p.vy*dt;p.z+=p.vz*dt;p.life-=dt;let dist=Math.hypot(p.x-camera.x,p.y-camera.y,p.z-camera.z);if(p.life<=0||dist>p.targetDist){if(p.on&&!enemy.dead){damage(p.damage)}else if(!p.on)toast('빗나갔습니다');projectiles.splice(i,1)}}
 for(let i=sparks.length-1;i>=0;i--){let s=sparks[i];s.t+=dt;s.x+=s.vx*dt;s.y+=s.vy*dt;s.z+=s.vz*dt;s.vy-=6*dt;if(s.t>s.life)sparks.splice(i,1)}}
