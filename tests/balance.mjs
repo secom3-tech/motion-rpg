@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { ACTIONS, EVENTS, ITEMS, RIDGE_EVENTS, REGIONS, QUESTS, TRAINING_DRILLS, UPGRADES, availableActions, availableRegions, newGame, beginEncounter, beginBossEncounter, isBossAvailable, resolveEncounter, advanceGame, beginTraining, resolveTraining, purchaseUpgrade, selectRegion } from "../src/engine.mjs";
+import { ACTIONS, EVENTS, ITEMS, RIDGE_EVENTS, REGIONS, QUESTS, TRAINING_DRILLS, UPGRADES, availableActions, availableRegions, newGame, beginEncounter, beginBossEncounter, isBossAvailable, recordIndoorSignal, recordOutdoorSignal, resolveEncounter, advanceGame, beginTraining, resolveTraining, purchaseUpgrade, selectRegion } from "../src/engine.mjs";
 
 assert.equal(new Set(EVENTS.map(e => e.id)).size, EVENTS.length, "Event IDs must be unique");
 assert.equal(new Set(Object.keys(ACTIONS)).size, Object.keys(ACTIONS).length, "Action IDs must be unique");
@@ -55,6 +55,18 @@ assert.equal(trainingRun.inventory.torch, 0);
 assert.equal(trainingRun.training.lastDrill.passed, true);
 assert.equal(trainingRun.xp, 10);
 assert.throws(() => resolveTraining(trainingRun, "torch"), /No active/);
+
+// Mock sensor inputs take the same route as future GPS/camera inputs.
+let sensorRun = recordOutdoorSignal(newGame(), 125, 60);
+sensorRun = beginEncounter(sensorRun, 4);
+assert.equal(sensorRun.currentEvent.pace, 8);
+assert.equal(sensorRun.currentEvent.inputSource, "signal");
+assert.throws(() => recordOutdoorSignal(newGame(), 0, 60), /Invalid/);
+let motionRun = recordIndoorSignal(newGame(), 8);
+motionRun = resolveTraining(beginTraining(motionRun), "form");
+assert.equal(motionRun.training.lastDrill.inputBonus, 2);
+assert.equal(motionRun.training.lastDrill.gainedXp, 12);
+assert.throws(() => recordIndoorSignal(newGame(), -1), /Invalid/);
 
 // Gold has a deterministic use and upgrades affect their advertised systems.
 let campRun = { ...newGame(), gold: 120 };

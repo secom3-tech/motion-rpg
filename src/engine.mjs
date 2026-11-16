@@ -82,8 +82,9 @@ export function newGame() {
     currentEvent: null, lastEvent: null, history: [],
     training: { phase: "ready", attempts: 0, successes: 0, currentDrill: null, lastDrill: null },
     camp: { lantern: 0, surveyMap: 0, guards: 0 },
-    region: "forest", regionAttempts: { forest: 0, ridge: 0 }, unlockedRegions: ["forest"]
-    , quests: { forest: { attempts: 0, successes: 0, bossDefeated: false }, ridge: { attempts: 0, successes: 0, bossDefeated: false } }
+    region: "forest", regionAttempts: { forest: 0, ridge: 0 }, unlockedRegions: ["forest"],
+    quests: { forest: { attempts: 0, successes: 0, bossDefeated: false }, ridge: { attempts: 0, successes: 0, bossDefeated: false } },
+    outdoorInput: null
   };
 }
 
@@ -128,6 +129,15 @@ export function selectRegion(state, regionId) {
   return next;
 }
 
+// Adapter boundary for a future GPS source. Inputs are mock data for now.
+export function recordOutdoorSignal(state, distanceM, durationSec) {
+  const distance = Number(distanceM);
+  const duration = Number(durationSec);
+  if (!Number.isFinite(distance) || !Number.isFinite(duration) || distance < 20 || duration < 10) throw Error("Invalid outdoor signal");
+  const pace = clamp((duration / 60) / (distance / 1000), 4, 12);
+  return { ...state, outdoorInput: { distanceM: Math.round(distance), durationSec: Math.round(duration), pace: Number(pace.toFixed(1)) } };
+}
+
 export function isBossAvailable(state, regionId = state.region) {
   const quest = state.quests[regionId];
   const rules = QUESTS[regionId];
@@ -137,26 +147,28 @@ export function isBossAvailable(state, regionId = state.region) {
 export function beginBossEncounter(state, paceInput) {
   if (state.phase !== "exploring" || state.training.phase !== "ready") throw Error("Finish the active challenge first");
   if (!isBossAvailable(state)) throw Error("Boss challenge is locked");
-  if (!isValidPace(paceInput)) throw Error("Invalid pace");
-  const pace = clamp(Number(paceInput), 4, 12);
+  const inputPace = state.outdoorInput?.pace ?? paceInput;
+  if (!isValidPace(inputPace)) throw Error("Invalid pace");
+  const pace = clamp(Number(inputPace), 4, 12);
   const next = { ...state };
   next.phase = "encounter";
-  next.currentEvent = { ...QUESTS[state.region].boss, pace, region: state.region, boss: true };
+  next.currentEvent = { ...QUESTS[state.region].boss, pace, region: state.region, boss: true, inputSource: state.outdoorInput ? "signal" : "manual" };
   return next;
 }
 
 // Begins one simulated minute. Calling it outside exploration is an invalid transition.
 export function beginEncounter(state, paceInput) {
   if (state.phase !== "exploring") throw Error("Can only begin an encounter while exploring");
-  if (!isValidPace(paceInput)) throw Error("Invalid pace");
-  const pace = clamp(Number(paceInput), 4, 12);
+  const inputPace = state.outdoorInput?.pace ?? paceInput;
+  if (!isValidPace(inputPace)) throw Error("Invalid pace");
+  const pace = clamp(Number(inputPace), 4, 12);
   const region = REGIONS[state.region];
   const event = region.events[state.regionAttempts[state.region] % region.events.length];
   const next = { ...state };
   next.elapsedMin += 1;
   next.distanceM = Math.round(next.distanceM + 1000 / pace);
   next.phase = "encounter";
-  next.currentEvent = { ...event, pace, region: state.region };
+  next.currentEvent = { ...event, pace, region: state.region, inputSource: state.outdoorInput ? "signal" : "manual" };
   return next;
 }
 
@@ -192,7 +204,7 @@ export function resolveEncounter(state, action) {
   next.successes += passed ? 1 : 0;
   next.phase = "exploring";
   next.currentEvent = null;
-  next.lastEvent = { id: event.id, title: event.title, task: event.task, region: event.region, boss: !!event.boss, action, passed, gainedXp, gainedGold, gainedItem, pace: event.pace };
+  next.lastEvent = { id: event.id, title: event.title, task: event.task, region: event.region, boss: !!event.boss, action, passed, gainedXp, gainedGold, gainedItem, pace: event.pace, inputSource: event.inputSource };
   next.history = [...state.history, next.lastEvent].slice(-6);
   return next;
 }
@@ -237,13 +249,21 @@ export function beginTraining(state) {
   return next;
 }
 
+// Adapter boundary for a future camera or wearable motion counter.
+export function recordIndoorSignal(state, motionCount) {
+  const count = Number(motionCount);
+  if (!Number.isFinite(count) || count < 0 || count > 100) throw Error("Invalid indoor signal");
+  return { ...state, training: { ...state.training, inputCount: Math.round(count) } };
+}
+
 export function resolveTraining(state, action) {
   if (state.training.phase !== "challenge" || !state.training.currentDrill) throw Error("No active training to resolve");
   if (!ACTIONS[action]) throw Error("Unknown action");
   const drill = state.training.currentDrill;
   if (!availableActions(drill, state.inventory).includes(action)) throw Error("Required item is not available");
   const passed = trainingPassed(drill, action, state.energy);
-  const gainedXp = passed ? 10 : state.camp.guards > 0 ? 6 : 3;
+  const inputBonus = passed && (state.training.inputCount ?? 0) >= 8 ? 2 : 0;
+  const gainedXp = passed ? 10 + inputBonus : state.camp.guards > 0 ? 6 : 3;
   const gainedGold = passed ? drill.reward : 0;
   const usedItem = ACTIONS[action].item;
   const next = { ...state, inventory: { ...state.inventory }, training: { ...state.training } };
@@ -256,6 +276,6 @@ export function resolveTraining(state, action) {
   next.training.successes += passed ? 1 : 0;
   next.training.phase = "ready";
   next.training.currentDrill = null;
-  next.training.lastDrill = { id: drill.id, title: drill.title, task: drill.task, action, passed, gainedXp, gainedGold };
+  next.training.lastDrill = { id: drill.id, title: drill.title, task: drill.task, action, passed, gainedXp, gainedGold, inputBonus };
   return next;
 }
