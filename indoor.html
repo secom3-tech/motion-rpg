@@ -415,7 +415,17 @@ el("cameraStop").onclick=()=>{
  el("cameraStart").disabled=false;el("cameraStop").disabled=true;el("cameraReset").disabled=true;
 };
 el("cameraReset").onclick=()=>poseCamera.recalibrate();
-window.addEventListener("pagehide",()=>{poseCamera.stop();motionHost.stop();});
+function stopMotionInputs(){
+ poseCamera.stop();motionHost.stop();
+ el("hostStart").disabled=false;el("hostStop").disabled=true;el("copyController").disabled=true;
+ el("motionRoom").textContent="연결 전";
+ el("cameraStart").disabled=false;el("cameraStop").disabled=true;el("cameraReset").disabled=true;
+}
+window.addEventListener("pagehide",stopMotionInputs);
+window.addEventListener("message",e=>{
+ if(e.origin!==location.origin||e.source!==window.parent)return;
+ if(e.data?.type==="motion-rpg-pause-input")stopMotionInputs();
+});
 const begin=el('begin');if(begin)begin.addEventListener('click',()=>{active=true;el('intro').classList.add('hidden');if(!worldMode)spawnEnemy();toast('숲에서 몬스터의 흔적을 찾아보세요!');try{if(window.AudioContext)ctx=new AudioContext()}catch(e){}});
 el('dodge').addEventListener('pointerdown',e=>{e.preventDefault();dodge()});el('fire').addEventListener('pointerdown',e=>{e.preventDefault();magic()});el('sword').addEventListener('pointerdown',e=>{e.preventDefault();swordHit()});el('campReturn').addEventListener('click',()=>{bankProgress();if(new URLSearchParams(location.search).get('return')==='preview'){if(window.parent!==window){window.parent.postMessage({type:'motion-rpg-indoor-return',sessionId},location.origin)}else{location.href='./preview.html?from=indoor'}}else{location.href='./index.html?from=indoor'}});window.addEventListener('keydown',e=>{keys[e.code]=true;if(['Space','ArrowLeft','ArrowRight','ArrowDown','ArrowUp'].includes(e.code))e.preventDefault();if(e.code==='Space'&&!e.repeat)magic();if(e.code==='KeyF'&&!e.repeat)swordHit();if((e.code==='ShiftLeft'||e.code==='KeyQ')&&!e.repeat)dodge()});window.addEventListener('keyup',e=>{keys[e.code]=false});document.addEventListener('visibilitychange',()=>{last=performance.now()});window.addEventListener('resize',resize);dragCamera();joystick();requestAnimationFrame(loop);
 })();
