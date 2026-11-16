@@ -19,7 +19,7 @@
 </head>
 <body>
 <main>
-  <div class="eyebrow">MOTION RPG · PROTOTYPE 0.12.0</div>
+  <div class="eyebrow">MOTION RPG · PROTOTYPE 0.13.0</div>
   <h1>경계의 숲</h1>
   <div class="muted">실내 전투와 야외 러닝이 하나의 캐릭터로 연결되는 운동 RPG</div>
   <div class="notice"><b>개발용 모의 러닝 화면이야.</b> 실제 GPS·운동 감지·음성은 아직 연결되지 않았다. 페이스와 선택으로 사건 흐름과 보상을 시험한다.<div class="muted" id="saveStatus">이 브라우저에 진행 상황을 자동 저장한다.</div></div>
@@ -27,6 +27,7 @@
   <div class="screen" id="view-home"><section class="card"><h2>모험가 상태</h2><div class="stats">
     <div class="stat"><span>레벨</span><b id="level">1</b></div><div class="stat"><span>경험치</span><b id="xp">0 XP</b></div><div class="stat"><span>골드</span><b id="gold">0 G</b></div><div class="stat"><span>기력 (게임 수치)</span><b id="energy">100</b></div><div class="stat"><span>모의 거리</span><b id="distance">0 m</b></div><div class="stat"><span>진행</span><b id="time">0 분</b></div>
   </div></section>
+  <section class="card"><h2>최근 탐험 기록</h2><ul id="history" aria-label="최근 탐험 기록"><li>아직 기록이 없다. 첫 사건을 해결해 봐.</li></ul></section>
   <section class="card"><h2>탐험 가방</h2><div class="stats">
     <div class="stat"><span>횃불</span><b id="torch">0</b></div><div class="stat"><span>지도 조각</span><b id="map">0</b></div><div class="stat"><span>붕대</span><b id="bandage">0</b></div>
   </div><div class="muted">보급 사건에서 획득한 물품은 해당 유형의 사건에서 선택지로 나타난다.</div></section>
@@ -88,6 +89,7 @@
     for (const id of ["home","outdoor","indoor"]) $("view-"+id).classList.toggle("hidden", view !== id); document.querySelectorAll("[data-view]").forEach(button => button.classList.toggle("active", button.dataset.view === view));
     for (const [id,value] of [["level",state.level],["xp",state.xp+" XP"],["gold",state.gold+" G"],["energy",state.energy],["distance",state.distanceM+" m"],["time",state.elapsedMin+" 분"]]) $(id).textContent = value;
     for (const item of Object.keys(ITEMS)) $(item).textContent = state.inventory[item];
+    const history = [...state.history].reverse(); $("history").replaceChildren(...(history.length ? history.map(entry => { const li=document.createElement("li"); const source=entry.inputSource === "treadmill" ? "러닝머신" : entry.inputSource === "gps" ? "GPS" : "수동"; li.textContent=`${entry.passed ? "성공" : "도전"} · ${entry.title} · ${ACTIONS[entry.action].label} · ${source} · +${entry.gainedXp} XP${entry.gainedGold ? ` / +${entry.gainedGold} G` : ""}`; return li; }) : [Object.assign(document.createElement("li"), { textContent: "아직 기록이 없다. 첫 사건을 해결해 봐." })]));
     const outdoorLabel = state.outdoorInput?.source === "treadmill" ? "최근 러닝머신 신호" : "최근 GPS 모의 신호"; $("gpsInfo").textContent = state.outdoorInput ? `${outdoorLabel}: ${state.outdoorInput.distanceM}m / ${state.outdoorInput.durationSec}초 · ${state.outdoorInput.pace.toFixed(1)} 분/km` : "수동 페이스를 사용 중";
     $("motionInfo").textContent = `최근 동작 모의 신호: ${state.training.inputCount ?? 0}회 · 8회 이상이면 훈련 성공 XP +2`;
     $("treadmillTitle").textContent = state.treadmill.active ? `${state.treadmill.speedKmh.toFixed(1)} km/h로 주행 중` : "러닝머신 대기 중";

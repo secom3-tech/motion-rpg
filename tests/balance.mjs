@@ -26,6 +26,11 @@ assert.equal(state.phase, "exploring");
 assert.equal(state.attempts, 1);
 assert.equal(state.lastEvent.action, "push");
 assert.throws(() => resolveEncounter(state, "push"), /No active/);
+let historyRun = newGame();
+for (let i = 0; i < 7; i += 1) historyRun = advanceGame(historyRun, 8);
+assert.equal(historyRun.history.length, 6);
+assert.equal(historyRun.history.at(-1).id, historyRun.lastEvent.id);
+assert.ok(historyRun.history.every(entry => typeof entry.inputSource === "string" && typeof entry.gainedXp === "number"));
 
 // Consumables are hidden without stock, become valid when held, and are spent on use.
 let fogRun = { ...newGame(), attempts: 3, regionAttempts: { forest: 3, ridge: 0 } };
