@@ -85,7 +85,7 @@ export function newGame() {
     region: "forest", regionAttempts: { forest: 0, ridge: 0 }, unlockedRegions: ["forest"],
     quests: { forest: { attempts: 0, successes: 0, bossDefeated: false }, ridge: { attempts: 0, successes: 0, bossDefeated: false } },
     outdoorInput: null,
-    outdoorSession: { active: false, distanceM: 0, distanceExactM: 0, elapsedSec: 0, nextEncounterM: 250, startAttempts: 0, lastSummary: null },
+    outdoorSession: { active: false, paused: false, distanceM: 0, distanceExactM: 0, elapsedSec: 0, nextEncounterM: 250, startAttempts: 0, paceSamples: [], lastSummary: null },
     treadmill: { active: false, speedKmh: 8, distanceM: 0, distanceExactM: 0, elapsedSec: 0, nextEncounterM: 250, session: { active: false, goalM: 1000, startDistanceM: 0, startElapsedSec: 0, startAttempts: 0, lastSummary: null } }
   };
 }
@@ -145,12 +145,13 @@ export function recordOutdoorSignal(state, distanceM, durationSec) {
 export function startOutdoorSession(state) {
   if (state.outdoorSession.active) throw Error("Outdoor session is already active");
   if (state.phase !== "exploring" || state.training.phase !== "ready") throw Error("Finish the active challenge first");
-  const session = { ...state.outdoorSession, active: true, distanceM: 0, distanceExactM: 0, elapsedSec: 0, nextEncounterM: 250, startAttempts: state.attempts, lastSummary: null };
+  const session = { ...state.outdoorSession, active: true, paused: false, distanceM: 0, distanceExactM: 0, elapsedSec: 0, nextEncounterM: 250, startAttempts: state.attempts, paceSamples: [], lastSummary: null };
   return { ...state, outdoorSession: session };
 }
 
 export function recordOutdoorSegment(state, distanceM, durationSec) {
   if (!state.outdoorSession.active) throw Error("Outdoor session is not active");
+  if (state.outdoorSession.paused) throw Error("Outdoor session is paused");
   const distance = Number(distanceM), duration = Number(durationSec);
   if (!Number.isFinite(distance) || !Number.isFinite(duration) || distance < 0 || distance > 1000 || duration <= 0 || duration > 600) throw Error("Invalid outdoor segment");
   const exactDistance = state.outdoorSession.distanceExactM + distance;
@@ -158,17 +159,32 @@ export function recordOutdoorSegment(state, distanceM, durationSec) {
   const scheduledDistance = state.outdoorSession.nextEncounterM ?? 250;
   const crossedEncounterMarker = roundedDistance >= scheduledDistance;
   const nextEncounterM = crossedEncounterMarker ? (Math.floor(roundedDistance / 250) + 1) * 250 : scheduledDistance;
-  const session = { ...state.outdoorSession, distanceM: roundedDistance, distanceExactM: exactDistance, elapsedSec: state.outdoorSession.elapsedSec + Math.round(duration), nextEncounterM };
   const measuredPace = distance >= 3 ? clamp((duration / 60) / (distance / 1000), 4, 12) : state.outdoorInput?.pace ?? 8;
-  const next = { ...state, outdoorSession: session, outdoorInput: { source: "gps", distanceM: Math.round(distance), durationSec: Math.round(duration), pace: Number(measuredPace.toFixed(1)) } };
-  return crossedEncounterMarker && next.phase === "exploring" && next.training.phase === "ready" ? beginEncounter(next, measuredPace) : next;
+  const samples = distance >= 3 ? [...(state.outdoorSession.paceSamples ?? []), measuredPace].slice(-5) : (state.outdoorSession.paceSamples ?? []);
+  const ordered = [...samples].sort((a, b) => a - b);
+  const stablePace = ordered.length ? ordered[Math.floor(ordered.length / 2)] : measuredPace;
+  const session = { ...state.outdoorSession, distanceM: roundedDistance, distanceExactM: exactDistance, elapsedSec: state.outdoorSession.elapsedSec + Math.round(duration), nextEncounterM, paceSamples: samples };
+  const next = { ...state, outdoorSession: session, outdoorInput: { source: "gps", distanceM: Math.round(distance), durationSec: Math.round(duration), pace: Number(stablePace.toFixed(1)) } };
+  return crossedEncounterMarker && next.phase === "exploring" && next.training.phase === "ready" ? beginEncounter(next, stablePace) : next;
+}
+
+export function pauseOutdoorSession(state) {
+  if (!state.outdoorSession.active) throw Error("Outdoor session is not active");
+  if (state.outdoorSession.paused) throw Error("Outdoor session is already paused");
+  return { ...state, outdoorSession: { ...state.outdoorSession, paused: true } };
+}
+
+export function resumeOutdoorSession(state) {
+  if (!state.outdoorSession.active) throw Error("Outdoor session is not active");
+  if (!state.outdoorSession.paused) throw Error("Outdoor session is not paused");
+  return { ...state, outdoorSession: { ...state.outdoorSession, paused: false } };
 }
 
 export function stopOutdoorSession(state) {
   if (!state.outdoorSession.active) throw Error("Outdoor session is not active");
   const session = state.outdoorSession;
   const lastSummary = { distanceM: session.distanceM, elapsedSec: session.elapsedSec, encounters: Math.max(0, state.attempts - session.startAttempts) };
-  return { ...state, outdoorSession: { ...session, active: false, lastSummary } };
+  return { ...state, outdoorSession: { ...session, active: false, paused: false, lastSummary } };
 }
 
 // Treadmill adapter: a future timer or BLE FTMS feed can call advanceTreadmill.

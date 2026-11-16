@@ -1,5 +1,5 @@
-const CACHE = "motion-rpg-v0.16.0";
-const ASSETS = ["./", "./index.html", "./manifest.webmanifest", "./icons/icon.svg", "./src/engine.mjs?v=0.16.0"];
+const CACHE = "motion-rpg-v0.17.0";
+const ASSETS = ["./", "./index.html", "./manifest.webmanifest", "./icons/icon.svg", "./src/engine.mjs?v=0.17.0"];
 
 self.addEventListener("install", event => event.waitUntil(caches.open(CACHE).then(cache => cache.addAll(ASSETS)).then(() => self.skipWaiting())));
 self.addEventListener("activate", event => event.waitUntil(caches.keys().then(keys => Promise.all(keys.filter(key => key !== CACHE).map(key => caches.delete(key)))).then(() => self.clients.claim())));
