@@ -67,7 +67,7 @@
     <div class="row"><input id="motionCount" type="number" min="0" max="100" value="0" aria-label="모의 동작 수" /><button id="motionApply" class="secondary">동작 신호 반영</button></div><div class="muted" id="motionInfo">동작 신호 8회 이상이면 훈련 성공 XP +2</div>
     <div class="row"><button id="trainingStart">훈련장 진입</button></div>
     <div id="trainingActions" class="actions hidden" aria-label="훈련 선택"></div>
-    <div id="trainingResult" class="result" role="status" aria-live="polite">투척·근접 휘두르기는 휴대폰 회전 센서, 회피는 카메라로 분리한다. 전투 행동은 아직 직접 선택한다.</div>
+    <div id="trainingResult" class="result" role="status" aria-live="polite">투척·근접 휘두르기는 S21 회전 센서, 회피는 폴드6 카메라로 분리한다. 회피 몬스터 전투 중 카메라 움직임을 감지하면 회피 행동을 자동 반영한다.</div>
     <ul><li>슬라임 사수·그림자 늑대·철갑 골렘과 차례로 전투한다.</li><li>카메라는 기기 안에서 프레임 변화만 측정하며, 영상은 저장·전송하지 않는다.</li></ul>
   </section></div>
   <footer>Motion RPG — 기본 규칙과 실험 코드는 GitHub에서 관리 · 운동 감지 및 운동 처방 기능 미구현</footer>
@@ -85,7 +85,7 @@
       return { ...blank, ...saved, inventory: { ...blank.inventory, ...saved.inventory }, arcade: { ...blank.arcade, ...saved.arcade, bestScores: { ...blank.arcade.bestScores, ...saved.arcade?.bestScores } }, training: { ...blank.training, ...saved.training, session: { ...blank.training.session, ...saved.training?.session, active: false } }, camp: { ...blank.camp, ...saved.camp }, treadmill: { ...blank.treadmill, ...saved.treadmill }, outdoorSession: { ...blank.outdoorSession, ...saved.outdoorSession, active: false }, regionAttempts: { ...blank.regionAttempts, ...saved.regionAttempts }, quests: { ...blank.quests, ...saved.quests }, unlockedRegions: saved.unlockedRegions || blank.unlockedRegions };
     } catch { return blank; }
   }
-  let state = loadGame(); let view = "home"; let treadmillTimer = null; let treadmillLastTick = 0; let gpsWatchId = null; let gpsLastPosition = null; let gpsSignalTimer = null; let lastGpsSignalAt = 0; let wakeLock = null; let wakeLockStatus = "화면 유지 요청 전"; let voiceEnabled = localStorage.getItem(VOICE_KEY) === "true"; let gpsStatus = "GPS 권한을 허용하면 실제 이동 기록을 받을 수 있다."; let cameraStream = null; let motionFrame = null; let motionTimer = null; let motionLastAt = 0; let detectedMotions = state.training.inputCount ?? 0;
+  let state = loadGame(); let view = "home"; let treadmillTimer = null; let treadmillLastTick = 0; let gpsWatchId = null; let gpsLastPosition = null; let gpsSignalTimer = null; let lastGpsSignalAt = 0; let wakeLock = null; let wakeLockStatus = "화면 유지 요청 전"; let voiceEnabled = localStorage.getItem(VOICE_KEY) === "true"; let gpsStatus = "GPS 권한을 허용하면 실제 이동 기록을 받을 수 있다."; let cameraStream = null; let motionFrame = null; let motionTimer = null; let motionLastAt = 0; let dodgeCount = 0; let detectedMotions = state.training.inputCount ?? 0;
   function saveGame() { localStorage.setItem(SAVE_KEY, JSON.stringify(state)); }
   function speak(message) { if (!voiceEnabled || !("speechSynthesis" in window)) return; window.speechSynthesis.cancel(); const utterance = new SpeechSynthesisUtterance(message); utterance.lang = "ko-KR"; utterance.rate = 1.12; window.speechSynthesis.speak(utterance); }
   async function requestWakeLock() { if (wakeLock || !("wakeLock" in navigator)) { if (!("wakeLock" in navigator)) wakeLockStatus = "이 브라우저는 화면 유지 기능을 지원하지 않는다."; return; } try { wakeLock = await navigator.wakeLock.request("screen"); wakeLockStatus = "화면 켜짐 유지 중"; wakeLock.addEventListener("release", () => { wakeLock = null; wakeLockStatus = "화면 유지가 해제됐다."; render(); }); } catch { wakeLockStatus = "화면 유지 요청을 허용하지 못했다."; } }
@@ -108,6 +108,13 @@
     if (cameraStream) cameraStream.getTracks().forEach(track => track.stop()); cameraStream = null;
     $("motionVideo").srcObject = null; $("cameraPanel").classList.add("hidden"); $("cameraStart").disabled = false; $("cameraStop").disabled = true;
   }
+  function resolveTrainingInput(action, source) {
+    const drill = state.training.currentDrill;
+    if (state.training.phase !== "challenge" || !drill || !availableActions(drill, state.inventory).includes(action)) return false;
+    state = resolveTraining(state, action); render();
+    if (source === "camera") { $("cameraInfo").textContent = `회피 성공 판정 ${dodgeCount}회 · 전투에 ${action === "dodge" ? "회피" : "동작"}를 반영했어.`; speak("회피 성공"); }
+    return true;
+  }
   function sampleCameraMotion() {
     const video = $("motionVideo"); if (!video.videoWidth) return;
     const canvas = document.createElement("canvas"); canvas.width = 64; canvas.height = 48;
@@ -115,12 +122,12 @@
     const pixels = context.getImageData(0, 0, canvas.width, canvas.height).data; const current = new Uint8Array(canvas.width * canvas.height);
     let score = 0; for (let i = 0, p = 0; p < current.length; i += 4, p += 1) { const light = (pixels[i] * 3 + pixels[i + 1] * 6 + pixels[i + 2]) / 10; current[p] = light; if (motionFrame) score += Math.abs(light - motionFrame[p]); }
     motionFrame = current; const amount = motionFrame && score ? Math.min(100, Math.round(score / current.length * 3.2)) : 0; $("motionMeter").style.width = `${amount}%`;
-    if (amount >= 22 && Date.now() - motionLastAt > 1100) { motionLastAt = Date.now(); $("cameraInfo").textContent = "회피 후보 움직임 감지! 실제 회피 판정 규칙을 조율 중이야."; }
-    else if (amount < 22) $("cameraInfo").textContent = `움직임 강도 ${amount}% · 화면 안에서 옆으로 크게 피해 봐.`;
+    if (amount >= 28 && Date.now() - motionLastAt > 1100) { motionLastAt = Date.now(); dodgeCount += 1; const drill = state.training.currentDrill; if (drill?.kind === "dodge" && availableActions(drill, state.inventory).includes("dodge")) resolveTrainingInput("dodge", "camera"); else $("cameraInfo").textContent = `회피 후보 움직임 ${dodgeCount}회 · 그림자 늑대 전투에서 자동 반영된다.`; }
+    else if (amount < 28) $("cameraInfo").textContent = `움직임 강도 ${amount}% · 회피 몬스터 전투에서는 옆으로 크게 피해 봐.`;
   }
   async function startCameraMotion() {
     if (!navigator.mediaDevices?.getUserMedia) { $("cameraInfo").textContent = "이 브라우저는 카메라 입력을 지원하지 않는다."; $("cameraPanel").classList.remove("hidden"); return; }
-    try { cameraStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user", width: { ideal: 640 }, height: { ideal: 480 } }, audio: false }); $("motionVideo").srcObject = cameraStream; $("cameraPanel").classList.remove("hidden"); $("cameraStart").disabled = true; $("cameraStop").disabled = false; motionFrame = null; $("cameraInfo").textContent = "카메라 연결됨 · 1초 간격으로 큰 움직임을 세어 본다."; motionTimer = window.setInterval(sampleCameraMotion, 160); }
+    try { cameraStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user", width: { ideal: 640 }, height: { ideal: 480 } }, audio: false }); $("motionVideo").srcObject = cameraStream; $("cameraPanel").classList.remove("hidden"); $("cameraStart").disabled = true; $("cameraStop").disabled = false; motionFrame = null; $("cameraInfo").textContent = "카메라 연결됨 · 그림자 늑대 전투 중 옆으로 피하면 회피 행동을 자동 반영한다."; motionTimer = window.setInterval(sampleCameraMotion, 160); }
     catch { $("cameraPanel").classList.remove("hidden"); $("cameraInfo").textContent = "카메라 권한이 필요하다. 주소창 권한 설정을 확인해 줘."; }
   }
   function beginGpsRun() {
@@ -165,7 +172,7 @@
       $("event").textContent = "어떻게 대응할까? 선택은 게임 결과만 바꾸며 실제 행동을 지시하지 않아."; $("actions").replaceChildren(...availableActions(e,state.inventory).map(id => { const b=document.createElement("button"); b.className="action"; b.innerHTML=`${ACTIONS[id].label}<small>${ACTIONS[id].description}</small>`; b.onclick=()=>{state=resolveEncounter(state,id);render();}; return b;}));
     } else if (state.lastEvent) { const e=state.lastEvent; $("phaseTitle").textContent="다음 구간 준비"; $("phaseHint").textContent="결과를 정리하고 다시 탐험한다."; $("scene").textContent="🌲 ✨ 🌲"; const item=e.gainedItem ? ` / ${ITEMS[e.gainedItem].label} 획득` : ""; const source=e.inputSource === "gps" ? "GPS 모의 신호" : e.inputSource === "treadmill" ? "러닝머신" : "수동 페이스"; $("event").textContent=`${e.title} · ${ACTIONS[e.action].label} (${source}) — ${e.passed ? `성공! +${e.gainedXp} XP / +${e.gainedGold} G${item}` : `아쉬운 결과. +${e.gainedXp} XP`}`; }
     else { $("phaseTitle").textContent="탐험 대기 중"; $("phaseHint").textContent=`${REGIONS[state.region].label}에서 다음 사건을 기다린다`; }
-    if (trainingActive) { const d=state.training.currentDrill; $("trainingTitle").textContent=`${d.title} · HP ${d.hp}/${d.maxHp}`; $("trainingHint").textContent=d.task; $("trainingScene").textContent=d.kind === "throw" ? "🎯 🟢 🏹" : d.kind === "dodge" ? "🐺 💨 🧍" : "🪨 🛡️ ⚔️"; $("trainingResult").textContent=`전투 ${d.turn + 1}턴 · 몬스터 공격력 ${d.attack} · 행동을 골라 HP를 0으로 만들어.`; $("trainingActions").replaceChildren(...availableActions(d,state.inventory).map(id=>{const b=document.createElement("button");b.className="action";b.innerHTML=`${ACTIONS[id].label}<small>${ACTIONS[id].description}</small>`;b.onclick=()=>{state=resolveTraining(state,id);render();};return b;})); }
+    if (trainingActive) { const d=state.training.currentDrill; $("trainingTitle").textContent=`${d.title} · HP ${d.hp}/${d.maxHp}`; $("trainingHint").textContent=d.task; $("trainingScene").textContent=d.kind === "throw" ? "🎯 🟢 🏹" : d.kind === "dodge" ? "🐺 💨 🧍" : "🪨 🛡️ ⚔️"; $("trainingResult").textContent=d.kind === "dodge" ? `전투 ${d.turn + 1}턴 · 카메라를 켠 뒤 화면 안에서 옆으로 피하면 회피가 자동 입력된다.` : `전투 ${d.turn + 1}턴 · 몬스터 공격력 ${d.attack} · 행동을 골라 HP를 0으로 만들어.`; $("trainingActions").replaceChildren(...availableActions(d,state.inventory).map(id=>{const b=document.createElement("button");b.className="action";b.innerHTML=`${ACTIONS[id].label}<small>${ACTIONS[id].description}</small>`;b.onclick=()=>resolveTrainingInput(id,"button");return b;})); }
     else if (state.training.lastDrill) { const d=state.training.lastDrill; $("trainingTitle").textContent="다음 몬스터 탐색"; $("trainingHint").textContent="전투 결과가 모험가 상태에 반영됐다."; $("trainingScene").textContent="⚔️ ✨ 🛡️"; $("trainingResult").textContent=`${d.title} · ${ACTIONS[d.action].label} — ${d.passed ? `승리! +${d.gainedXp} XP / +${d.gainedGold} G${d.inputBonus ? " · 신호 보너스 +2 XP" : ""}` : `방어 성공. +${d.gainedXp} XP`}`; }
   }
   $("pace").addEventListener("input",e=>$("paceValue").textContent=Number(e.target.value).toFixed(1));
