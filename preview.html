@@ -2,13 +2,38 @@
 <html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#0c1b23"><title>Motion RPG | 통합 플레이 시안</title>
 <style>
 :root{color-scheme:dark;--bg:#071219;--panel:#10242a;--line:#426b684e;--fog:#b0cbc0;--white:#f5fcf8;--mint:#a8ecc2;--gold:#ffd593;font-family:system-ui,-apple-system,"Pretendard","Noto Sans KR",sans-serif}*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:radial-gradient(ellipse at 55% -10%,#1b4939,transparent 44%),#071219;color:var(--white)}button,input,select{font:inherit}button{cursor:pointer}button:disabled{opacity:.45;cursor:default}.app{width:min(1120px,100%);margin:auto;padding:18px 18px 66px}.top{display:flex;align-items:center;justify-content:space-between;gap:15px;margin-bottom:19px}.mark{letter-spacing:.2em;font-weight:900;font-size:13px;color:#bdebd0}.mark em{font-style:normal;color:#739e8c;font-weight:500;letter-spacing:.05em}.version{font-size:11px;border:1px solid #6e9b82;border-radius:999px;color:#bfdec9;padding:7px 11px}.menu{display:flex;gap:7px;overflow:auto;padding:5px 0 15px;scrollbar-width:none}.menu button{border:1px solid #416454;background:#112821;color:#bcd4c6;border-radius:13px;padding:11px 16px;white-space:nowrap;font-weight:750}.menu button.active{background:#b7e9ad;color:#152b22;border-color:#b7e9ad}.page{display:none}.page.active{display:block}.stage{position:relative;overflow:hidden;border-radius:24px;border:1px solid #a8d2b640;min-height:320px;background:#254837;box-shadow:0 19px 60px #0008}.stage canvas{display:block;width:100%;height:clamp(335px,57vw,575px)}.stage::after{content:"";position:absolute;inset:0;pointer-events:none;background:linear-gradient(90deg,#091a20d9 0%,#091a2080 37%,transparent 75%),linear-gradient(0deg,#031a1dcf,transparent 38%)}.stage-copy{position:absolute;z-index:2;left:clamp(17px,4vw,47px);top:clamp(30px,8vw,95px);width:min(440px,82%);pointer-events:none}.stage-copy .eyebrow{font-size:12px;letter-spacing:.2em;color:#caefb0}.stage-copy h1{font-size:clamp(32px,5vw,60px);line-height:1.08;margin:14px 0 17px;letter-spacing:-.06em;text-shadow:0 3px 13px #0008}.stage-copy p{max-width:335px;font-size:clamp(13px,1.7vw,17px);line-height:1.8;color:#e0ede7;margin:0;text-shadow:0 2px 6px #0007}.stage-bottom{position:absolute;z-index:3;bottom:20px;left:clamp(15px,3vw,34px);right:clamp(15px,3vw,34px);display:flex;gap:9px;flex-wrap:wrap}.cta{border:1px solid #d8f3c8;background:#b7e9ad;color:#193025;font-weight:900;padding:13px 19px;border-radius:14px;box-shadow:0 5px 18px #0717177d}.cta.alt{border-color:#d0efe477;background:#092b31c4;color:white;backdrop-filter:blur(12px)}.cta.ghost{background:#193b37;color:#dfefea;border-color:#568877}.section-title{display:flex;justify-content:space-between;align-items:center;gap:12px;margin:26px 0 12px}.section-title h2{font-size:19px;margin:0;letter-spacing:-.025em}.tiny{font-size:12px;color:#96b3a6}.grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}.card{border:1px solid var(--line);background:linear-gradient(160deg,#152d31,#0d1d25);border-radius:19px;padding:19px;box-shadow:inset 0 1px #e4ffe609}.card h3{font-size:16px;margin:3px 0 11px}.card p{color:#adc9be;font-size:13px;line-height:1.65;margin:0}.stat{font-size:28px;font-weight:900;letter-spacing:-.04em}.stat small{display:block;font-size:11px;font-weight:600;color:#96b7a8;letter-spacing:0}.flex{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}.world-note{font-size:12px;color:#aac5b7;margin:11px 0 0}.intro{margin:10px 0 19px;max-width:650px;color:#a7c4b4;line-height:1.7;font-size:14px}.mode-hero{display:grid;grid-template-columns:1.3fr .7fr;gap:14px}.forest{min-height:268px;position:relative;border-radius:19px;overflow:hidden;background:radial-gradient(ellipse at 65% 0,#eff4aa7a 0,transparent 45%),linear-gradient(170deg,#477c75,#254c49 52%,#183a2d 53%,#132e2c);display:flex;justify-content:center;align-items:center;border:1px solid #7bc99e4f}.forest::before{content:"🌲　🌳　🌲　🌲　🌳　🌲";position:absolute;bottom:12px;white-space:nowrap;font-size:clamp(36px,6vw,65px);filter:drop-shadow(0 3px 3px #071e1a);opacity:.96}.forest::after{content:"";position:absolute;left:38%;right:35%;bottom:0;height:38%;background:#9fa06a99;clip-path:polygon(43% 0%,66% 0,100% 100%,0 100%);opacity:.5}.floating{z-index:1;position:relative;text-align:center;padding:25px;text-shadow:0 3px 12px #102920}.floating .tag{font-size:11px;letter-spacing:.14em;color:#e2f8d6}.floating h2{font-size:clamp(23px,4vw,38px);margin:8px 0}.floating p{font-size:13px;max-width:330px;line-height:1.6;margin:auto;color:#e2f0e6}.tracker{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}.tracker .card{padding:13px 15px}.tracker .stat{font-size:22px}.settings{display:grid;grid-template-columns:1fr 1fr 1fr;gap:13px;margin-top:15px}.settings label{display:block;color:#9fbbac;font-size:12px;margin-bottom:8px}.settings select,.settings input{width:100%;height:42px;border:1px solid #5687777a;border-radius:11px;background:#0a2025;color:#e9f8ef;padding:8px 10px}.controls{display:flex;gap:8px;flex-wrap:wrap;margin-top:15px}.controls button{padding:10px 14px;border:1px solid #6c9685;border-radius:11px;background:#183a34;color:#ddf7e4;font-weight:750}.controls button.primary{background:#b7e9ad;color:#152b22;border-color:#b7e9ad}.controls button.active{background:#417e60;color:white;border-color:#c0f0bb}.story{min-height:115px;line-height:1.7;padding:18px;border-radius:17px;border:1px solid #6fa98b6c;background:#142f29;margin-top:15px}.story b{display:block;color:#c6f4c6;margin-bottom:6px}.story p{margin:0;color:#d9e9db;font-size:14px}.meter{width:100%;height:9px;border-radius:100px;background:#07171b;overflow:hidden;margin-top:15px}.meter span{display:block;height:100%;width:0;background:linear-gradient(90deg,#77c9a4,#d5ed9b);transition:width .25s}.feed{max-height:175px;overflow:auto;padding-left:17px;color:#bed4c7;font-size:12px;line-height:1.8}.badge{display:inline-block;padding:5px 9px;border:1px solid #68ad9373;border-radius:999px;color:#d2edda;font-size:11px}.msg{border:1px solid #819d8a40;border-radius:15px;background:#0d2928;padding:13px 15px;font-size:13px;color:#b9d2c4;line-height:1.7;margin:16px 0}.indoor-stage{height:min(65vh,550px);min-height:380px;border-radius:19px;overflow:hidden;border:1px solid #5c938282;background:#102b31}.indoor-stage iframe{border:0;width:100%;height:100%;display:block}.slots{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:13px}.slot{border:1px solid #52736469;border-radius:16px;background:#163129;padding:17px}.slot b{font-size:16px}.slot p{font-size:12px;color:#aac7b9;line-height:1.65}.footer{font-size:11px;color:#829b91;text-align:center;margin:34px 0 4px}.hidden{display:none!important}@media(max-width:740px){.grid{grid-template-columns:1fr 1fr}.mode-hero{grid-template-columns:1fr}.settings{grid-template-columns:1fr 1fr}.stage canvas{height:390px}.slots{grid-template-columns:1fr}.stage-copy{top:35px}.stage-bottom .cta{font-size:13px;padding:11px 13px}}@media(max-width:460px){.app{padding:13px 12px 58px}.grid{grid-template-columns:repeat(2,1fr)}.card{padding:15px}.settings{grid-template-columns:1fr 1fr}.stage canvas{height:400px}.cta{padding:11px 13px}.top{margin-bottom:10px}.stage-copy h1{font-size:39px}}
+
+/* Equipment preview: styled as a game character pane, not as a shop. */
+.village-hero-name{position:absolute;z-index:3;right:9%;bottom:100px;padding:8px 16px;border:1px solid #bde4b885;background:#082626c9;backdrop-filter:blur(6px);border-radius:999px;font-size:13px;font-weight:900;box-shadow:0 6px 26px #0005;pointer-events:none}
+.village-hero-name small{font-size:11px;color:#d8edaa;display:block;text-align:center;font-weight:500}
+.loadout-layout{display:grid;grid-template-columns:minmax(250px,.9fr) minmax(280px,1.1fr);gap:16px;margin:17px 0 20px}
+.avatar-display{height:420px;border-radius:21px;border:1px solid #a5ceac70;background:radial-gradient(ellipse at 51% 39%,#536f5a66,transparent 53%),radial-gradient(ellipse at 51% 94%,#588562 0%,transparent 54%),linear-gradient(155deg,#1c403c,#11262a 75%);position:relative;overflow:hidden;box-shadow:inset 0 1px 0 #dae8c132,0 18px 40px #0004}
+.avatar-display:before{content:"";position:absolute;left:3%;right:3%;bottom:28px;height:55px;background:radial-gradient(ellipse at center,#c4bf8a66,transparent 72%);border-radius:100%}
+.avatar-display canvas{display:block;width:100%;height:100%;position:relative;z-index:1}
+.avatar-title{position:absolute;z-index:2;left:16px;top:13px;pointer-events:none;display:flex;gap:8px;align-items:center}
+.avatar-title .badge{background:#0c2b2cba}
+.avatar-caption{position:absolute;z-index:2;left:15px;right:15px;bottom:14px;text-align:center;color:#d7ebd5;font-size:12px;text-shadow:0 2px 8px #000a;pointer-events:none}
+.loadout-panel{border-radius:21px;background:linear-gradient(145deg,#162f31,#0e2528);border:1px solid #6f958071;padding:20px}
+.loadout-panel h2{margin:2px 0 7px;font-size:20px}
+.gear-intro{font-size:13px;line-height:1.65;color:#b6ccbd;margin:0 0 16px}
+.gear-list{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.gear-list label{display:block;margin:0;color:#c8ded1;font-size:12px;font-weight:800}
+.gear-list label span{display:block;margin-bottom:6px}
+.gear-list select{width:100%;border:1px solid #719b857e;border-radius:12px;background:#082329;color:#f2fdf3;padding:11px 9px;font-size:13px;min-height:43px;cursor:pointer}
+.gear-presets{display:flex;gap:7px;flex-wrap:wrap;margin:15px 0}
+.gear-presets button{border:1px solid #789d86a6;border-radius:10px;background:#20473e;color:#e8f4e6;font-size:12px;padding:8px 11px;min-height:36px}
+.gear-presets button:hover{background:#3b6952}
+.gear-status{border:1px solid #9dba8c59;border-radius:12px;background:#102e2c;padding:13px;font-size:12px;line-height:1.7;color:#d5ead8;min-height:62px}
+.gear-disclaimer{color:#a0b7aa;font-size:12px;line-height:1.65;margin-top:12px}
+@media(max-width:750px){.loadout-layout{grid-template-columns:1fr}.avatar-display{height:400px}.village-hero-name{right:3%;bottom:93px;font-size:11px;padding:6px 11px}}
+@media(max-width:420px){.gear-list{grid-template-columns:1fr 1fr}.loadout-panel{padding:14px}.avatar-display{height:365px}.village-hero-name{right:2%;bottom:90px}}
 </style></head>
 <body><div class="app">
 <header class="top"><div class="mark">MOTION RPG <em> / 경계의 숲</em></div><div class="version">전체 콘셉트 시안 · 0.25</div></header>
 <nav class="menu" aria-label="게임 화면"><button data-view="village" class="active">마을</button><button data-view="run">야외 탐험</button><button data-view="indoor">실내 전투</button><button data-view="character">모험가</button></nav>
 <section class="page active" id="page-village">
- <div class="stage"><canvas id="village3d" aria-label="입체감 있는 숲과 마을 풍경"></canvas><div class="stage-copy"><div class="eyebrow">THE BORDERWOOD</div><h1>경계의 숲<br>모험의 시작</h1><p>작은 숲마을을 거점으로 미지의 길을 탐험하고, 전투와 발견을 통해 성장한다.</p></div><div class="stage-bottom"><button class="cta" data-go="run">숲으로 탐험하기</button><button class="cta alt" data-go="indoor">실내 전투 시작</button><button class="cta alt" data-go="character">장비 · 성장</button></div></div>
- <p class="world-note">마을 풍경은 조작 가능한 3D풍 콘셉트 렌더링 시안이며, 실제 이동형 3D 마을과 NPC 상호작용은 아직 구현되지 않았어.</p>
+ <div class="stage"><canvas id="village3d" aria-label="입체감 있는 숲과 마을 풍경, 장비를 착용한 모험가"></canvas><div class="village-hero-name">마을의 모험가<small>장비 시착 중</small></div><div class="stage-copy"><div class="eyebrow">THE BORDERWOOD</div><h1>경계의 숲<br>모험의 시작</h1><p>작은 숲마을을 거점으로 미지의 길을 탐험하고, 전투와 발견을 통해 성장한다.</p></div><div class="stage-bottom"><button class="cta" data-go="run">숲으로 탐험하기</button><button class="cta alt" data-go="indoor">실내 전투 시작</button><button class="cta alt" data-go="character">장비 · 성장</button></div></div>
+ <p class="world-note">숲마을과 캐릭터는 장비별 외형 변화를 보여주는 3D풍 그래픽 시안이야. 실제 자유 이동형 3D 마을과 NPC 상호작용은 추후 개발할 예정이야.</p>
  <div class="section-title"><h2>모험가 상태</h2><span class="badge">실내 · 야외 성장 공유</span></div>
  <div class="grid"><div class="card"><div class="stat" id="homeLevel">1<small>레벨</small></div></div><div class="card"><div class="stat" id="homeGold">0<small>골드</small></div></div><div class="card"><div class="stat" id="homeXp">0<small>누적 경험치</small></div></div></div>
  <div class="section-title"><h2>오늘의 활동</h2></div>
@@ -32,6 +57,21 @@
 <div class="indoor-stage"><iframe id="indoorFrame" title="기존 3D 실내 전투 프로토타입" loading="lazy"></iframe></div><div class="controls"><a class="cta" href="./indoor.html" target="_blank" rel="noopener">3D 전투 전체화면 열기</a><button id="restartIndoor" class="cta alt">전투 화면 다시 불러오기</button></div>
 <div class="msg">원래 실내 전투는 훈련장 미션이 아니라 같은 숲 세계에서의 실제 전투야. 몬스터 체력·보스·검격·투척·회피·장비 성장 요소는 앞으로 동일한 세계와 연결해 완성할 예정이야.</div></section>
 <section class="page" id="page-character"><div class="mark">CHARACTER & PROGRESSION</div><h1 style="font-size:30px;margin:9px 0">모험가의 성장</h1><p class="intro">숲의 전투와 야외 러닝은 별개 게임이 아니라 같은 캐릭터를 성장시키는 다른 방법이야. 저장된 진행 상황을 확인해 봐.</p>
+<div class="section-title"><h2>내 캐릭터 · 장비 외형 미리보기</h2><span class="badge">외형 연동 시안</span></div>
+<div class="loadout-layout">
+ <div class="avatar-display"><canvas id="avatarCanvas" aria-label="장비를 착용한 모험가 전신 일러스트"></canvas><div class="avatar-title"><span class="badge">ADVENTURER</span><span class="badge">장비 변경 즉시 반영</span></div><div class="avatar-caption">마을 화면에도 같은 장비 외형이 표시돼</div></div>
+ <div class="loadout-panel"><h2>장비 시착실</h2><p class="gear-intro">무기·머리·갑옷·보조장비를 선택하면 캐릭터 모습이 즉시 달라져. 여러 장비를 조합해 봐.</p>
+  <div class="gear-list">
+   <label><span>무기</span><select id="gear-weapon"></select></label>
+   <label><span>투구 · 머리장식</span><select id="gear-head"></select></label>
+   <label><span>갑옷</span><select id="gear-armor"></select></label>
+   <label><span>보조장비</span><select id="gear-offhand"></select></label>
+  </div>
+  <div class="gear-presets"><button data-outfit="beginner">초보 모험가</button><button data-outfit="scout">숲 정찰병</button><button data-outfit="knight">철갑 기사</button><button data-outfit="mage">숲의 마도사</button></div>
+  <div class="gear-status" id="gearStatus" role="status" aria-live="polite">착용 장비를 불러오는 중이야.</div>
+  <p class="gear-disclaimer">현재는 <b>외형 시착 전용</b>이야. 장비를 실제로 얻거나 소유한 것으로 처리되지 않고, 전투 능력치와 게임 보상에도 영향을 주지 않아. 선택한 외형은 이 브라우저에만 별도로 저장돼.</p>
+ </div>
+</div>
 <div class="grid"><div class="card"><div class="stat" id="cLevel">1<small>레벨</small></div></div><div class="card"><div class="stat" id="cXp">0 XP<small>경험치</small></div></div><div class="card"><div class="stat" id="cGold">0 G<small>골드</small></div></div></div><div class="section-title"><h2>탐험 가방</h2></div><div class="grid"><div class="card"><div class="stat" id="cTorch">0<small>횃불</small></div></div><div class="card"><div class="stat" id="cMap">0<small>지도 조각</small></div></div><div class="card"><div class="stat" id="cBandage">0<small>붕대</small></div></div></div>
 <div class="section-title"><h2>앞으로 연결할 성장 요소</h2></div><div class="slots"><div class="slot"><b>무기와 장비 제작</b><p>희귀한 재료, 검·활·마법 도구, 상황별 장비 선택. 반복 횟수보다 전투 전략과 숙련도에 의미가 있어야 해.</p></div><div class="slot"><b>다양한 몬스터와 돌발 이벤트</b><p>사건을 조합해 같은 숲을 반복해도 새로운 경험을 제공하고, 더 어려운 적과 도전 목표를 열어.</p></div></div>
 <div class="msg">원정 시뮬레이션의 보상은 실제 캐릭터에 반영되지 않아. 실전 모드의 장기 보상과 악용 방지는 추후 검증이 필요해.</div></section>
@@ -39,14 +79,51 @@
 </div>
 <script type="module">
 import {createAdventure,startAdventure,advanceAdventure,endAdventure,summarizeAdventure,settleAdventure} from "./src/expedition.mjs";
+import {GEAR,DEFAULT_LOADOUT,SAMPLE_SETS,sanitizeLoadout,describeLoadout,drawAvatar} from "./src/avatar.mjs";
 const $=id=>document.getElementById(id);
 const pages=["village","run","indoor","character"];
-function go(page){if(!pages.includes(page))return;pages.forEach(x=>$("page-"+x).classList.toggle("active",x===page));document.querySelectorAll("[data-view]").forEach(b=>b.classList.toggle("active",b.dataset.view===page));if(page==="indoor"&&!$("indoorFrame").src)$("indoorFrame").src="./indoor.html";if(page==="village")drawVillage();if(page==="character"||page==="village")syncCharacter();window.scrollTo({top:0,behavior:"smooth"});}
+function go(page){if(!pages.includes(page))return;pages.forEach(x=>$("page-"+x).classList.toggle("active",x===page));document.querySelectorAll("[data-view]").forEach(b=>b.classList.toggle("active",b.dataset.view===page));if(page==="indoor"&&!$("indoorFrame").src)$("indoorFrame").src="./indoor.html";if(page==="village")drawVillage();if(page==="character"){drawEquipment();}if(page==="character"||page==="village")syncCharacter();window.scrollTo({top:0,behavior:"smooth"});}
 document.querySelectorAll("[data-view]").forEach(b=>b.onclick=()=>go(b.dataset.view));
 document.querySelectorAll("[data-go]").forEach(b=>b.onclick=()=>go(b.dataset.go));
 $("restartIndoor").onclick=()=>$("indoorFrame").src="./indoor.html?reload="+Date.now();
 function sharedCharacter(){try{return JSON.parse(localStorage.getItem("motion-rpg-save-v1")||"null")||{}}catch{return{}}}
 function syncCharacter(){const s=sharedCharacter();$("homeLevel").innerHTML=(s.level||1)+"<small>레벨</small>";$("homeXp").innerHTML=(s.xp||0)+"<small>누적 경험치</small>";$("homeGold").innerHTML=(s.gold||0)+"<small>골드</small>";$("cLevel").innerHTML=(s.level||1)+"<small>레벨</small>";$("cXp").innerHTML=(s.xp||0)+" XP<small>경험치</small>";$("cGold").innerHTML=(s.gold||0)+" G<small>골드</small>";const bag=s.inventory||{};$("cTorch").innerHTML=(bag.torch||0)+"<small>횃불</small>";$("cMap").innerHTML=(bag.map||0)+"<small>지도 조각</small>";$("cBandage").innerHTML=(bag.bandage||0)+"<small>붕대</small>";}
+// Temporary preview loadout, deliberately separate from the real RPG save.
+const EQUIPMENT_KEY="motion-rpg-preview-equipment-v1";
+function loadPreviewGear(){try{return sanitizeLoadout(JSON.parse(localStorage.getItem(EQUIPMENT_KEY)||"null"));}catch{return {...DEFAULT_LOADOUT};}}
+let loadout=loadPreviewGear();
+const gearSlots={weapon:"무기",head:"머리",armor:"갑옷",offhand:"보조장비"};
+function updateGearStatus(){
+  $("gearStatus").textContent="현재 외형: "+describeLoadout(loadout)+". 이 조합은 외형 미리보기로만 적용돼.";
+}
+function drawEquipment(){
+ const canvas=$("avatarCanvas");if(!canvas)return;
+ const w=canvas.clientWidth||350,h=canvas.clientHeight||400,ratio=Math.min(window.devicePixelRatio||1,2);
+ canvas.width=Math.round(w*ratio);canvas.height=Math.round(h*ratio);
+ const g=canvas.getContext("2d");if(!g)return;g.setTransform(ratio,0,0,ratio,0,0);
+ const avatarScale=Math.min(1.34,(h-85)/265,w/250);
+ drawAvatar(g,w*.5,h*.86,avatarScale,loadout);
+}
+function savePreviewGear(){
+ try{localStorage.setItem(EQUIPMENT_KEY,JSON.stringify(loadout));}catch{}
+ updateGearStatus();drawVillage();
+ if($("page-character").classList.contains("active"))drawEquipment();
+}
+for(const slot of Object.keys(gearSlots)){
+ const select=$("gear-"+slot);
+ for(const item of GEAR[slot]){
+  const option=document.createElement("option");option.value=item.id;option.textContent=item.name;select.append(option);
+ }
+ select.value=loadout[slot];
+ select.addEventListener("change",()=>{loadout=sanitizeLoadout({...loadout,[slot]:select.value});savePreviewGear();});
+}
+document.querySelectorAll("[data-outfit]").forEach(button=>button.addEventListener("click",()=>{
+ const next=SAMPLE_SETS[button.dataset.outfit];if(!next)return;
+ loadout=sanitizeLoadout(next);
+ for(const slot of Object.keys(gearSlots))$("gear-"+slot).value=loadout[slot];
+ savePreviewGear();
+}));
+updateGearStatus();
 syncCharacter();
 let session=null,timer=null,voice=false,paceType="steady",watchId=null,lastGps=null,lastGpsAt=0,seed=Date.now()>>>0,runId="";
 function message(head,detail){$("storyHead").textContent=head;$("storyDetail").textContent=detail;}
@@ -74,6 +151,6 @@ function poly(points,color,stroke){ctx.beginPath();points.forEach((p,i)=>i?ctx.l
 function box(x,y,size,color){const z=size*.36;poly([[x-z,y-size],[x+size,y-size],[x+size,y],[x-z,y]],color);poly([[x-z,y-size],[x+size,y-size],[x+size+z,y-size-z*.6],[x,y-size-z*.6]],"#95a68a");poly([[x+size,y-size],[x+size+z,y-size-z*.6],[x+size+z,y-z*.6],[x+size,y]],"#284237");}
 function tree(x,y,s){ctx.fillStyle="#413f2c";ctx.fillRect(x-s*.09,y-s*.6,s*.18,s*.6);poly([[x,y-s*1.9],[x-s*.63,y-s*.6],[x+s*.61,y-s*.6]],"#17483f");poly([[x,y-s*2.35],[x-s*.55,y-s*1.18],[x+s*.56,y-s*1.18]],"#25664f");poly([[x,y-s*2.65],[x-s*.42,y-s*1.75],[x+s*.42,y-s*1.75]],"#36785a");}
 function house(x,y,s,roof){box(x-s*.45,y,s,"#9b9e7b");poly([[x-s*1.0,y-s],[x-s*.1,y-s*1.85],[x+s*1.05,y-s]],roof);ctx.fillStyle="#322f2a";ctx.fillRect(x-s*.12,y-s*.55,s*.3,s*.55);ctx.fillStyle="#e4bb75";ctx.fillRect(x-s*.62,y-s*.65,s*.25,s*.23);}
-function drawVillage(){const width=cvs.clientWidth||880,height=cvs.clientHeight||490;if(!width||!height)return;const ratio=Math.min(2,window.devicePixelRatio||1);if(cvs.width!==Math.round(width*ratio)||cvs.height!==Math.round(height*ratio)){cvs.width=Math.round(width*ratio);cvs.height=Math.round(height*ratio)}ctx.setTransform(ratio,0,0,ratio,0,0);w=width;h=height;const g=ctx.createLinearGradient(0,0,0,h);g.addColorStop(0,"#87b7ba");g.addColorStop(.51,"#d5d7a2");g.addColorStop(.53,"#638d6e");g.addColorStop(1,"#244a35");ctx.fillStyle=g;ctx.fillRect(0,0,w,h);const cy=h*.53;ctx.fillStyle="#3c7662";for(let i=0;i<9;i++){const x=i*w/8;poly([[x-w*.18,cy],[x+w*.16,cy],[x,cy-h*.19]],i%2?"#538376":"#5a9184");}poly([[w*.48,cy],[w*.58,cy],[w*.9,h],[w*.24,h]],"#b1a87c");poly([[w*.49,cy],[w*.52,cy],[w*.64,h],[w*.54,h]],"#d0c494");for(let i=0;i<8;i++){const depth=i/8;const y=cy+Math.pow(depth,1.45)*h*.54;let s=8+depth*54;tree(w*(.05+depth*.18),y,s);tree(w*(.96-depth*.17),y,s*.92)}house(w*.68,cy+h*.34,w*.125,"#5c5142");house(w*.31,cy+h*.28,w*.10,"#67503c");house(w*.82,cy+h*.12,w*.07,"#534c3f");for(let i=0;i<10;i++){let a=i/9,yy=cy+Math.pow(a,1.3)*h*.52,xx=w*(.34-a*.1);ctx.strokeStyle="#afad78";ctx.lineWidth=2+a*2;ctx.beginPath();ctx.moveTo(xx,yy);ctx.lineTo(xx+15+a*22,yy);ctx.stroke();}ctx.fillStyle="#ffffff36";for(let i=0;i<35;i++){let x=(i*127%997)/997*w,y=cy+(i*79%491)/491*h*.4;ctx.fillRect(x,y,1.2,1.2);}}
-window.addEventListener("resize",drawVillage);drawVillage();syncRun();
+function drawVillage(){const width=cvs.clientWidth||880,height=cvs.clientHeight||490;if(!width||!height)return;const ratio=Math.min(2,window.devicePixelRatio||1);if(cvs.width!==Math.round(width*ratio)||cvs.height!==Math.round(height*ratio)){cvs.width=Math.round(width*ratio);cvs.height=Math.round(height*ratio)}ctx.setTransform(ratio,0,0,ratio,0,0);w=width;h=height;const g=ctx.createLinearGradient(0,0,0,h);g.addColorStop(0,"#87b7ba");g.addColorStop(.51,"#d5d7a2");g.addColorStop(.53,"#638d6e");g.addColorStop(1,"#244a35");ctx.fillStyle=g;ctx.fillRect(0,0,w,h);const cy=h*.53;ctx.fillStyle="#3c7662";for(let i=0;i<9;i++){const x=i*w/8;poly([[x-w*.18,cy],[x+w*.16,cy],[x,cy-h*.19]],i%2?"#538376":"#5a9184");}poly([[w*.48,cy],[w*.58,cy],[w*.9,h],[w*.24,h]],"#b1a87c");poly([[w*.49,cy],[w*.52,cy],[w*.64,h],[w*.54,h]],"#d0c494");for(let i=0;i<8;i++){const depth=i/8;const y=cy+Math.pow(depth,1.45)*h*.54;let s=8+depth*54;tree(w*(.05+depth*.18),y,s);tree(w*(.96-depth*.17),y,s*.92)}house(w*.68,cy+h*.34,w*.125,"#5c5142");house(w*.31,cy+h*.28,w*.10,"#67503c");house(w*.82,cy+h*.12,w*.07,"#534c3f");for(let i=0;i<10;i++){let a=i/9,yy=cy+Math.pow(a,1.3)*h*.52,xx=w*(.34-a*.1);ctx.strokeStyle="#afad78";ctx.lineWidth=2+a*2;ctx.beginPath();ctx.moveTo(xx,yy);ctx.lineTo(xx+15+a*22,yy);ctx.stroke();}ctx.fillStyle="#ffffff36";for(let i=0;i<35;i++){let x=(i*127%997)/997*w,y=cy+(i*79%491)/491*h*.4;ctx.fillRect(x,y,1.2,1.2);}drawAvatar(ctx,w*.77,h*.84,Math.max(.53,Math.min(1.05,w/970)),loadout);}
+window.addEventListener("resize",()=>{drawVillage();if($("page-character").classList.contains("active"))drawEquipment();});drawVillage();syncRun();
 </script></body></html>
