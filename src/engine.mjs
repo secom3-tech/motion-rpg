@@ -30,6 +30,17 @@ export const REGIONS = Object.freeze({
   ridge: { label: "달빛 능선", description: "레벨 2와 작은 랜턴이 필요한 고지대", events: RIDGE_EVENTS },
 });
 
+export const QUESTS = Object.freeze({
+  forest: {
+    goalAttempts: 6, goalSuccesses: 3,
+    boss: { id: "forest-warden", title: "숲의 수문장", task: "숲의 길을 지킬 자격을 증명하라", kind: "chase", reward: 20, actions: ["push", "steady", "bandage"] },
+  },
+  ridge: {
+    goalAttempts: 5, goalSuccesses: 3,
+    boss: { id: "ridge-watcher", title: "능선의 감시자", task: "고지대의 마지막 관문을 넘어라", kind: "fog", reward: 28, actions: ["steady", "recover", "torch"] },
+  },
+});
+
 export const ACTIONS = Object.freeze({
   push: { label: "돌파", description: "빠르게 기회를 잡는다" },
   steady: { label: "안정 이동", description: "현재 흐름을 유지한다" },
@@ -72,6 +83,7 @@ export function newGame() {
     training: { phase: "ready", attempts: 0, successes: 0, currentDrill: null, lastDrill: null },
     camp: { lantern: 0, surveyMap: 0, guards: 0 },
     region: "forest", regionAttempts: { forest: 0, ridge: 0 }, unlockedRegions: ["forest"]
+    , quests: { forest: { attempts: 0, successes: 0, bossDefeated: false }, ridge: { attempts: 0, successes: 0, bossDefeated: false } }
   };
 }
 
@@ -116,6 +128,23 @@ export function selectRegion(state, regionId) {
   return next;
 }
 
+export function isBossAvailable(state, regionId = state.region) {
+  const quest = state.quests[regionId];
+  const rules = QUESTS[regionId];
+  return !!quest && !quest.bossDefeated && quest.attempts >= rules.goalAttempts && quest.successes >= rules.goalSuccesses;
+}
+
+export function beginBossEncounter(state, paceInput) {
+  if (state.phase !== "exploring" || state.training.phase !== "ready") throw Error("Finish the active challenge first");
+  if (!isBossAvailable(state)) throw Error("Boss challenge is locked");
+  if (!isValidPace(paceInput)) throw Error("Invalid pace");
+  const pace = clamp(Number(paceInput), 4, 12);
+  const next = { ...state };
+  next.phase = "encounter";
+  next.currentEvent = { ...QUESTS[state.region].boss, pace, region: state.region, boss: true };
+  return next;
+}
+
 // Begins one simulated minute. Calling it outside exploration is an invalid transition.
 export function beginEncounter(state, paceInput) {
   if (state.phase !== "exploring") throw Error("Can only begin an encounter while exploring");
@@ -151,12 +180,19 @@ export function resolveEncounter(state, action) {
   if (gainedItem) next.inventory[gainedItem] += 1;
   next.level = 1 + Math.floor(next.xp / 100);
   next.attempts += 1;
-  next.regionAttempts = { ...state.regionAttempts, [event.region]: state.regionAttempts[event.region] + 1 };
+  next.regionAttempts = { ...state.regionAttempts, [event.region]: state.regionAttempts[event.region] + (event.boss ? 0 : 1) };
   next.unlockedRegions = [...new Set([...state.unlockedRegions, ...availableRegions(next)])];
+  next.quests = { ...state.quests, [event.region]: { ...state.quests[event.region] } };
+  if (event.boss) {
+    if (passed) next.quests[event.region].bossDefeated = true;
+  } else {
+    next.quests[event.region].attempts += 1;
+    next.quests[event.region].successes += passed ? 1 : 0;
+  }
   next.successes += passed ? 1 : 0;
   next.phase = "exploring";
   next.currentEvent = null;
-  next.lastEvent = { id: event.id, title: event.title, task: event.task, region: event.region, action, passed, gainedXp, gainedGold, gainedItem, pace: event.pace };
+  next.lastEvent = { id: event.id, title: event.title, task: event.task, region: event.region, boss: !!event.boss, action, passed, gainedXp, gainedGold, gainedItem, pace: event.pace };
   next.history = [...state.history, next.lastEvent].slice(-6);
   return next;
 }

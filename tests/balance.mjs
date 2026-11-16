@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { ACTIONS, EVENTS, ITEMS, RIDGE_EVENTS, REGIONS, TRAINING_DRILLS, UPGRADES, availableActions, availableRegions, newGame, beginEncounter, resolveEncounter, advanceGame, beginTraining, resolveTraining, purchaseUpgrade, selectRegion } from "../src/engine.mjs";
+import { ACTIONS, EVENTS, ITEMS, RIDGE_EVENTS, REGIONS, QUESTS, TRAINING_DRILLS, UPGRADES, availableActions, availableRegions, newGame, beginEncounter, beginBossEncounter, isBossAvailable, resolveEncounter, advanceGame, beginTraining, resolveTraining, purchaseUpgrade, selectRegion } from "../src/engine.mjs";
 
 assert.equal(new Set(EVENTS.map(e => e.id)).size, EVENTS.length, "Event IDs must be unique");
 assert.equal(new Set(Object.keys(ACTIONS)).size, Object.keys(ACTIONS).length, "Action IDs must be unique");
@@ -10,6 +10,7 @@ assert.equal(TRAINING_DRILLS.length, 3, "Indoor training needs three rotating dr
 assert.equal(Object.keys(UPGRADES).length, 3, "Camp needs three starter upgrades");
 assert.equal(RIDGE_EVENTS.length, 6, "The second region should contain six events");
 assert.equal(Object.keys(REGIONS).length, 2, "Two regions should be configured");
+assert.equal(Object.keys(QUESTS).length, 2, "Each region needs a quest");
 
 // State-machine boundaries: no rewards before an encounter is resolved.
 let state = newGame();
@@ -77,6 +78,16 @@ assert.equal(regionRun.region, "ridge");
 regionRun = resolveEncounter(beginEncounter(regionRun, 8), "steady");
 assert.equal(regionRun.lastEvent.region, "ridge");
 assert.ok(regionRun.lastEvent.gainedGold <= 13);
+
+// Bosses appear only after the regional objective and only clear on success.
+let bossRun = { ...newGame(), quests: { forest: { attempts: 6, successes: 3, bossDefeated: false }, ridge: { attempts: 0, successes: 0, bossDefeated: false } } };
+assert.ok(isBossAvailable(bossRun));
+bossRun = beginBossEncounter(bossRun, 7);
+assert.equal(bossRun.currentEvent.boss, true);
+bossRun = resolveEncounter(bossRun, "push");
+assert.equal(bossRun.lastEvent.boss, true);
+assert.equal(bossRun.quests.forest.bossDefeated, true);
+assert.ok(!isBossAvailable(bossRun));
 
 // Every event must be reachable once in a 12-minute cycle.
 let coverageRun = newGame();
