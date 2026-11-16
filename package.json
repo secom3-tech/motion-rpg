@@ -4,6 +4,6 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "test": "node tests/balance.mjs && node tests/expedition.mjs && node tests/preview-check.mjs && node tests/avatar.mjs && node tests/gear.mjs"
+    "test": "node tests/balance.mjs && node tests/expedition.mjs && node tests/preview-check.mjs && node tests/avatar.mjs && node tests/gear.mjs && node tests/combat-spatial.mjs"
   }
 }
