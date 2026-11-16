@@ -116,7 +116,7 @@ function rewardMaterials(kills){
  * those of completeArcadeGame. Materials are independent from cosmetics.
  */
 export function claimIndoorBattle(state,result){
- if(!validGame(state)||!result||!Number.isInteger(result.kills)||result.kills<1||result.kills>30)
+ if(!validGame(state)||!result||!Number.isInteger(result.kills)||result.kills<1||result.kills>10000)
    return {state,awarded:false,reason:"No valid battle result"};
  if(!Number.isFinite(result.updatedAt)||result.updatedAt<=0)return {state,awarded:false,reason:"No result timestamp"};
  const id=typeof result.sessionId==="string"&&result.sessionId.length>=8&&result.sessionId.length<=100?
