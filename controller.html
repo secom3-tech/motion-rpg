@@ -11,6 +11,8 @@
     #pairStatus{margin-top:12px;min-height:22px}
     button:disabled{opacity:.43;cursor:not-allowed}
     .linked{color:#a8f6bf!important}
+    #cutStyle{width:100%;padding:12px;background:#0b2b36;color:#e8f7ee;border-radius:11px;border:1px solid #90bbafa1;font-size:14px;margin:9px 0}
+    #cutHint{font-size:12px}
   </style>
 </head>
 <body><main>
@@ -25,18 +27,21 @@
   </section>
   <section class="card"><div>현재 동작</div><div class="score" id="count">0</div><div class="meter"><i id="meter"></i></div><div class="muted" id="status">센서를 켜고 한 번 시험해 봐.</div><div id="sensorDetail" class="muted">센서 수신: 꺼짐 · 인식 민감도 확인 전</div><div id="lastSignal" class="muted">마지막 동작: 없음</div><button id="start">센서 켜기</button><button id="stop" class="secondary" disabled>센서 끄기</button></section>
   <section class="card"><b>동작 타입</b><div><button class="mode active" data-mode="throw">투척</button><button class="mode secondary" data-mode="melee">근접 휘두르기</button></div><p class="muted" id="hint">휴대폰을 놓지 않은 채, 팔을 짧고 빠르게 앞으로 뻗어 봐.</p></section>
+  <section class="card"><b>검격 방향</b><p class="muted">근접 모드일 때 가로·세로·찌르기 궤적을 따로 전송해. 자동은 휴대폰 센서축으로 추정하므로 쥔 방향에 따라 오판할 수 있어.</p><label for="cutStyle" class="muted">인식 방식</label><select id="cutStyle" aria-label="검격 스타일"><option value="auto">동작 방향 자동 추정 (시험용)</option><option value="sweep">가로 베기 고정</option><option value="overhead">세로 내려찍기 고정</option><option value="thrust">앞으로 찌르기 고정</option></select><p id="cutHint" class="muted">인식이 헷갈리면 방향을 고정해 비교해 봐.</p></section>
   <section class="card"><b>동작 민감도 · <span id="sensitivityLabel">보통</span></b><input id="sensitivity" type="range" min="1" max="5" step="1" value="3" /><div class="muted">낮음은 강한 회전만 인식하고, 높음은 작은 손목 회전도 인식한다. 지금은 <b>낮음</b>부터 권장.</div></section>
   <section class="card"><b>동작축 설정 · <span id="axisLabel">모든 방향</span></b><p class="muted">버튼을 누른 뒤 평소처럼 한 번 동작하면, 가장 크게 회전한 축만 다음부터 판정한다.</p><button id="calibrate" class="secondary">동작축 설정하기</button><button id="clearAxis" class="secondary">축 해제</button></section>
   <section class="card"><b>현재 단계</b><p class="muted">동작축을 설정하면 단순히 휴대폰을 다른 방향으로 돌리는 동작은 줄이고, 투척·휘두르기에 쓴 회전축을 우선 판정한다.</p></section>
   <ul><li>한 번 감지한 뒤 센서 강도가 충분히 내려와야 다음 동작으로 다시 준비된다.</li><li>감지된 검격·투척 이벤트만 폴드6에 전송해. 원본 센서 수치나 카메라 영상은 보내지 않아.</li><li>주변을 비우고, 휴대폰을 실제로 던지지 마.</li></ul>
 </main>
 <script type="module">
-import {createGestureDetector,motionSample,dominantAxis} from "./src/motion-core.mjs";
+import {createGestureDetector,motionSample,dominantAxis} from "./src/motion-core.mjs?v=0.33";
+import {classifyMeleeGesture} from "./src/player-combat.mjs?v=0.33";
 import {createWirelessController,cleanRoom} from "./src/peer-bridge.mjs?v=0.31";
 const $=id=>document.getElementById(id);
 let active=false,count=0,mode="throw",sensitivity=3,calibrating=false,calibration=[],sampleTime=0,seq=0,received=0,sensorEvents=0,sensorStartedAt=0;
 try{sensitivity=Math.max(1,Math.min(5,Number(localStorage.getItem("motion-rpg-s21-sensitivity")||3)));}catch{}
 let axes={};try{const saved=JSON.parse(localStorage.getItem("motion-rpg-s21-axes")||"{}");if(saved&&typeof saved==="object")axes=saved;}catch{}
+let cutStyle="auto";try{const saved=localStorage.getItem("motion-rpg-s21-cut-style");if(["auto","sweep","overhead","thrust"].includes(saved))cutStyle=saved;}catch{}
 const detector=createGestureDetector({mode,sensitivity,axis:axes[mode]||""});
 const wireless=createWirelessController({
  onStatus:state=>{
@@ -84,10 +89,12 @@ function onMotion(e){
  }
  if(calibrating||!result.gesture)return;
  count++;$("count").textContent=count;
+ const style=result.gesture.type==="melee"?classifyMeleeGesture(e,cutStyle):null;
  const packet={type:"gesture",gesture:result.gesture.type,strength:result.gesture.strength,time:now,seq:++seq,session:wireless.room};
+ if(style)packet.style=style;
  const sent=wireless.send(packet);
  setStatus((mode==="throw"?"투척":"검격")+" 감지 "+count+"회 · "+(sent?"폴드6 전송":"무선 미연결 · 로컬 감지만"));
- $("lastSignal").textContent="최근 동작: "+(mode==="throw"?"투척":"검격")+" "+count+"회"+(sent?" · 폴드6 응답 대기":" · 전송 안 됨");
+ $("lastSignal").textContent="최근 동작: "+(mode==="throw"?"투척":({sweep:"가로 베기",overhead:"세로 내려찍기",thrust:"찌르기"}[style]||"검격"))+" "+count+"회"+(sent?" · 폴드6 응답 대기":" · 전송 안 됨");
  try{navigator.vibrate?.(35)}catch{}
 }
 async function startSensor(){
@@ -112,6 +119,12 @@ async function connect(){
  try{await wireless.connect(code);}catch(e){$("pairStatus").textContent="연결 실패: "+(e.message||e);$("connect").disabled=false;}
 }
 $("sensitivity").value=sensitivity;syncSettings();
+$("cutStyle").value=cutStyle;
+$("cutStyle").onchange=()=>{
+ cutStyle=$("cutStyle").value;
+ try{localStorage.setItem("motion-rpg-s21-cut-style",cutStyle);}catch{}
+ $("cutHint").textContent=cutStyle==="auto"?"가로·세로·찌르기를 센서축으로 추정해. 자세 보정 전에는 방향이 틀릴 수 있어.":"현재 방향: "+({sweep:"가로 베기",overhead:"내려찍기",thrust:"찌르기"}[cutStyle])+" · S21 동작이 감지되면 해당 자세로 공격해.";
+};
 $("sensitivity").addEventListener("input",syncSettings);
 document.querySelectorAll("[data-mode]").forEach(b=>b.onclick=()=>changeMode(b.dataset.mode));
 $("connect").onclick=connect;
