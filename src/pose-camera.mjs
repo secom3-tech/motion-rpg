@@ -39,7 +39,7 @@ export function createPoseCamera({video,onStatus=()=>{},onDodge=()=>{}}={}){
       data.movement==="duck"?"앉기 / 몸 낮추기 감지":data.movement==="left"||data.movement==="right"?"옆으로 피하기 감지":"카메라 추적 정상 · 좌우 이동·앉기로 회피";
     if(label!==previousLabel){status(label);previousLabel=label;}
    }
-  }catch(e){status("자세 인식 오류: "+(e?.message||String(e)));stop();return;}
+  }catch(e){const message="자세 인식 오류: "+(e?.message||String(e));stop();status(message);return;}
   timer=setTimeout(process,125);
  }
  async function start(){
