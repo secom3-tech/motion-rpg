@@ -8,7 +8,13 @@ for(const [slot,options] of Object.entries(GEAR)){
  assert.ok(options.some(x=>x.id===DEFAULT_LOADOUT[slot]),slot+" default exists");
 }
 assert.deepEqual(sanitizeLoadout(null),DEFAULT_LOADOUT);
-assert.equal(sanitizeLoadout({weapon:"not-an-item",armor:"iron"}).weapon,"sword");
+assert.equal(sanitizeLoadout({weapon:"not-an-item",armor:"iron"}).weapon,DEFAULT_LOADOUT.weapon);
+assert.equal(DEFAULT_LOADOUT.weapon,"bow");
+assert.equal(DEFAULT_LOADOUT.armor,"hunter");
+assert.equal(DEFAULT_LOADOUT.head,"hunterCap");
+assert.equal(DEFAULT_LOADOUT.offhand,"satchel");
+assert.ok(describeLoadout(DEFAULT_LOADOUT).includes("사냥꾼"));
+assert.ok(SAMPLE_SETS.hunter.weapon==="bow");
 assert.equal(sanitizeLoadout({weapon:"not-an-item",armor:"iron"}).armor,"iron");
 assert.ok(describeLoadout(SAMPLE_SETS.knight).includes("장검"));
 let calls=0,polygons=0,gradients=0;
