@@ -95,7 +95,7 @@ import {GEAR} from "./src/avatar.mjs";
 import {createWirelessHost} from "./src/peer-bridge.mjs";
 import {validMotionPacket} from "./src/motion-core.mjs";
 import {createPoseCamera} from "./src/pose-camera.mjs";
-import {ATTACKS,angleToTarget,turnToTarget,strikeInfo,spawnAroundPlayer,distance2d} from "./src/combat-spatial.mjs";
+import {ATTACKS,angleToTarget,turnToTarget,strikeInfo,spawnAroundPlayer,distance2d,dodgeMatches} from "./src/combat-spatial.mjs";
 (()=>{'use strict';
 const cvs=document.getElementById('game'),gl=cvs.getContext('webgl',{antialias:true,alpha:true,premultipliedAlpha:false,powerPreference:'high-performance'})||cvs.getContext('experimental-webgl');
 const el=id=>document.getElementById(id),RESULT_KEY='motion-rpg-indoor-result-v1',worldMode=new URLSearchParams(location.search).get('mode')==='world';if(worldMode){document.title='Motion RPG · 경계의 숲';el('brand').innerHTML='<div id="sigil">✦</div><div><h1>경계의 숲</h1><p>MOTION RPG · WORLD</p></div>';el('enemyHud').style.display='none';el('location').innerHTML='<span>VILLAGE GATE</span>숲 입구 마을<br><small style="opacity:.85">오늘의 원정을 선택하세요</small>';el('introCard').innerHTML='<div class="emblem">✦ 🌲 ✦</div><h2>경계의 숲</h2><p>마을을 거점으로 숲을 달리고,<br>발견한 마력체를 사냥하며 성장한다.</p><div id="worldMenu"><a href="./index.html?view=outdoor">🌲 숲 탐험 시작</a><a href="./index.html?view=indoor" class="secondary">🏃 러닝머신 원정</a><a href="./index.html" class="secondary">🏘️ 마을 정리</a></div><small>사냥 전투는 숲에서 마력체를 발견했을 때 시작된다</small>'}let active=false,last=0,clock=0,yaw=0,pitch=-0.032,weaponKick=0,impactTint=0,score=0,kills=0,projectiles=[],sparks=[],flares=[],enemy={x:.1,z:-7.2,hp:100,max:100,bob:0,dead:worldMode,respawn:0,name:'이끼 슬라임',speed:0.25,kind:0,attackTimer:2.5,windup:0,facing:0};
@@ -118,7 +118,7 @@ function dodge(direction="button"){
 function evadeMatchesAttack(){
  if(clock>dodgeUntil)return false;
  if(lastDodgeKind==="button")return true;
- return enemy.attackStyle==="sweep"?lastDodgeKind==="duck":lastDodgeKind==="left"||lastDodgeKind==="right";
+ return dodgeMatches(enemy.attackStyle,lastDodgeKind);
 }
 function flashHit(amount){
  const elements=["hitFx","damageNumber","game","heroHpWrap"];
