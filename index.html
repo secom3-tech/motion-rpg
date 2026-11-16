@@ -22,7 +22,7 @@
 </head>
 <body>
 <main>
-  <div class="eyebrow">MOTION RPG · ALPHA BUILD 0.19.0</div>
+  <div class="eyebrow">MOTION RPG · ALPHA BUILD 0.20.0</div>
   <h1>경계의 숲</h1>
   <div class="muted">현실의 움직임으로 숲과 실내 던전을 탐험하는 모험 RPG</div>
   <div class="notice"><b>오늘의 원정은 네 움직임에서 시작된다.</b> 야외 GPS와 러닝머신은 기록·사건·보상으로 이어진다. 카메라 판정과 건강 점수는 아직 넣지 않았다.<div class="muted" id="saveStatus">이 브라우저에 진행 상황을 자동 저장한다.</div></div>
@@ -58,19 +58,19 @@
     <div class="muted">시작하면 앱 타이머가 1초 단위로 거리와 시간을 자동 누적한다. 실제 연동 전까지는 설정한 속도를 기준으로 계산한다.</div>
   </section>
   <section class="card">
-    <h2>훈련장 · 전투 리듬</h2>
+    <h2>훈련장 · 몬스터 전투</h2>
     <div class="hero"><div class="tree" id="trainingScene">⚔️ 🛡️ ⚔️</div><strong id="trainingTitle">훈련 대기 중</strong><span class="muted" id="trainingHint">야외에서 얻은 물품도 사용할 수 있다.</span></div>
     <div class="muted">훈련 던전 목표</div><div id="trainingGoals" class="actions" aria-label="훈련 던전 목표"></div><div class="result" id="trainingSummary">목표를 정하고 훈련장에 진입해 봐.</div>
     <div class="row"><input id="motionCount" type="number" min="0" max="100" value="0" aria-label="모의 동작 수" /><button id="motionApply" class="secondary">동작 신호 반영</button></div><div class="muted" id="motionInfo">동작 신호 8회 이상이면 훈련 성공 XP +2</div>
     <div class="row"><button id="trainingStart">훈련장 진입</button></div>
     <div id="trainingActions" class="actions hidden" aria-label="훈련 선택"></div>
     <div id="trainingResult" class="result" role="status" aria-live="polite">센서·카메라 없이 규칙과 보상만 시험하는 모의훈련이야.</div>
-    <ul><li>실제 동작을 판정하거나 운동을 지시하지 않는 테스트 모드다.</li><li>경험치·골드·기력·탐험 가방은 야외 모드와 공유한다.</li></ul>
+    <ul><li>슬라임 사수·그림자 늑대·철갑 골렘과 차례로 전투한다.</li><li>투척·회피·가드는 현재 버튼 판정이며, 이후 실제 동작·카메라 입력으로 교체한다.</li></ul>
   </section></div>
   <footer>Motion RPG — 기본 규칙과 실험 코드는 GitHub에서 관리 · 운동 감지 및 운동 처방 기능 미구현</footer>
 </main>
 <script type="module">
-  import { ACTIONS, ITEMS, REGIONS, QUESTS, UPGRADES, availableActions, availableRegions, newGame, adjustTreadmillSpeed, advanceTreadmill, beginEncounter, beginBossEncounter, isBossAvailable, pauseOutdoorSession, recordIndoorSignal, recordOutdoorSegment, recordOutdoorSignal, resolveEncounter, resumeOutdoorSession, beginTraining, resolveTraining, purchaseUpgrade, selectRegion, setTrainingGoal, setTreadmillGoal, setTreadmillSpeed, startOutdoorSession, startTrainingSession, startTreadmill, stopOutdoorSession, stopTreadmill } from "./src/engine.mjs?v=0.19.0";
+  import { ACTIONS, ITEMS, REGIONS, QUESTS, UPGRADES, availableActions, availableRegions, newGame, adjustTreadmillSpeed, advanceTreadmill, beginEncounter, beginBossEncounter, isBossAvailable, pauseOutdoorSession, recordIndoorSignal, recordOutdoorSegment, recordOutdoorSignal, resolveEncounter, resumeOutdoorSession, beginTraining, resolveTraining, purchaseUpgrade, selectRegion, setTrainingGoal, setTreadmillGoal, setTreadmillSpeed, startOutdoorSession, startTrainingSession, startTreadmill, stopOutdoorSession, stopTreadmill } from "./src/engine.mjs?v=0.20.0";
   const SAVE_KEY = "motion-rpg-save-v1";
   const VOICE_KEY = "motion-rpg-voice-enabled-v1";
   const $ = id => document.getElementById(id);
@@ -79,7 +79,7 @@
     try {
       const saved = JSON.parse(localStorage.getItem(SAVE_KEY) || "null");
       if (!saved || typeof saved !== "object") return blank;
-      return { ...blank, ...saved, inventory: { ...blank.inventory, ...saved.inventory }, training: { ...blank.training, ...saved.training, session: { ...blank.training.session, ...saved.training?.session, active: false } }, camp: { ...blank.camp, ...saved.camp }, treadmill: { ...blank.treadmill, ...saved.treadmill }, outdoorSession: { ...blank.outdoorSession, ...saved.outdoorSession, active: false }, regionAttempts: { ...blank.regionAttempts, ...saved.regionAttempts }, quests: { ...blank.quests, ...saved.quests }, unlockedRegions: saved.unlockedRegions || blank.unlockedRegions };
+      return { ...blank, ...saved, inventory: { ...blank.inventory, ...saved.inventory }, arcade: { ...blank.arcade, ...saved.arcade, bestScores: { ...blank.arcade.bestScores, ...saved.arcade?.bestScores } }, training: { ...blank.training, ...saved.training, session: { ...blank.training.session, ...saved.training?.session, active: false } }, camp: { ...blank.camp, ...saved.camp }, treadmill: { ...blank.treadmill, ...saved.treadmill }, outdoorSession: { ...blank.outdoorSession, ...saved.outdoorSession, active: false }, regionAttempts: { ...blank.regionAttempts, ...saved.regionAttempts }, quests: { ...blank.quests, ...saved.quests }, unlockedRegions: saved.unlockedRegions || blank.unlockedRegions };
     } catch { return blank; }
   }
   let state = loadGame(); let view = "home"; let treadmillTimer = null; let treadmillLastTick = 0; let gpsWatchId = null; let gpsLastPosition = null; let gpsSignalTimer = null; let lastGpsSignalAt = 0; let wakeLock = null; let wakeLockStatus = "화면 유지 요청 전"; let voiceEnabled = localStorage.getItem(VOICE_KEY) === "true"; let gpsStatus = "GPS 권한을 허용하면 실제 이동 기록을 받을 수 있다.";
@@ -142,8 +142,8 @@
       $("event").textContent = "어떻게 대응할까? 선택은 게임 결과만 바꾸며 실제 행동을 지시하지 않아."; $("actions").replaceChildren(...availableActions(e,state.inventory).map(id => { const b=document.createElement("button"); b.className="action"; b.innerHTML=`${ACTIONS[id].label}<small>${ACTIONS[id].description}</small>`; b.onclick=()=>{state=resolveEncounter(state,id);render();}; return b;}));
     } else if (state.lastEvent) { const e=state.lastEvent; $("phaseTitle").textContent="다음 구간 준비"; $("phaseHint").textContent="결과를 정리하고 다시 탐험한다."; $("scene").textContent="🌲 ✨ 🌲"; const item=e.gainedItem ? ` / ${ITEMS[e.gainedItem].label} 획득` : ""; const source=e.inputSource === "gps" ? "GPS 모의 신호" : e.inputSource === "treadmill" ? "러닝머신" : "수동 페이스"; $("event").textContent=`${e.title} · ${ACTIONS[e.action].label} (${source}) — ${e.passed ? `성공! +${e.gainedXp} XP / +${e.gainedGold} G${item}` : `아쉬운 결과. +${e.gainedXp} XP`}`; }
     else { $("phaseTitle").textContent="탐험 대기 중"; $("phaseHint").textContent=`${REGIONS[state.region].label}에서 다음 사건을 기다린다`; }
-    if (trainingActive) { const d=state.training.currentDrill; $("trainingTitle").textContent=d.title; $("trainingHint").textContent=d.task; $("trainingScene").textContent=d.kind === "focus" ? "🌑 🔥 👁️" : d.kind === "recovery" ? "🧘 ✨ 🛡️" : "⚔️ 🛡️ ⚔️"; $("trainingResult").textContent="어떤 방식으로 훈련을 진행할까? 선택은 게임 결과만 바꾸며 실제 동작을 지시하지 않아."; $("trainingActions").replaceChildren(...availableActions(d,state.inventory).map(id=>{const b=document.createElement("button");b.className="action";b.innerHTML=`${ACTIONS[id].label}<small>${ACTIONS[id].description}</small>`;b.onclick=()=>{state=resolveTraining(state,id);render();};return b;})); }
-    else if (state.training.lastDrill) { const d=state.training.lastDrill; $("trainingTitle").textContent="다음 훈련 준비"; $("trainingHint").textContent="훈련 결과가 모험가 상태에 반영됐다."; $("trainingScene").textContent="⚔️ ✨ 🛡️"; $("trainingResult").textContent=`${d.title} · ${ACTIONS[d.action].label} — ${d.passed ? `성공! +${d.gainedXp} XP / +${d.gainedGold} G${d.inputBonus ? " · 신호 보너스 +2 XP" : ""}` : `아쉬운 결과. +${d.gainedXp} XP`}`; }
+    if (trainingActive) { const d=state.training.currentDrill; $("trainingTitle").textContent=d.title; $("trainingHint").textContent=d.task; $("trainingScene").textContent=d.kind === "throw" ? "🎯 🟢 🏹" : d.kind === "dodge" ? "🐺 💨 🧍" : "🪨 🛡️ ⚔️"; $("trainingResult").textContent="몬스터의 움직임을 읽고 전투 행동을 선택해. 현재는 버튼 판정이며, 이후 실제 동작 입력으로 바꾼다."; $("trainingActions").replaceChildren(...availableActions(d,state.inventory).map(id=>{const b=document.createElement("button");b.className="action";b.innerHTML=`${ACTIONS[id].label}<small>${ACTIONS[id].description}</small>`;b.onclick=()=>{state=resolveTraining(state,id);render();};return b;})); }
+    else if (state.training.lastDrill) { const d=state.training.lastDrill; $("trainingTitle").textContent="다음 몬스터 탐색"; $("trainingHint").textContent="전투 결과가 모험가 상태에 반영됐다."; $("trainingScene").textContent="⚔️ ✨ 🛡️"; $("trainingResult").textContent=`${d.title} · ${ACTIONS[d.action].label} — ${d.passed ? `승리! +${d.gainedXp} XP / +${d.gainedGold} G${d.inputBonus ? " · 신호 보너스 +2 XP" : ""}` : `방어 성공. +${d.gainedXp} XP`}`; }
   }
   $("pace").addEventListener("input",e=>$("paceValue").textContent=Number(e.target.value).toFixed(1));
   document.querySelectorAll("[data-view]").forEach(button=>button.onclick=()=>{view=button.dataset.view;render();});

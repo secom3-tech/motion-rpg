@@ -51,6 +51,9 @@ export const ACTIONS = Object.freeze({
   bandage: { label: "붕대 정비", description: "위기를 넘길 준비를 한다", item: "bandage" },
   form: { label: "기본 동작", description: "훈련의 흐름을 유지한다" },
   focus: { label: "집중 유지", description: "한 가지 신호에 집중한다" },
+  throw: { label: "투척", description: "표적의 빈틈을 노려 반격한다" },
+  dodge: { label: "회피", description: "공격 방향에서 벗어난다" },
+  guard: { label: "가드", description: "들어오는 공격을 막아 낸다" },
 });
 
 export const ITEMS = Object.freeze({
@@ -60,10 +63,16 @@ export const ITEMS = Object.freeze({
 });
 
 export const TRAINING_DRILLS = Object.freeze([
-  { id: "guard", title: "방어 리듬", task: "한 동작의 리듬을 끝까지 유지한다", kind: "form", reward: 2, actions: ["form", "focus"] },
-  { id: "darkroom", title: "어두운 훈련장", task: "흐트러지지 않고 단서를 포착한다", kind: "focus", reward: 3, actions: ["focus", "form", "torch"] },
-  { id: "recovery", title: "회복 루틴", task: "다음 도전을 위한 흐름을 정리한다", kind: "recovery", reward: 2, actions: ["recover", "form"] },
+  { id: "slime-archer", title: "슬라임 사수", task: "표적이 열린 순간 투척으로 반격한다", kind: "throw", reward: 3, actions: ["throw", "dodge"] },
+  { id: "shadow-wolf", title: "그림자 늑대", task: "공격 방향을 읽고 회피해 빈틈을 만든다", kind: "dodge", reward: 3, actions: ["dodge", "guard"] },
+  { id: "iron-guard", title: "철갑 골렘", task: "묵직한 일격을 가드하고 반격 기회를 만든다", kind: "guard", reward: 4, actions: ["guard", "throw"] },
 ]);
+
+export const INDOOR_GAMES = Object.freeze({
+  throw: { label: "정밀 투척", reward: "표적을 빠르게 맞혀라" },
+  dodge: { label: "그림자 회피", reward: "공격 반대 방향으로 피하라" },
+  guard: { label: "방패 반응", reward: "신호가 오면 즉시 가드하라" },
+});
 
 export const UPGRADES = Object.freeze({
   lantern: { label: "작은 랜턴", cost: 30, maxLevel: 1, description: "횃불을 사용할 때 소모하지 않는다" },
@@ -85,6 +94,7 @@ export function newGame() {
     region: "forest", regionAttempts: { forest: 0, ridge: 0 }, unlockedRegions: ["forest"],
     quests: { forest: { attempts: 0, successes: 0, bossDefeated: false }, ridge: { attempts: 0, successes: 0, bossDefeated: false } },
     outdoorInput: null,
+    arcade: { bestScores: { throw: 0, dodge: 0, guard: 0 }, lastResult: null },
     outdoorSession: { active: false, paused: false, distanceM: 0, distanceExactM: 0, elapsedSec: 0, nextEncounterM: 250, startAttempts: 0, paceSamples: [], lastSummary: null },
     treadmill: { active: false, speedKmh: 8, distanceM: 0, distanceExactM: 0, elapsedSec: 0, nextEncounterM: 250, session: { active: false, goalM: 1000, startDistanceM: 0, startElapsedSec: 0, startAttempts: 0, lastSummary: null } }
   };
@@ -347,10 +357,9 @@ export function purchaseUpgrade(state, upgradeId) {
 }
 
 function trainingPassed(drill, action, energy) {
-  if (action === "torch" && drill.kind === "focus") return true;
-  if (drill.kind === "form") return action === "form" || action === "focus" && energy >= 25;
-  if (drill.kind === "focus") return action === "focus" && energy >= 20 || action === "form" && energy >= 55;
-  if (drill.kind === "recovery") return action === "recover" || action === "form" && energy >= 35;
+  if (drill.kind === "throw") return action === "throw" || action === "dodge" && energy >= 25;
+  if (drill.kind === "dodge") return action === "dodge" || action === "guard" && energy >= 35;
+  if (drill.kind === "guard") return action === "guard" || action === "throw" && energy >= 45;
   return false;
 }
 
@@ -384,6 +393,16 @@ export function recordIndoorSignal(state, motionCount) {
   const count = Number(motionCount);
   if (!Number.isFinite(count) || count < 0 || count > 100) throw Error("Invalid indoor signal");
   return { ...state, training: { ...state.training, inputCount: Math.round(count) } };
+}
+
+export function completeArcadeGame(state, gameId, scoreInput) {
+  if (!INDOOR_GAMES[gameId]) throw Error("Unknown indoor game");
+  const score = Number(scoreInput);
+  if (!Number.isInteger(score) || score < 0 || score > 30) throw Error("Invalid arcade score");
+  const gainedXp = score >= 8 ? 8 : score >= 4 ? 4 : 1;
+  const gainedGold = score >= 8 ? 2 : score >= 4 ? 1 : 0;
+  const arcade = { ...state.arcade, bestScores: { ...state.arcade.bestScores, [gameId]: Math.max(state.arcade.bestScores?.[gameId] ?? 0, score) }, lastResult: { gameId, score, gainedXp, gainedGold } };
+  return { ...state, arcade, xp: state.xp + gainedXp, gold: state.gold + gainedGold, level: 1 + Math.floor((state.xp + gainedXp) / 100) };
 }
 
 export function resolveTraining(state, action) {

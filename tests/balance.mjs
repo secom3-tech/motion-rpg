@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { ACTIONS, EVENTS, ITEMS, RIDGE_EVENTS, REGIONS, QUESTS, TRAINING_DRILLS, UPGRADES, availableActions, availableRegions, newGame, adjustTreadmillSpeed, advanceTreadmill, beginEncounter, beginBossEncounter, isBossAvailable, pauseOutdoorSession, recordIndoorSignal, recordOutdoorSegment, recordOutdoorSignal, resolveEncounter, resumeOutdoorSession, advanceGame, beginTraining, resolveTraining, purchaseUpgrade, selectRegion, setTrainingGoal, setTreadmillGoal, setTreadmillSpeed, startOutdoorSession, startTrainingSession, startTreadmill, stopOutdoorSession, stopTreadmill } from "../src/engine.mjs";
+import { ACTIONS, EVENTS, ITEMS, RIDGE_EVENTS, REGIONS, QUESTS, TRAINING_DRILLS, UPGRADES, availableActions, availableRegions, completeArcadeGame, newGame, adjustTreadmillSpeed, advanceTreadmill, beginEncounter, beginBossEncounter, isBossAvailable, pauseOutdoorSession, recordIndoorSignal, recordOutdoorSegment, recordOutdoorSignal, resolveEncounter, resumeOutdoorSession, advanceGame, beginTraining, resolveTraining, purchaseUpgrade, selectRegion, setTrainingGoal, setTreadmillGoal, setTreadmillSpeed, startOutdoorSession, startTrainingSession, startTreadmill, stopOutdoorSession, stopTreadmill } from "../src/engine.mjs";
 
 assert.equal(new Set(EVENTS.map(e => e.id)).size, EVENTS.length, "Event IDs must be unique");
 assert.equal(new Set(Object.keys(ACTIONS)).size, Object.keys(ACTIONS).length, "Action IDs must be unique");
@@ -50,16 +50,15 @@ assert.equal(lootRun.lastEvent.gainedItem, "bandage");
 assert.equal(lootRun.inventory.bandage, 1);
 
 // Indoor play shares the same inventory and character rewards with outdoor play.
-let trainingRun = { ...newGame(), inventory: { torch: 1, map: 0, bandage: 0 }, training: { ...newGame().training, attempts: 1 } };
+let trainingRun = newGame();
 trainingRun = beginTraining(trainingRun);
-assert.equal(trainingRun.training.currentDrill.id, "darkroom");
-assert.ok(availableActions(trainingRun.training.currentDrill, trainingRun.inventory).includes("torch"));
-trainingRun = resolveTraining(trainingRun, "torch");
+assert.equal(trainingRun.training.currentDrill.id, "slime-archer");
+assert.ok(availableActions(trainingRun.training.currentDrill, trainingRun.inventory).includes("throw"));
+trainingRun = resolveTraining(trainingRun, "throw");
 assert.equal(trainingRun.training.phase, "ready");
-assert.equal(trainingRun.inventory.torch, 0);
 assert.equal(trainingRun.training.lastDrill.passed, true);
 assert.equal(trainingRun.xp, 10);
-assert.throws(() => resolveTraining(trainingRun, "torch"), /No active/);
+assert.throws(() => resolveTraining(trainingRun, "throw"), /No active/);
 
 // Mock sensor inputs take the same route as future GPS/camera inputs.
 let sensorRun = recordOutdoorSignal(newGame(), 125, 60);
@@ -90,15 +89,19 @@ smoothGpsRun = recordOutdoorSegment(smoothGpsRun, 100, 60);
 smoothGpsRun = recordOutdoorSegment(smoothGpsRun, 100, 48);
 assert.equal(smoothGpsRun.outdoorInput.pace, 8, "GPS pace should use the median of recent segments");
 let motionRun = recordIndoorSignal(newGame(), 8);
-motionRun = resolveTraining(beginTraining(motionRun), "form");
+motionRun = resolveTraining(beginTraining(motionRun), "throw");
 assert.equal(motionRun.training.lastDrill.inputBonus, 2);
 assert.equal(motionRun.training.lastDrill.gainedXp, 12);
 assert.throws(() => recordIndoorSignal(newGame(), -1), /Invalid/);
 let indoorSessionRun = setTrainingGoal(newGame(), 1);
-indoorSessionRun = resolveTraining(startTrainingSession(indoorSessionRun), "form");
+indoorSessionRun = resolveTraining(startTrainingSession(indoorSessionRun), "throw");
 assert.equal(indoorSessionRun.training.session.active, false);
 assert.equal(indoorSessionRun.training.session.lastSummary.goal, 1);
 assert.equal(indoorSessionRun.training.session.lastSummary.gainedXp, 4);
+let arcadeRun = completeArcadeGame(newGame(), "throw", 8);
+assert.equal(arcadeRun.arcade.bestScores.throw, 8);
+assert.equal(arcadeRun.arcade.lastResult.gainedGold, 2);
+assert.throws(() => completeArcadeGame(newGame(), "missing", 1), /Unknown/);
 
 let treadmillRun = startTreadmill(newGame(), 8);
 treadmillRun = advanceTreadmill(treadmillRun, 60);
