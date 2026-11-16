@@ -134,5 +134,13 @@ assert.ok(arena.includes("createWirelessHost")&&arena.includes("validMotionPacke
 assert.ok(arena.includes("createPoseCamera")&&arena.includes("dodge(event.direction)"),"Camera dodge connected to actual game");
 assert.ok(controller.includes("createWirelessController")&&controller.includes("wireless.send(packet)"),"Controller sends gestures");
 assert.ok(camera.includes("getUserMedia")&&camera.includes("detectForVideo"),"Camera pose inference required");
+
+assert.ok(arena.includes('if(!el("motionPanel").hidden||document.hidden)return;'),"Arena must pause enemy activity during settings");
+assert.ok(arena.includes('id="retryCombat"')&&arena.includes('el("retryCombat").onclick'),"Arena should recover from 0 HP without disconnecting");
+assert.ok(arena.includes('type:"gesture-ack"'),"Wireless events need explicit accepted/rejected feedback to S21");
+assert.ok(arena.includes('room.replace(/^mrpg-/,"")'),"Game should show only six digits, not internal peer prefix");
+assert.ok(controller.includes('id="sensorDetail"')&&controller.includes('id="lastSignal"'),"S21 must explain sensor activity and last action");
+assert.ok(camera.includes("VISION_SOURCES")&&camera.includes("loadPoseModel"),"Camera must offer fallback import endpoints");
+
 assert.ok(bridge.includes("0")&&bridge.includes("peerjs@1.5.5"),"Pinned PeerJS dependency required");
 console.log("MOTION v0.30 TEST PASS: sensor gating, pose dodge, room validation and integrated controls");
