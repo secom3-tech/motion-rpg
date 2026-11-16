@@ -85,7 +85,7 @@ export function newGame() {
     region: "forest", regionAttempts: { forest: 0, ridge: 0 }, unlockedRegions: ["forest"],
     quests: { forest: { attempts: 0, successes: 0, bossDefeated: false }, ridge: { attempts: 0, successes: 0, bossDefeated: false } },
     outdoorInput: null,
-    treadmill: { active: false, speedKmh: 8, distanceM: 0, elapsedSec: 0 }
+    treadmill: { active: false, speedKmh: 8, distanceM: 0, distanceExactM: 0, elapsedSec: 0 }
   };
 }
 
@@ -159,7 +159,9 @@ export function advanceTreadmill(state, durationSec = 60) {
   const duration = Number(durationSec);
   if (!Number.isFinite(duration) || duration <= 0 || duration > 3600) throw Error("Invalid treadmill duration");
   const distanceM = state.treadmill.speedKmh * 1000 * duration / 3600;
-  const treadmill = { ...state.treadmill, distanceM: Math.round(state.treadmill.distanceM + distanceM), elapsedSec: state.treadmill.elapsedSec + Math.round(duration) };
+  const previousDistance = Number.isFinite(state.treadmill.distanceExactM) ? state.treadmill.distanceExactM : state.treadmill.distanceM;
+  const distanceExactM = previousDistance + distanceM;
+  const treadmill = { ...state.treadmill, distanceM: Math.round(distanceExactM), distanceExactM, elapsedSec: state.treadmill.elapsedSec + Math.round(duration) };
   const pace = Number((60 / treadmill.speedKmh).toFixed(1));
   return { ...state, treadmill, outdoorInput: { source: "treadmill", distanceM: Math.round(distanceM), durationSec: Math.round(duration), pace } };
 }

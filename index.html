@@ -19,7 +19,7 @@
 </head>
 <body>
 <main>
-  <div class="eyebrow">MOTION RPG · PROTOTYPE 0.10.0</div>
+  <div class="eyebrow">MOTION RPG · PROTOTYPE 0.11.0</div>
   <h1>경계의 숲</h1>
   <div class="muted">실내 전투와 야외 러닝이 하나의 캐릭터로 연결되는 운동 RPG</div>
   <div class="notice"><b>개발용 모의 러닝 화면이야.</b> 실제 GPS·운동 감지·음성은 아직 연결되지 않았다. 페이스와 선택으로 사건 흐름과 보상을 시험한다.<div class="muted" id="saveStatus">이 브라우저에 진행 상황을 자동 저장한다.</div></div>
@@ -46,8 +46,8 @@
     <h2>실내 러닝머신 모드</h2>
     <div class="hero"><div class="tree">🏃‍♂️ ▰▰▰</div><strong id="treadmillTitle">러닝머신 대기 중</strong><span class="muted" id="treadmillInfo">속도를 정한 뒤 시작해 봐.</span></div>
     <div class="row"><button id="treadmillStart">러닝머신 시작</button><button id="treadmillDown" class="secondary">속도 −</button><button id="treadmillUp" class="secondary">속도 +</button></div>
-    <div class="row"><button id="treadmillTick" class="secondary">1분 반영</button><button id="treadmillStop" class="secondary">종료</button></div>
-    <div class="muted">테스트에서는 1분 반영 버튼이 타이머 역할을 한다. 실제 버전에서는 러닝머신 신호 또는 앱 타이머가 자동으로 같은 함수를 호출한다.</div>
+    <div class="row"><button id="treadmillStop" class="secondary">러닝머신 종료</button></div>
+    <div class="muted">시작하면 앱 타이머가 1초 단위로 거리와 시간을 자동 누적한다. 실제 연동 전까지는 설정한 속도를 기준으로 계산한다.</div>
   </section>
   <section class="card">
     <h2>실내 모의훈련</h2>
@@ -72,8 +72,17 @@
       return { ...blank, ...saved, inventory: { ...blank.inventory, ...saved.inventory }, training: { ...blank.training, ...saved.training }, camp: { ...blank.camp, ...saved.camp }, treadmill: { ...blank.treadmill, ...saved.treadmill }, regionAttempts: { ...blank.regionAttempts, ...saved.regionAttempts }, quests: { ...blank.quests, ...saved.quests }, unlockedRegions: saved.unlockedRegions || blank.unlockedRegions };
     } catch { return blank; }
   }
-  let state = loadGame(); let view = "home";
+  let state = loadGame(); let view = "home"; let treadmillTimer = null; let treadmillLastTick = 0;
   function saveGame() { localStorage.setItem(SAVE_KEY, JSON.stringify(state)); }
+  function stopTreadmillTimer() { if (treadmillTimer) window.clearInterval(treadmillTimer); treadmillTimer = null; }
+  function startTreadmillTimer() {
+    stopTreadmillTimer(); if (!state.treadmill.active) return; treadmillLastTick = Date.now();
+    treadmillTimer = window.setInterval(() => {
+      if (!state.treadmill.active) return stopTreadmillTimer();
+      const now = Date.now(), seconds = Math.max(1, Math.round((now - treadmillLastTick) / 1000));
+      treadmillLastTick = now; state = advanceTreadmill(state, seconds); render();
+    }, 1000);
+  }
   function render() {
     saveGame(); $("saveStatus").textContent = "이 브라우저에 진행 상황을 자동 저장 중 · 처음부터를 누르면 저장도 초기화된다.";
     for (const id of ["home","outdoor","indoor"]) $("view-"+id).classList.toggle("hidden", view !== id); document.querySelectorAll("[data-view]").forEach(button => button.classList.toggle("active", button.dataset.view === view));
@@ -83,7 +92,7 @@
     $("motionInfo").textContent = `최근 동작 모의 신호: ${state.training.inputCount ?? 0}회 · 8회 이상이면 훈련 성공 XP +2`;
     $("treadmillTitle").textContent = state.treadmill.active ? `${state.treadmill.speedKmh.toFixed(1)} km/h로 주행 중` : "러닝머신 대기 중";
     $("treadmillInfo").textContent = `누적 ${state.treadmill.distanceM}m · ${Math.floor(state.treadmill.elapsedSec / 60)}분 ${state.treadmill.elapsedSec % 60}초`;
-    $("treadmillStart").disabled = state.treadmill.active || state.phase !== "exploring" || state.training.phase !== "ready"; $("treadmillDown").disabled=!state.treadmill.active; $("treadmillUp").disabled=!state.treadmill.active; $("treadmillTick").disabled=!state.treadmill.active; $("treadmillStop").disabled=!state.treadmill.active;
+    $("treadmillStart").disabled = state.treadmill.active || state.phase !== "exploring" || state.training.phase !== "ready"; $("treadmillDown").disabled=!state.treadmill.active; $("treadmillUp").disabled=!state.treadmill.active; $("treadmillStop").disabled=!state.treadmill.active;
     $("shop").replaceChildren(...Object.entries(UPGRADES).map(([id,u]) => { const b=document.createElement("button"); b.className="action"; const owned=state.camp[id]; b.disabled=owned>=u.maxLevel || state.gold<u.cost || state.phase!=="exploring" || state.training.phase!=="ready"; b.innerHTML=`${u.label} · ${owned ? "완료" : u.cost+" G"}<small>${u.description}</small>`; b.onclick=()=>{state=purchaseUpgrade(state,id);render();}; return b; }));
     $("regionInfo").textContent = `현재 지역: ${REGIONS[state.region].label}`;
     $("regions").replaceChildren(...Object.entries(REGIONS).map(([id,r]) => { const b=document.createElement("button"); b.className="action"; const available=availableRegions(state).includes(id); b.disabled=!available || id===state.region || state.phase!=="exploring" || state.training.phase!=="ready"; b.innerHTML=`${r.label} · ${id===state.region ? "탐험 중" : available ? "이동" : "잠김"}<small>${r.description}</small>`; b.onclick=()=>{state=selectRegion(state,id);render();}; return b; }));
@@ -98,6 +107,6 @@
     else if (state.training.lastDrill) { const d=state.training.lastDrill; $("trainingTitle").textContent="다음 훈련 준비"; $("trainingHint").textContent="훈련 결과가 모험가 상태에 반영됐다."; $("trainingScene").textContent="⚔️ ✨ 🛡️"; $("trainingResult").textContent=`${d.title} · ${ACTIONS[d.action].label} — ${d.passed ? `성공! +${d.gainedXp} XP / +${d.gainedGold} G${d.inputBonus ? " · 신호 보너스 +2 XP" : ""}` : `아쉬운 결과. +${d.gainedXp} XP`}`; }
   }
   $("pace").addEventListener("input",e=>$("paceValue").textContent=Number(e.target.value).toFixed(1));
-  document.querySelectorAll("[data-view]").forEach(button=>button.onclick=()=>{view=button.dataset.view;render();}); $("gpsApply").onclick=()=>{state=recordOutdoorSignal(state,$("gpsDistance").value,$("gpsDuration").value);render();}; $("motionApply").onclick=()=>{state=recordIndoorSignal(state,$("motionCount").value);render();}; $("treadmillStart").onclick=()=>{state=startTreadmill(state);render();}; $("treadmillDown").onclick=()=>{state=adjustTreadmillSpeed(state,-0.5);render();}; $("treadmillUp").onclick=()=>{state=adjustTreadmillSpeed(state,0.5);render();}; $("treadmillTick").onclick=()=>{state=advanceTreadmill(state,60);render();}; $("treadmillStop").onclick=()=>{state=stopTreadmill(state);render();}; $("start").onclick=()=>{state=beginEncounter(state,$("pace").value);render();}; $("bossStart").onclick=()=>{state=beginBossEncounter(state,$("pace").value);render();}; $("trainingStart").onclick=()=>{state=beginTraining(state);render();}; $("reset").onclick=()=>{localStorage.removeItem(SAVE_KEY);state=newGame();render();}; render();
+  document.querySelectorAll("[data-view]").forEach(button=>button.onclick=()=>{view=button.dataset.view;render();}); $("gpsApply").onclick=()=>{state=recordOutdoorSignal(state,$("gpsDistance").value,$("gpsDuration").value);render();}; $("motionApply").onclick=()=>{state=recordIndoorSignal(state,$("motionCount").value);render();}; $("treadmillStart").onclick=()=>{state=startTreadmill(state);startTreadmillTimer();render();}; $("treadmillDown").onclick=()=>{state=adjustTreadmillSpeed(state,-0.5);render();}; $("treadmillUp").onclick=()=>{state=adjustTreadmillSpeed(state,0.5);render();}; $("treadmillStop").onclick=()=>{state=stopTreadmill(state);stopTreadmillTimer();render();}; $("start").onclick=()=>{state=beginEncounter(state,$("pace").value);render();}; $("bossStart").onclick=()=>{state=beginBossEncounter(state,$("pace").value);render();}; $("trainingStart").onclick=()=>{state=beginTraining(state);render();}; $("reset").onclick=()=>{stopTreadmillTimer();localStorage.removeItem(SAVE_KEY);state=newGame();render();}; if (state.treadmill.active) startTreadmillTimer(); render();
 </script>
 </body></html>
