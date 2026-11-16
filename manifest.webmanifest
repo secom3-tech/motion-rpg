@@ -1,0 +1,13 @@
+{
+  "name": "Motion RPG — 경계의 숲",
+  "short_name": "Motion RPG",
+  "lang": "ko-KR",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#0c1615",
+  "theme_color": "#0c1615",
+  "icons": [
+    { "src": "./icons/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
+  ]
+}
