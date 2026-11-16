@@ -21,4 +21,9 @@ for(const ref of refs) assert.ok(ids.includes(ref),"Missing element: "+ref);
 for(const required of ["page-village","page-run","page-indoor","page-character","runFeed","runTitle"])assert.ok(ids.includes(required));
 assert.ok(html.includes("./src/expedition.mjs"));
 assert.ok(html.includes("./indoor.html"));
+assert.ok(html.includes("data-town=\"guild\"")&&html.includes("data-town=\"smith\"")&&html.includes("data-town=\"ranger\""));
+assert.ok(html.includes("townTalk(\"guild\")")&&html.includes("./src/avatar.mjs"));
+assert.ok(html.includes("data-outfit=\"hunter\""));
+assert.ok(html.includes("모험가 장비실"));
+
 console.log("PREVIEW SMOKE PASS: module syntax, unique IDs, references and main modes");
