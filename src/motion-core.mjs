@@ -67,5 +67,8 @@ export function validMotionPacket(packet,expectedSession=null){
  if(!Number.isInteger(packet.strength)||packet.strength<1||packet.strength>100)return false;
  if(!Number.isFinite(packet.time)||packet.time<=0)return false;
  if(expectedSession!==null&&packet.session!==expectedSession)return false;
+ if(packet.style!==undefined){
+  if(packet.gesture!=="melee"||!["sweep","overhead","thrust"].includes(packet.style))return false;
+ }
  return true;
 }
