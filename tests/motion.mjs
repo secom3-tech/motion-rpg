@@ -77,11 +77,14 @@ assert.equal(dodgeMatches("unknown","duck"),false);
 
 // 4. Room security and input contract.
 const room=randomRoom(new Uint8Array([1,2,3,4,5,6,7,8,9,10]));
-assert.ok(/^mrpg-[a-z2-9]{10}$/.test(room));
+assert.ok(/^mrpg-[0-9]{6}$/.test(room));
 assert.equal(cleanRoom(room.toUpperCase()),room);
 assert.equal(cleanRoom(room.slice(5)),room);
 assert.equal(cleanRoom("bad code"),null);
 assert.equal(cleanRoom("mrpg-short"),null);
+assert.equal(cleanRoom("482613"),"mrpg-482613");
+assert.equal(cleanRoom("  482 613  "),"mrpg-482613");
+assert.equal(cleanRoom("mrpg-fhuzfw8yk2"),"mrpg-fhuzfw8yk2");
 
 // 5. Browser integration smoke.
 const arena=fs.readFileSync(new URL("../indoor.html",import.meta.url),"utf8");
