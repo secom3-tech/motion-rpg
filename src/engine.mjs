@@ -413,7 +413,8 @@ export function resolveTraining(state, action) {
   const passed = trainingPassed(drill, action, state.energy);
   const damage = (passed ? { throw: 4, dodge: 3, guard: 2 }[action] : 1) + ((state.training.inputCount ?? 0) >= 8 ? 1 : 0);
   const remainingHp = Math.max(0, drill.hp - damage);
-  const incoming = action === "guard" ? 0 : action === "dodge" ? 1 : 2;
+  // Stronger monsters matter on every unfinished turn; good defensive timing softens the hit.
+  const incoming = !passed ? drill.attack : action === "guard" ? 0 : action === "dodge" ? Math.max(0, drill.attack - 3) : Math.max(1, drill.attack - 2);
   if (remainingHp > 0) {
     return { ...state, energy: clamp(state.energy - incoming, 0, 100), training: { ...state.training, currentDrill: { ...drill, hp: remainingHp, turn: drill.turn + 1 } } };
   }
