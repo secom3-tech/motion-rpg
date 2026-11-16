@@ -211,16 +211,66 @@ function enemyPart(mesh,x,y,z,sx,sy,sz,col,rot=0,glow=0,alpha=1){
  const rx=enemy.x+dx*c+dz*si,rz=enemy.z-dx*si+dz*c;
  part(mesh,rx,y,rz,sx,sy,sz,col,rot+ang,glow,alpha);
 }
-function renderBeast(ex,ey,ez){
+
+/** 3D warning cone is sampled directly from the attack's actual hitbox. */
+function renderAttackFootprint(visual){
+ if(visual.stage!=="windup"||enemy.dead)return;
+ const area=warningFootprint(enemy,ATTACKS[enemy.kind]||ATTACKS[0],visual.style,3,9);
+ const amber=visual.style==="slam",rim=amber?[1,.68,.25]:[1,.27,.36],fill=amber?[1,.47,.18]:[.95,.13,.26];
+ const pulse=.78+.22*Math.sin(clock*14),strength=visual.charge*pulse;
+ for(const p of area.fill)part(lowSphere,p.x,terrainHeight(p.x,p.z)+.065,p.z,.28,.027,.34,fill,p.heading,.8,.13+.23*strength);
+ for(const p of area.edge)part(lowSphere,p.x,terrainHeight(p.x,p.z)+.074,p.z,.23,.027,.072,rim,p.heading,1,.42+.35*strength);
+ for(const p of area.borders)part(lowSphere,p.x,terrainHeight(p.x,p.z)+.075,p.z,.092,.028,.28,rim,p.heading,1,.33+.40*strength);
+ for(let i=1;i<=3;i++){
+  const rho=area.range*i/4,x=enemy.x+Math.sin(enemy.facing)*rho,z=enemy.z+Math.cos(enemy.facing)*rho;
+  part(lowSphere,x,terrainHeight(x,z)+.09,z,.12,.04,.18,rim,enemy.facing,1,.55+.3*strength);
+ }
+}
+function renderEnemyAttack(visual){
+ if(visual.stage!=="impact"||enemy.dead)return;
+ const area=attackArea(ATTACKS[enemy.kind]||ATTACKS[0],visual.style);
+ const strength=visual.impact,colour=visual.style==="slam"?[1,.89,.48]:[1,.52,.46];
+ if(visual.style==="sweep"){
+  // Physical sword-like crescent. The sweep takes place in front of the enemy.
+  for(let i=0;i<12;i++){
+   const angle=-area.arc+2*area.arc*i/11,heading=enemy.facing+angle;
+   const radius=Math.min(area.range,2.25+strength*.65);
+   const x=enemy.x+Math.sin(heading)*radius,z=enemy.z+Math.cos(heading)*radius;
+   part(lowSphere,x,.48+strength*.8+(i%3)*.045,z,.36,.09,.20,colour,heading,.9,Math.min(.85,.22+strength*.68));
+  }
+ }else{
+  // Impact cracks on the ground and a rising vertical strike flash.
+  for(let i=0;i<5;i++){
+   const rad=.55+i*.52,x=enemy.x+Math.sin(enemy.facing)*rad,z=enemy.z+Math.cos(enemy.facing)*rad;
+   part(lowSphere,x,terrainHeight(x,z)+.09,z,.26+strength*.2,.05,.29+strength*.18,colour,enemy.facing,1,.27+.56*strength);
+  }
+  const rad=Math.min(area.range,2.75),fx=enemy.x+Math.sin(enemy.facing)*rad,fz=enemy.z+Math.cos(enemy.facing)*rad;
+  part(lowSphere,fx,terrainHeight(fx,fz)+.15,fz,.55+strength*.9,.05,.7+strength*.75,colour,enemy.facing,1,.22+.52*strength);
+  part(cone,fx,.25+strength*.9,fz,.34+strength*.25,1.45*strength+.18,.34+strength*.25,colour,enemy.facing,.65,.33+.45*strength);
+ }
+}
+function showEnemyStrike(){
+ const style=enemy.attackStyle,colour=style==="sweep"?[1,.57,.39]:[1,.78,.4];
+ const area=attackArea(ATTACKS[enemy.kind]||ATTACKS[0],style);
+ for(let i=0;i<13;i++){
+  const heading=enemy.facing+(rand()*2-1)*area.arc,r=.9+rand()*Math.min(area.range,3.5);
+  sparks.push({x:enemy.x+Math.sin(heading)*r,y:.2+rand()*.55,z:enemy.z+Math.cos(heading)*r,
+   vx:(rand()-.5)*2.1,vy:1+rand()*2.5,vz:(rand()-.5)*2.1,r:.045+rand()*.075,life:.25+rand()*.36,t:0,col:colour});
+ }
+ beep(style==="sweep"?270:128,.18,style==="sweep"?"sawtooth":"triangle",.085);
+}
+
+function renderBeast(ex,ey,ez,visual){
  const golem=enemy.kind===4;
+ const prepare=visual.stage==="windup"?visual.progress:0,strike=visual.impact;
  const shade=golem?[.43,.52,.52]:[.30,.42,.35];
  enemyPart(lowSphere,ex,.15,ez,1.4,.07,1.2,[.11,.2,.16],0,0,.7);
  if(golem){
   // Armoured stone guardian: layered stone torso, heavy arms and a glowing rune.
-  enemyPart(lowSphere,ex,ey+.23,ez,1.18,1.5,.91,[.48,.57,.54]);
-  enemyPart(lowSphere,ex,ey+1.45,ez+.15,.77,.76,.69,[.58,.68,.64]);
+  enemyPart(lowSphere,ex,ey+.23-.20*prepare+.15*strike,ez-.17*prepare+.32*strike,1.18,1.5,.91,[.48,.57,.54]);
+  enemyPart(lowSphere,ex,ey+1.45-.25*prepare+.14*strike,ez+.15-.16*prepare+.46*strike,.77,.76,.69,[.58,.68,.64]);
   for(const side of [-1,1]){
-    enemyPart(lowSphere,ex+side*1.2,ey+.32,ez,.46,1.0,.55,[.41,.51,.50]);
+    enemyPart(lowSphere,ex+side*(1.2-.20*prepare),ey+.32+prepare*.92-strike*.70,ez-.43*prepare+.75*strike,.46,1.0,.55,[.41,.51,.50],side*(prepare*.28-strike*.22));
     enemyPart(lowSphere,ex+side*.72,.39,ez+.1,.42,.6,.47,[.37,.45,.47]);
     enemyPart(lowSphere,ex+side*.3,ey+1.52,ez+.74,.12,.12,.09,[.82,1,.81],0,.85);
   }
@@ -229,10 +279,10 @@ function renderBeast(ex,ey,ez){
   enemyPart(cone,ex,ey+2.2,ez,.31,.55,.31,[.49,.59,.53]);
  }else{
   // Forest wolf: longer horizontal body, separate neck, ears, muzzle, paws and tail.
-  enemyPart(lowSphere,ex,ey-.31,ez-.47,1.05,.7,1.4,shade);
+  enemyPart(lowSphere,ex,ey-.31-.19*prepare+.13*strike,ez-.47-.16*prepare+.28*strike,1.05,.7+.11*prepare,1.4,shade);
   enemyPart(lowSphere,ex,ey,ez+.53,.75,.72,.7,[.38,.47,.39]);
-  enemyPart(lowSphere,ex,ey+.22,ez+1.06,.75,.64,.59,[.43,.52,.45]);
-  enemyPart(lowSphere,ex,ey-.15,ez+1.52,.43,.21,.44,[.28,.35,.31]);
+  enemyPart(lowSphere,ex,ey+.22-.12*prepare+.17*strike,ez+1.06-.16*prepare+.67*strike,.75,.64,.59,[.43,.52,.45]);
+  enemyPart(lowSphere,ex,ey-.15-.12*prepare+.08*strike,ez+1.52-.16*prepare+.68*strike,.43,.21+.09*strike,.44,[.28,.35,.31]);
   for(const side of [-1,1]){
    enemyPart(cone,ex+side*.48,ey+.99,ez+1.07,.22,.61,.22,[.33,.38,.37],side*.13);
    enemyPart(lowSphere,ex+side*.52,ey+.4,ez+1.61,.12,.12,.06,[.96,.94,.76],0,.67);
@@ -245,9 +295,11 @@ function renderBeast(ex,ey,ez){
   enemyPart(lowSphere,ex,ey-.1,ez+1.89,.13,.1,.14,[.14,.22,.2]);
  }
 }
-function renderEnemy(){if(enemy.dead)return;let ex=enemy.x,ez=enemy.z,b=Math.sin(clock*2.3)*.085,ey=1.23+b;if(enemy.kind>=3){renderBeast(ex,ey,ez);return;}const col=enemyColor(),shade=[col[0]*.63,col[1]*.70,col[2]*.66];enemyPart(lowSphere,ex,.12,ez,1.08,.09,.85,[.11,.20,.16],0,.1,.7);enemyPart(sphere,ex,ey,ez,1.12,1.09,.91,col);enemyPart(sphere,ex,ey-.54,ez+.43,.91,.47,.5,[col[0]*.78,col[1]*.88,col[2]*.83],0,.22,.82);enemyPart(lowSphere,ex-.67,ey-.74,ez+.23,.34,.23,.31,shade);enemyPart(lowSphere,ex+.67,ey-.74,ez+.23,.34,.23,.31,shade);
+function renderEnemy(visual=attackVisualState(enemy,clock)){if(enemy.dead)return;let ex=enemy.x,ez=enemy.z,b=Math.sin(clock*2.3)*.085;
+const charge=visual.stage==="windup"?visual.progress:0,burst=visual.impact;
+let ey=1.23+b-.30*charge+.24*burst;if(enemy.kind>=3){renderBeast(ex,ey,ez,visual);return;}const col=enemyColor(),shade=[col[0]*.63,col[1]*.70,col[2]*.66];enemyPart(lowSphere,ex,.12,ez,1.08,.09,.85,[.11,.20,.16],0,.1,.7);enemyPart(sphere,ex,ey,ez,1.12+.16*charge,1.09-.22*charge+.18*burst,.91+.14*charge,col);enemyPart(sphere,ex,ey-.54,ez+.43,.91,.47,.5,[col[0]*.78,col[1]*.88,col[2]*.83],0,.22,.82);enemyPart(lowSphere,ex-.67,ey-.74,ez+.23,.34,.23,.31,shade);enemyPart(lowSphere,ex+.67,ey-.74,ez+.23,.34,.23,.31,shade);
 const blink=Math.sin(clock*1.45)>0.994?0.08:1;for(const side of [-1,1]){enemyPart(lowSphere,ex+side*.38,ey+.19,ez+.77,.24,.24*blink,.12,[.92,1,.89],0,.45);enemyPart(lowSphere,ex+side*.34,ey+.19,ez+.877,.115,.14*blink,.075,[.08,.23,.22],0,.22);enemyPart(lowSphere,ex+side*.38,ey+.23,ez+.935,.038,.052*blink,.025,[.95,1,.97],0,1);enemyPart(lowSphere,ex+side*.69,ey-.18,ez+.60,.16,.105,.035,enemy.kind===2?[.95,.36,.49]:[.9,.59,.63]);}
-enemyPart(lowSphere,ex,ey-.25,ez+.904,.24,.07,.028,[.17,.38,.31]);enemyPart(cone,ex-.47,ey+.82,ez,.23,.7,.24,col,-.27);enemyPart(cone,ex+.47,ey+.82,ez,.23,.7,.24,col,.27);enemyPart(lowSphere,ex,ey+1.06,ez,.22,.26,.23,[.78,.94,.55],0,1);
+enemyPart(lowSphere,ex,ey-.25+.08*burst,ez+.904+.20*burst,.24+.18*burst,.07+.07*burst,.028,[.17,.38,.31]);enemyPart(cone,ex-.47,ey+.82,ez,.23,.7,.24,col,-.27);enemyPart(cone,ex+.47,ey+.82,ez,.23,.7,.24,col,.27);enemyPart(lowSphere,ex,ey+1.06,ez,.22,.26,.23,[.78,.94,.55],0,1);
 // Atmospheric magic seal below the slime.
 let s=1+Math.sin(clock*1.8)*.05;enemyPart(lowSphere,ex,.066,ez,1.58*s,.022,1.46*s,[.27,.84,.66],0,1,.23);
 }
@@ -339,7 +391,7 @@ function update(dt){if(!el("motionPanel").hidden||document.hidden)return;clock+=
 updateEnemy(dt);
 for(let i=projectiles.length-1;i>=0;i--){let p=projectiles[i];p.age+=dt;p.x+=p.vx*dt;p.y+=p.vy*dt;p.z+=p.vz*dt;p.life-=dt;let dist=Math.hypot(p.x-camera.x,p.y-camera.y,p.z-camera.z);if(p.life<=0||dist>p.targetDist){if(p.on&&!enemy.dead){damage(p.damage)}else if(!p.on)toast('빗나갔습니다');projectiles.splice(i,1)}}
 for(let i=sparks.length-1;i>=0;i--){let s=sparks[i];s.t+=dt;s.x+=s.vx*dt;s.y+=s.vy*dt;s.z+=s.vz*dt;s.vy-=6*dt;if(s.t>s.life)sparks.splice(i,1)}}
-function render(){resize();gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);let proj=perspective(Math.PI/3.2,W/H,.06,155),vp=mul(proj,viewMatrix());gl.useProgram(program);gl.uniformMatrix4fv(loc.vp,false,vp);gl.uniform3fv(loc.cam,[camera.x,camera.y,camera.z]);draw(staticMesh);renderEnemy();for(let p of projectiles){const r=.16+.07*Math.sin(clock*18);part(lowSphere,p.x,p.y,p.z,r*2.4,r*2.4,r*2.4,[.32,.91,1],0,1,.28);part(sphere,p.x,p.y,p.z,r,r,r,[.65,.99,1],0,1)}for(let s of sparks){let alpha=Math.max(0,1-s.t/s.life);part(lowSphere,s.x,s.y,s.z,s.r,s.r,s.r,s.col,0,1,alpha)}requestAnimationFrame(loop)}
+function render(){resize();gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);let proj=perspective(Math.PI/3.2,W/H,.06,155),vp=mul(proj,viewMatrix());gl.useProgram(program);gl.uniformMatrix4fv(loc.vp,false,vp);gl.uniform3fv(loc.cam,[camera.x,camera.y,camera.z]);draw(staticMesh);const enemyVisual=attackVisualState(enemy,clock);renderAttackFootprint(enemyVisual);renderEnemy(enemyVisual);renderEnemyAttack(enemyVisual);for(let p of projectiles){const r=.16+.07*Math.sin(clock*18);part(lowSphere,p.x,p.y,p.z,r*2.4,r*2.4,r*2.4,[.32,.91,1],0,1,.28);part(sphere,p.x,p.y,p.z,r,r,r,[.65,.99,1],0,1)}for(let s of sparks){let alpha=Math.max(0,1-s.t/s.life);part(lowSphere,s.x,s.y,s.z,s.r,s.r,s.r,s.col,0,1,alpha)}requestAnimationFrame(loop)}
 function loop(t){let dt=Math.min(.05,Math.max(.001,(t-last)/1000||.016));last=t;update(dt);render()}
 function dragCamera(){let pId=null,lx=0,ly=0;const target=cvs;target.addEventListener('pointerdown',e=>{if(!active)return;pId=e.pointerId;lx=e.clientX;ly=e.clientY;target.setPointerCapture(pId)});target.addEventListener('pointermove',e=>{if(e.pointerId!==pId)return;let dx=e.clientX-lx,dy=e.clientY-ly;lx=e.clientX;ly=e.clientY;yaw+=dx*.0042;pitch=Math.max(-.72,Math.min(.57,pitch-dy*.0038))});const stop=e=>{if(e.pointerId===pId)pId=null};target.addEventListener('pointerup',stop);target.addEventListener('pointercancel',stop)}
 function joystick(){const area=el('joy'),stickEl=el('stick');let pid=null;function redraw(e){let r=area.getBoundingClientRect(),dx=(e.clientX-(r.left+r.width/2)),dy=e.clientY-(r.top+r.height/2),m=Math.hypot(dx,dy),lim=r.width*.34;if(m>lim){dx*=lim/m;dy*=lim/m}stick.x=dx/lim;stick.y=dy/lim;stickEl.style.transform=`translate(${dx}px,${dy}px)`}area.addEventListener('pointerdown',e=>{if(!active)return;pid=e.pointerId;area.setPointerCapture(pid);redraw(e)});area.addEventListener('pointermove',e=>{if(e.pointerId===pid)redraw(e)});function end(e){if(e.pointerId!==pid)return;pid=null;stick.x=0;stick.y=0;stickEl.style.transform='translate(0,0)'}area.addEventListener('pointerup',end);area.addEventListener('pointercancel',end)}
