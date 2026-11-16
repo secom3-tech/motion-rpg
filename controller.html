@@ -7,28 +7,123 @@
   <title>Motion RPG — S21 모션 컨트롤러</title>
   <style>
     :root{color-scheme:dark;font-family:system-ui,-apple-system,"Noto Sans KR",sans-serif;background:#071018;color:#ecf8ff}body{margin:0;min-height:100vh;background:radial-gradient(circle at 15% 0,#235568,transparent 37%),#071018}main{max-width:520px;margin:auto;padding:28px 18px}.eyebrow{font-size:11px;color:#87dbcb;letter-spacing:.15em;font-weight:900}h1{font-size:32px;margin:8px 0}.card{margin:16px 0;padding:18px;border:1px solid #75e8ad44;border-radius:20px;background:#0d202bd9}.meter{height:16px;border:1px solid #8bcbd655;border-radius:999px;overflow:hidden;background:#041016;margin:16px 0}.meter i{display:block;height:100%;width:0;background:linear-gradient(90deg,#76d8ff,#9df2a3,#ffd779);transition:width .1s}.score{font-size:48px;font-weight:900}button{border:0;border-radius:13px;padding:14px 16px;background:linear-gradient(135deg,#b6f6a2,#68dcb3);color:#092019;font:900 16px inherit;margin:6px 6px 0 0}button.secondary{background:#183447;color:#e8f6ff;border:1px solid #80cde055}.muted{color:#9bb8c5;line-height:1.6;font-size:14px}.mode.active{outline:2px solid #baf8ae}input[type=range]{width:100%;accent-color:#9df2a3;margin:14px 0 4px}ul{color:#b9d0da;padding-left:20px;line-height:1.7}
+    #roomCode{box-sizing:border-box;width:100%;margin:9px 0 7px;border:1px solid #73c0c088;border-radius:12px;background:#061b23;color:#e9fdec;padding:14px;font-size:16px;letter-spacing:.04em}
+    #pairStatus{margin-top:12px;min-height:22px}
+    button:disabled{opacity:.43;cursor:not-allowed}
+    .linked{color:#a8f6bf!important}
   </style>
 </head>
 <body><main>
   <div class="eyebrow">MOTION RPG · S21 CONTROLLER</div>
   <h1>투척 · 근접 휘두르기</h1>
-  <p class="muted">이 화면은 S21에서 여는 컨트롤러야. 폴드6은 게임 화면과 카메라 회피 판정에 둔다.</p>
+  <p class="muted">이 화면은 S21에서 실행해. 검격·투척 동작은 폴드6 3D 전투로 무선 전송하고, 폴드6은 화면과 카메라 회피를 담당해.</p>
+  <section class="card" id="pairing"><b>폴드6 무선 연결</b>
+   <p class="muted">폴드6의 3D 전투에서 <b>무선 연결 시작</b>을 누르면 코드가 표시돼. 그 코드를 여기에 입력하고 연결해.</p>
+   <label for="roomCode" class="muted">연결 코드</label><input id="roomCode" inputmode="text" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="예: mrpg-xxxxxxxxxx" maxlength="15" />
+   <div><button id="connect">게임 연결</button><button id="disconnect" class="secondary" disabled>연결 끊기</button><button id="diagnostic" class="secondary" disabled>통신 시험</button></div>
+   <div class="muted" id="pairStatus" aria-live="polite">연결 대기 중 · 휴대폰 두 대에서 페이지를 열어 주세요.</div>
+  </section>
   <section class="card"><div>현재 동작</div><div class="score" id="count">0</div><div class="meter"><i id="meter"></i></div><div class="muted" id="status">센서를 켜고 한 번 시험해 봐.</div><button id="start">센서 켜기</button><button id="stop" class="secondary" disabled>센서 끄기</button></section>
   <section class="card"><b>동작 타입</b><div><button class="mode active" data-mode="throw">투척</button><button class="mode secondary" data-mode="melee">근접 휘두르기</button></div><p class="muted" id="hint">휴대폰을 놓지 않은 채, 팔을 짧고 빠르게 앞으로 뻗어 봐.</p></section>
   <section class="card"><b>동작 민감도 · <span id="sensitivityLabel">보통</span></b><input id="sensitivity" type="range" min="1" max="5" step="1" value="3" /><div class="muted">낮음은 강한 회전만 인식하고, 높음은 작은 손목 회전도 인식한다. 지금은 <b>낮음</b>부터 권장.</div></section>
   <section class="card"><b>동작축 설정 · <span id="axisLabel">모든 방향</span></b><p class="muted">버튼을 누른 뒤 평소처럼 한 번 동작하면, 가장 크게 회전한 축만 다음부터 판정한다.</p><button id="calibrate" class="secondary">동작축 설정하기</button><button id="clearAxis" class="secondary">축 해제</button></section>
   <section class="card"><b>현재 단계</b><p class="muted">동작축을 설정하면 단순히 휴대폰을 다른 방향으로 돌리는 동작은 줄이고, 투척·휘두르기에 쓴 회전축을 우선 판정한다.</p></section>
-  <ul><li>한 번 감지한 뒤 센서 강도가 충분히 내려와야 다음 동작으로 다시 준비된다.</li><li>센서 데이터는 이 기기 브라우저 안에서만 사용하며 저장·전송하지 않는다.</li><li>주변을 비우고, 휴대폰을 실제로 던지지 마.</li></ul>
+  <ul><li>한 번 감지한 뒤 센서 강도가 충분히 내려와야 다음 동작으로 다시 준비된다.</li><li>감지된 검격·투척 이벤트만 폴드6에 전송해. 원본 센서 수치나 카메라 영상은 보내지 않아.</li><li>주변을 비우고, 휴대폰을 실제로 던지지 마.</li></ul>
 </main>
-<script>
-  const $=id=>document.getElementById(id); let active=false,last=0,count=0,mode="throw",latched=false,quietSince=0,sensitivity=Number(localStorage.getItem("motion-rpg-s21-sensitivity")||2),calibrating=false,calibration=null;
-  let axes=JSON.parse(localStorage.getItem("motion-rpg-s21-axes")||"{}");
-  function syncSensitivity(){sensitivity=Math.max(1,Math.min(5,Number($("sensitivity").value)));localStorage.setItem("motion-rpg-s21-sensitivity",String(sensitivity));$("sensitivityLabel").textContent=["낮음","조금 낮음","보통","조금 높음","높음"][sensitivity-1];}
-  function syncAxis(){const axis=axes[mode];$("axisLabel").textContent=axis?`${axis.toUpperCase()}축 우선`:"모든 방향";}
-  const update=(score,message)=>{$("meter").style.width=`${Math.min(100,Math.round(score))}%`;if(message)$("status").textContent=message;};
-  function onMotion(event){if(!active)return;const r=event.rotationRate||{};const values={alpha:Math.abs(Number(r.alpha)||0),beta:Math.abs(Number(r.beta)||0),gamma:Math.abs(Number(r.gamma)||0)};const rotation=Math.hypot(values.alpha,values.beta,values.gamma);const a=event.acceleration||{};const linear=Math.hypot(Number(a.x)||0,Number(a.y)||0,Number(a.z)||0),now=Date.now();if(calibrating){Object.keys(values).forEach(axis=>calibration[axis]=Math.max(calibration[axis],values[axis]));return;}const axis=axes[mode],axisRotation=axis?values[axis]:rotation,score=Math.min(100,axisRotation/4+linear*5);update(score,`회전 ${Math.round(axisRotation)}°/s${axis?` · ${axis.toUpperCase()}축`:""} · 충격 ${linear.toFixed(1)} · ${mode==="throw"?"투척":"근접 휘두르기"} 감지 중`);const base=mode==="throw"?50:38,threshold=base+(3-sensitivity)*20;if(score<=threshold*.38){if(!quietSince)quietSince=now;if(now-quietSince>=350)latched=false;}else quietSince=0;if(!latched&&score>=threshold&&now-last>300){latched=true;last=now;count+=1;$("count").textContent=count;$("status").textContent=`${mode==="throw"?"투척":"근접 휘두르기"} 감지! ${count}회`;}}
-  async function start(){try{if(typeof DeviceMotionEvent!=="undefined"&&typeof DeviceMotionEvent.requestPermission==="function"){const result=await DeviceMotionEvent.requestPermission();if(result!=="granted")throw Error("denied");}if(!window.DeviceMotionEvent)throw Error("unsupported");window.addEventListener("devicemotion",onMotion,{passive:true});active=true;$("start").disabled=true;$("stop").disabled=false;$("status").textContent="센서 연결됨 · 짧고 빠르게 동작해 봐.";}catch{$("status").textContent="동작 센서 권한이 필요하다. 브라우저 설정을 확인해 줘.";}}
-  function stop(){window.removeEventListener("devicemotion",onMotion);active=false;$("start").disabled=false;$("stop").disabled=true;$("status").textContent="센서를 껐다.";}
-  function calibrate(){if(!active){$("status").textContent="먼저 센서를 켜고 동작축을 설정해 줘.";return;}calibrating=true;calibration={alpha:0,beta:0,gamma:0};$("calibrate").disabled=true;$("status").textContent="3초 안에 평소처럼 한 번 동작해 봐.";setTimeout(()=>{calibrating=false;$("calibrate").disabled=false;const axis=Object.keys(calibration).reduce((best,key)=>calibration[key]>calibration[best]?key:best,"alpha");if(calibration[axis]<12){$("status").textContent="동작이 약해 축을 정하지 못했어. 다시 한 번 크게 해 봐.";return;}axes[mode]=axis;localStorage.setItem("motion-rpg-s21-axes",JSON.stringify(axes));syncAxis();$("status").textContent=`${axis.toUpperCase()}축으로 설정됨 · 이제 이 축 회전을 우선 판정해.`;},3000);}
-  $("sensitivity").value=sensitivity;syncSensitivity();syncAxis();$("sensitivity").oninput=syncSensitivity;$("start").onclick=()=>void start();$("stop").onclick=stop;$("calibrate").onclick=calibrate;$("clearAxis").onclick=()=>{delete axes[mode];localStorage.setItem("motion-rpg-s21-axes",JSON.stringify(axes));syncAxis();$("status").textContent="동작축 설정을 해제했어.";};document.querySelectorAll("[data-mode]").forEach(button=>button.onclick=()=>{mode=button.dataset.mode;document.querySelectorAll("[data-mode]").forEach(item=>item.classList.toggle("active",item===button));$("hint").textContent=mode==="throw"?"휴대폰을 놓지 않은 채, 팔을 짧고 빠르게 앞으로 뻗어 봐.":"휴대폰을 단단히 쥐고, 옆이나 아래로 짧게 휘둘러 봐.";syncAxis();});
+<script type="module">
+import {createGestureDetector,motionSample,dominantAxis} from "./src/motion-core.mjs";
+import {createWirelessController,cleanRoom} from "./src/peer-bridge.mjs";
+const $=id=>document.getElementById(id);
+let active=false,count=0,mode="throw",sensitivity=3,calibrating=false,calibration=[],sampleTime=0,seq=0,received=0;
+try{sensitivity=Math.max(1,Math.min(5,Number(localStorage.getItem("motion-rpg-s21-sensitivity")||3)));}catch{}
+let axes={};try{const saved=JSON.parse(localStorage.getItem("motion-rpg-s21-axes")||"{}");if(saved&&typeof saved==="object")axes=saved;}catch{}
+const detector=createGestureDetector({mode,sensitivity,axis:axes[mode]||""});
+const wireless=createWirelessController({
+ onStatus:state=>{
+  $("pairStatus").textContent=state.message;
+  $("pairStatus").classList.toggle("linked",state.connected);
+  $("connect").disabled=state.connected;
+  $("disconnect").disabled=!state.connected;
+  $("diagnostic").disabled=!state.connected;
+ },
+ onMessage:data=>{if(data?.type==="hello")$("pairStatus").textContent="연결됨 · 폴드6이 입력을 받을 준비가 됐어.";if(data?.type==="diagnostic-ack")$("pairStatus").textContent="통신 확인: 폴드6에서 시험 메시지를 받았어."; }
+});
+const codeFromUrl=new URLSearchParams(location.search).get("room");if(codeFromUrl)$("roomCode").value=codeFromUrl;
+function setStatus(message){$("status").textContent=message;}
+function syncSettings(){
+ sensitivity=Math.max(1,Math.min(5,Number($("sensitivity").value)));
+ try{localStorage.setItem("motion-rpg-s21-sensitivity",String(sensitivity));}catch{}
+ $("sensitivityLabel").textContent=["낮음","조금 낮음","보통","조금 높음","높음"][sensitivity-1];
+ $("axisLabel").textContent=axes[mode]?axes[mode].toUpperCase()+"축 우선":"모든 방향";
+ detector.configure({sensitivity,mode,axis:axes[mode]||""});
+}
+function changeMode(next){
+ mode=next;
+ document.querySelectorAll("[data-mode]").forEach(b=>b.classList.toggle("active",b.dataset.mode===mode));
+ $("hint").textContent=mode==="throw"?"기기를 놓지 말고 팔을 짧게 앞으로 뻗어 봐.":"기기를 단단히 쥐고 좌우로 짧게 휘둘러 봐.";
+ syncSettings();
+}
+function onMotion(e){
+ if(!active)return;
+ const now=Date.now(),result=detector.feed(e,now);
+ if(calibrating)calibration.push(result.rotations);
+ if(now-sampleTime>125){
+  $("meter").style.width=Math.round(result.score)+"%";
+  if(!result.valid)setStatus("센서 데이터 없음 · 기기 권한/지원 확인");
+  else setStatus("회전 "+Math.round(result.rotation||0)+"°/s · 가속도 "+result.linear.toFixed(1)+" · "+(wireless.connected?"무선 연결됨":"연결 전 로컬 시험 중"));
+  sampleTime=now;
+ }
+ if(!result.gesture)return;
+ count++;$("count").textContent=count;
+ const packet={type:"gesture",gesture:result.gesture.type,strength:result.gesture.strength,time:now,seq:++seq,session:wireless.room};
+ const sent=wireless.send(packet);
+ setStatus((mode==="throw"?"투척":"검격")+" 감지 "+count+"회 · "+(sent?"폴드6 전송 완료":"무선 미연결 · 로컬 감지만"));
+ try{navigator.vibrate?.(35)}catch{}
+}
+async function startSensor(){
+ try{
+  if(typeof DeviceMotionEvent!=="undefined"&&typeof DeviceMotionEvent.requestPermission==="function"){
+   const permission=await DeviceMotionEvent.requestPermission();if(permission!=="granted")throw Error("권한이 거부됐어.");
+  }
+  if(!window.DeviceMotionEvent)throw Error("동작 센서가 지원되지 않는 기기야.");
+  window.addEventListener("devicemotion",onMotion,{passive:true});
+  detector.reset();active=true;
+  $("start").disabled=true;$("stop").disabled=false;
+  setStatus("센서 시작 · 1초간 가만히 둔 뒤 움직여 봐.");
+ }catch(e){setStatus("센서 켜기 실패: "+e.message);}
+}
+function stopSensor(){window.removeEventListener("devicemotion",onMotion);active=false;$("start").disabled=false;$("stop").disabled=true;setStatus("센서 종료");}
+async function connect(){
+ const code=cleanRoom($("roomCode").value);
+ if(!code){$("pairStatus").textContent="10자리 연결 코드를 확인해 줘.";return;}
+ $("connect").disabled=true;$("pairStatus").textContent="폴드6에 연결하는 중...";
+ try{await wireless.connect(code);}catch(e){$("pairStatus").textContent="연결 실패: "+(e.message||e);$("connect").disabled=false;}
+}
+$("sensitivity").value=sensitivity;syncSettings();
+$("sensitivity").addEventListener("input",syncSettings);
+document.querySelectorAll("[data-mode]").forEach(b=>b.onclick=()=>changeMode(b.dataset.mode));
+$("connect").onclick=connect;
+$("disconnect").onclick=()=>wireless.disconnect();
+$("diagnostic").onclick=()=>{if(wireless.send({type:"diagnostic",time:Date.now(),seq:++seq}))$("pairStatus").textContent="통신 시험 전송 중...";};
+$("start").onclick=startSensor;$("stop").onclick=stopSensor;
+$("calibrate").onclick=()=>{
+ if(!active){setStatus("먼저 센서를 켜 줘.");return;}
+ if(calibrating)return;
+ calibrating=true;calibration=[];$("calibrate").disabled=true;
+ setStatus("3초 동안 원하는 휘두르기 동작을 짧게 한 번 해 줘.");
+ setTimeout(()=>{
+  calibrating=false;$("calibrate").disabled=false;
+  const axis=dominantAxis(calibration);
+  if(!axis){setStatus("회전 변화가 충분하지 않아. 다시 설정해 줘.");return;}
+  axes[mode]=axis;
+  try{localStorage.setItem("motion-rpg-s21-axes",JSON.stringify(axes));}catch{}
+  syncSettings();setStatus(axis.toUpperCase()+"축 동작 설정 완료");
+ },3000);
+};
+$("clearAxis").onclick=()=>{
+ delete axes[mode];
+ try{localStorage.setItem("motion-rpg-s21-axes",JSON.stringify(axes));}catch{}
+ syncSettings();setStatus("동작축 해제");
+};
+window.addEventListener("pagehide",()=>{stopSensor();wireless.disconnect();});
 </script></body></html>
