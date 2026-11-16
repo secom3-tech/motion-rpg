@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { ACTIONS, EVENTS, ITEMS, TRAINING_DRILLS, UPGRADES, availableActions, newGame, beginEncounter, resolveEncounter, advanceGame, beginTraining, resolveTraining, purchaseUpgrade } from "../src/engine.mjs";
+import { ACTIONS, EVENTS, ITEMS, RIDGE_EVENTS, REGIONS, TRAINING_DRILLS, UPGRADES, availableActions, availableRegions, newGame, beginEncounter, resolveEncounter, advanceGame, beginTraining, resolveTraining, purchaseUpgrade, selectRegion } from "../src/engine.mjs";
 
 assert.equal(new Set(EVENTS.map(e => e.id)).size, EVENTS.length, "Event IDs must be unique");
 assert.equal(new Set(Object.keys(ACTIONS)).size, Object.keys(ACTIONS).length, "Action IDs must be unique");
@@ -8,6 +8,8 @@ assert.ok(EVENTS.every(event => event.actions.length >= 2 && event.reward >= 6 &
 assert.deepEqual(Object.keys(ITEMS).sort(), ["bandage", "map", "torch"]);
 assert.equal(TRAINING_DRILLS.length, 3, "Indoor training needs three rotating drills");
 assert.equal(Object.keys(UPGRADES).length, 3, "Camp needs three starter upgrades");
+assert.equal(RIDGE_EVENTS.length, 6, "The second region should contain six events");
+assert.equal(Object.keys(REGIONS).length, 2, "Two regions should be configured");
 
 // State-machine boundaries: no rewards before an encounter is resolved.
 let state = newGame();
@@ -25,18 +27,18 @@ assert.equal(state.lastEvent.action, "push");
 assert.throws(() => resolveEncounter(state, "push"), /No active/);
 
 // Consumables are hidden without stock, become valid when held, and are spent on use.
-let fogRun = { ...newGame(), attempts: 3 };
+let fogRun = { ...newGame(), attempts: 3, regionAttempts: { forest: 3, ridge: 0 } };
 fogRun = beginEncounter(fogRun, 8);
 assert.ok(!availableActions(fogRun.currentEvent, fogRun.inventory).includes("torch"));
 assert.throws(() => resolveEncounter(fogRun, "torch"), /Required item/);
-fogRun = { ...newGame(), attempts: 3, inventory: { torch: 1, map: 0, bandage: 0 } };
+fogRun = { ...newGame(), attempts: 3, regionAttempts: { forest: 3, ridge: 0 }, inventory: { torch: 1, map: 0, bandage: 0 } };
 fogRun = beginEncounter(fogRun, 8);
 assert.ok(availableActions(fogRun.currentEvent, fogRun.inventory).includes("torch"));
 fogRun = resolveEncounter(fogRun, "torch");
 assert.equal(fogRun.lastEvent.passed, true);
 assert.equal(fogRun.inventory.torch, 0);
 
-let lootRun = { ...newGame(), attempts: 2 };
+let lootRun = { ...newGame(), attempts: 2, regionAttempts: { forest: 2, ridge: 0 } };
 lootRun = resolveEncounter(beginEncounter(lootRun, 8), "recover");
 assert.equal(lootRun.lastEvent.gainedItem, "bandage");
 assert.equal(lootRun.inventory.bandage, 1);
@@ -61,9 +63,20 @@ campRun = purchaseUpgrade(campRun, "guards");
 assert.equal(campRun.gold, 0);
 assert.deepEqual(campRun.camp, { lantern: 1, surveyMap: 1, guards: 1 });
 assert.throws(() => purchaseUpgrade(campRun, "lantern"), /maximum/);
-let scoutRun = { ...campRun, attempts: 1 };
+let scoutRun = { ...campRun, attempts: 1, regionAttempts: { forest: 1, ridge: 0 } };
 scoutRun = resolveEncounter(beginEncounter(scoutRun, 8), "search");
 assert.equal(scoutRun.lastEvent.gainedGold, EVENTS[1].reward + 2);
+
+// Region two cannot be selected early, then unlocks through level plus camp progression.
+let regionRun = newGame();
+assert.ok(!availableRegions(regionRun).includes("ridge"));
+assert.throws(() => selectRegion(regionRun, "ridge"), /locked/);
+regionRun = { ...regionRun, level: 2, camp: { ...regionRun.camp, lantern: 1 } };
+regionRun = selectRegion(regionRun, "ridge");
+assert.equal(regionRun.region, "ridge");
+regionRun = resolveEncounter(beginEncounter(regionRun, 8), "steady");
+assert.equal(regionRun.lastEvent.region, "ridge");
+assert.ok(regionRun.lastEvent.gainedGold <= 13);
 
 // Every event must be reachable once in a 12-minute cycle.
 let coverageRun = newGame();
@@ -93,7 +106,7 @@ for (let seed = 1; seed <= 1000; seed++) {
     assert.ok(run.energy >= 0 && run.energy <= 100);
     assert.ok(run.xp >= prev.xp && run.gold >= prev.gold);
     assert.ok(run.distanceM >= prev.distanceM);
-    assert.ok(run.lastEvent.gainedGold <= 10);
+    assert.ok(run.lastEvent.gainedGold <= 13);
     assert.ok(Object.values(run.inventory).every(count => count >= 0));
     assert.ok(run.history.length <= 6);
   }

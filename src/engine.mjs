@@ -16,6 +16,20 @@ export const EVENTS = Object.freeze([
   { id: "messenger", title: "숲의 전령", task: "짧은 신호를 놓치지 말고 응답하라", kind: "chase", reward: 9, actions: ["push", "steady", "bandage"] },
 ]);
 
+export const RIDGE_EVENTS = Object.freeze([
+  { id: "ridge-echo", title: "메아리 절벽", task: "되돌아오는 신호 속에서 길을 가늠하라", kind: "fog", reward: 11, actions: ["steady", "recover", "torch"] },
+  { id: "ridge-marker", title: "부서진 이정표", task: "바람에 지워진 표시를 다시 읽어라", kind: "scout", reward: 10, actions: ["search", "steady", "map"] },
+  { id: "ridge-supply", title: "산등성이 보급품", task: "높은 곳에 남은 보급을 챙겨라", kind: "supply", reward: 11, loot: "torch", actions: ["recover", "search"] },
+  { id: "ridge-hunter", title: "능선의 사냥꾼", task: "짧은 틈을 보고 안전한 거리를 확보하라", kind: "chase", reward: 13, actions: ["push", "steady", "bandage"] },
+  { id: "ridge-lights", title: "달빛 표식", task: "희미한 빛을 따라 다음 고개를 넘는다", kind: "scout", reward: 12, actions: ["search", "steady", "map"] },
+  { id: "ridge-mist", title: "구름 바다", task: "시야가 흔들려도 흐름을 유지하라", kind: "fog", reward: 13, actions: ["steady", "recover", "torch"] },
+]);
+
+export const REGIONS = Object.freeze({
+  forest: { label: "경계의 숲", description: "첫 탐험 지역", events: EVENTS },
+  ridge: { label: "달빛 능선", description: "레벨 2와 작은 랜턴이 필요한 고지대", events: RIDGE_EVENTS },
+});
+
 export const ACTIONS = Object.freeze({
   push: { label: "돌파", description: "빠르게 기회를 잡는다" },
   steady: { label: "안정 이동", description: "현재 흐름을 유지한다" },
@@ -56,7 +70,8 @@ export function newGame() {
     inventory: { torch: 0, map: 0, bandage: 0 },
     currentEvent: null, lastEvent: null, history: [],
     training: { phase: "ready", attempts: 0, successes: 0, currentDrill: null, lastDrill: null },
-    camp: { lantern: 0, surveyMap: 0, guards: 0 }
+    camp: { lantern: 0, surveyMap: 0, guards: 0 },
+    region: "forest", regionAttempts: { forest: 0, ridge: 0 }, unlockedRegions: ["forest"]
   };
 }
 
@@ -82,17 +97,37 @@ export function availableActions(event, inventory) {
   return event.actions.filter(action => !ACTIONS[action].item || inventory[ACTIONS[action].item] > 0);
 }
 
+export function isRegionAvailable(state, regionId) {
+  if (!REGIONS[regionId]) return false;
+  if (regionId === "forest") return true;
+  if (regionId === "ridge") return state.level >= 2 && state.camp.lantern >= 1;
+  return false;
+}
+
+export function availableRegions(state) {
+  return Object.keys(REGIONS).filter(id => isRegionAvailable(state, id));
+}
+
+export function selectRegion(state, regionId) {
+  if (state.phase !== "exploring" || state.training.phase !== "ready") throw Error("Finish the active challenge first");
+  if (!isRegionAvailable(state, regionId)) throw Error("Region is locked");
+  const next = { ...state, unlockedRegions: [...new Set([...state.unlockedRegions, regionId])] };
+  next.region = regionId;
+  return next;
+}
+
 // Begins one simulated minute. Calling it outside exploration is an invalid transition.
 export function beginEncounter(state, paceInput) {
   if (state.phase !== "exploring") throw Error("Can only begin an encounter while exploring");
   if (!isValidPace(paceInput)) throw Error("Invalid pace");
   const pace = clamp(Number(paceInput), 4, 12);
-  const event = EVENTS[state.attempts % EVENTS.length];
+  const region = REGIONS[state.region];
+  const event = region.events[state.regionAttempts[state.region] % region.events.length];
   const next = { ...state };
   next.elapsedMin += 1;
   next.distanceM = Math.round(next.distanceM + 1000 / pace);
   next.phase = "encounter";
-  next.currentEvent = { ...event, pace };
+  next.currentEvent = { ...event, pace, region: state.region };
   return next;
 }
 
@@ -116,10 +151,12 @@ export function resolveEncounter(state, action) {
   if (gainedItem) next.inventory[gainedItem] += 1;
   next.level = 1 + Math.floor(next.xp / 100);
   next.attempts += 1;
+  next.regionAttempts = { ...state.regionAttempts, [event.region]: state.regionAttempts[event.region] + 1 };
+  next.unlockedRegions = [...new Set([...state.unlockedRegions, ...availableRegions(next)])];
   next.successes += passed ? 1 : 0;
   next.phase = "exploring";
   next.currentEvent = null;
-  next.lastEvent = { id: event.id, title: event.title, task: event.task, action, passed, gainedXp, gainedGold, gainedItem, pace: event.pace };
+  next.lastEvent = { id: event.id, title: event.title, task: event.task, region: event.region, action, passed, gainedXp, gainedGold, gainedItem, pace: event.pace };
   next.history = [...state.history, next.lastEvent].slice(-6);
   return next;
 }
