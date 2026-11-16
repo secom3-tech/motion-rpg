@@ -491,7 +491,59 @@ if(p.life<=0||p.traveled>=p.targetDist){
  projectiles.splice(i,1);
 }}
 for(let i=sparks.length-1;i>=0;i--){let s=sparks[i];s.t+=dt;s.x+=s.vx*dt;s.y+=s.vy*dt;s.z+=s.vz*dt;s.vy-=6*dt;if(s.t>s.life)sparks.splice(i,1)}}
-function render(){resize();gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);let proj=perspective(Math.PI/3.2,W/H,.06,155),vp=mul(proj,viewMatrix());gl.useProgram(program);gl.uniformMatrix4fv(loc.vp,false,vp);gl.uniform3fv(loc.cam,[camera.x,camera.y,camera.z]);draw(staticMesh);const enemyVisual=attackVisualState(enemy,clock);renderAttackFootprint(enemyVisual);renderEnemy(enemyVisual);renderEnemyAttack(enemyVisual);for(let p of projectiles){const r=.16+.07*Math.sin(clock*18);part(lowSphere,p.x,p.y,p.z,r*2.4,r*2.4,r*2.4,[.32,.91,1],0,1,.28);part(sphere,p.x,p.y,p.z,r,r,r,[.65,.99,1],0,1)}for(let s of sparks){let alpha=Math.max(0,1-s.t/s.life);part(lowSphere,s.x,s.y,s.z,s.r,s.r,s.r,s.col,0,1,alpha)}requestAnimationFrame(loop)}
+function renderPlayerProjectile(p){
+ if(p.kind==="arrow"){
+  const heading=p.heading||0,dz=Math.cos(heading),dx=Math.sin(heading);
+  part(lowSphere,p.x,p.y,p.z,.062,.062,.60,[.72,.56,.30],heading,.18);
+  part(lowSphere,p.x+dx*.38,p.y,p.z+dz*.38,.098,.095,.18,[.93,.98,.90],heading,.75);
+  part(lowSphere,p.x-dx*.46,p.y+.05,p.z-dz*.46,.16,.045,.14,[.48,.79,.61],heading,.25,.84);
+  return;
+ }
+ if(p.kind==="orb"){
+  const size=.27+.055*Math.sin(clock*22);
+  part(lowSphere,p.x,p.y,p.z,size*2.2,size*2.2,size*2.2,[.27,.75,1],0,.9,.25);
+  part(sphere,p.x,p.y,p.z,size,size,size,[.73,.94,1],0,1);
+  for(let i=0;i<3;i++){
+   const angle=clock*6+i*2.094;
+   part(lowSphere,p.x+Math.cos(angle)*.38,p.y+Math.sin(angle)*.18,p.z+Math.sin(angle)*.35,.065,.065,.065,[.89,.97,1],0,1,.75);
+  }
+  return;
+ }
+ if(p.kind==="ember"){
+  part(lowSphere,p.x,p.y,p.z,.48,.37,.48,[1,.47,.12],0,1,.32);
+  part(lowSphere,p.x,p.y,p.z,.19,.22,.27,[1,.83,.38],0,.8);
+  part(lowSphere,p.x,p.y+.21,p.z,.18,.1,.22,[.93,.39,.19],0,1,.45);
+  return;
+ }
+ const aura=p.kind==="aura";
+ const colour=aura?[.55,.80,1]:[.72,.98,.87];
+ part(lowSphere,p.x,p.y,p.z,aura?.42:.30,aura?.3:.20,aura?.65:.37,colour,p.heading||0,1,.32);
+ part(sphere,p.x,p.y,p.z,aura?.24:.15,aura?.24:.15,aura?.31:.17,colour,p.heading||0,1);
+}
+function render(){
+ resize();
+ gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);
+ let proj=perspective(Math.PI/3.2,W/H,.06,155),vp=mul(proj,viewMatrix());
+ gl.useProgram(program);gl.uniformMatrix4fv(loc.vp,false,vp);gl.uniform3fv(loc.cam,[camera.x,camera.y,camera.z]);
+ draw(staticMesh);
+ const enemyVisual=attackVisualState(enemy,clock);
+ renderAttackFootprint(enemyVisual);
+ renderEnemy(enemyVisual);
+ renderEnemyAttack(enemyVisual);
+ for(const p of projectiles)renderPlayerProjectile(p);
+ for(const sp of sparks){
+  const alpha=Math.max(0,1-sp.t/sp.life);
+  part(lowSphere,sp.x,sp.y,sp.z,sp.r,sp.r,sp.r,sp.col,0,1,alpha);
+ }
+ if(weaponCtx){
+  const ratio=Math.min(window.devicePixelRatio||1,1.5);
+  const w=Math.round(W*ratio),h=Math.round(H*ratio);
+  if(weaponCanvas.width!==w||weaponCanvas.height!==h){weaponCanvas.width=w;weaponCanvas.height=h;}
+  weaponCtx.setTransform(ratio,0,0,ratio,0,0);
+  drawFirstPersonWeapon(weaponCtx,W,H,equipped.weapon,meleeAction,rangedAction,clock);
+ }
+ requestAnimationFrame(loop);
+}
 function loop(t){let dt=Math.min(.05,Math.max(.001,(t-last)/1000||.016));last=t;update(dt);render()}
 function dragCamera(){let pId=null,lx=0,ly=0;const target=cvs;target.addEventListener('pointerdown',e=>{if(!active)return;pId=e.pointerId;lx=e.clientX;ly=e.clientY;target.setPointerCapture(pId)});target.addEventListener('pointermove',e=>{if(e.pointerId!==pId)return;let dx=e.clientX-lx,dy=e.clientY-ly;lx=e.clientX;ly=e.clientY;yaw+=dx*.0042;pitch=Math.max(-.72,Math.min(.57,pitch-dy*.0038))});const stop=e=>{if(e.pointerId===pId)pId=null};target.addEventListener('pointerup',stop);target.addEventListener('pointercancel',stop)}
 function joystick(){const area=el('joy'),stickEl=el('stick');let pid=null;function redraw(e){let r=area.getBoundingClientRect(),dx=(e.clientX-(r.left+r.width/2)),dy=e.clientY-(r.top+r.height/2),m=Math.hypot(dx,dy),lim=r.width*.34;if(m>lim){dx*=lim/m;dy*=lim/m}stick.x=dx/lim;stick.y=dy/lim;stickEl.style.transform=`translate(${dx}px,${dy}px)`}area.addEventListener('pointerdown',e=>{if(!active)return;pid=e.pointerId;area.setPointerCapture(pid);redraw(e)});area.addEventListener('pointermove',e=>{if(e.pointerId===pid)redraw(e)});function end(e){if(e.pointerId!==pid)return;pid=null;stick.x=0;stick.y=0;stickEl.style.transform='translate(0,0)'}area.addEventListener('pointerup',end);area.addEventListener('pointercancel',end)}
