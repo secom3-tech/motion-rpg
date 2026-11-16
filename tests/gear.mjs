@@ -26,6 +26,11 @@ assert.throws(()=>craftGear(starter,"greatsword"),/required|필요/);
 assert.throws(()=>craftGear(starter,"invalid"),/알 수 없는/);
 assert.equal(claimIndoorBattle(starter,{kills:0,updatedAt:12}).awarded,false);
 assert.equal(claimIndoorBattle(starter,{kills:2,updatedAt:0}).awarded,false);
+const marathon=claimIndoorBattle(newGame(),{sessionId:"long-battle-1234",kills:300,updatedAt:Date.now()});
+assert.equal(marathon.awarded,true,"long battle payout may not disappear");
+assert.equal(marathon.kills,24,"claim capped number of enemies");
+assert.equal(marathon.state.rpgGear.materials.fang,24);
+
 
 const r={sessionId:"battle-123456",kills:8,score:640,updatedAt:Date.now()};
 const first=claimIndoorBattle(starter,r);
