@@ -1,11 +1,12 @@
 import assert from "node:assert/strict";
-import { ACTIONS, EVENTS, ITEMS, availableActions, newGame, beginEncounter, resolveEncounter, advanceGame } from "../src/engine.mjs";
+import { ACTIONS, EVENTS, ITEMS, TRAINING_DRILLS, availableActions, newGame, beginEncounter, resolveEncounter, advanceGame, beginTraining, resolveTraining } from "../src/engine.mjs";
 
 assert.equal(new Set(EVENTS.map(e => e.id)).size, EVENTS.length, "Event IDs must be unique");
 assert.equal(new Set(Object.keys(ACTIONS)).size, Object.keys(ACTIONS).length, "Action IDs must be unique");
 assert.equal(EVENTS.length, 12, "The first forest region should contain 12 events");
 assert.ok(EVENTS.every(event => event.actions.length >= 2 && event.reward >= 6 && event.reward <= 10));
 assert.deepEqual(Object.keys(ITEMS).sort(), ["bandage", "map", "torch"]);
+assert.equal(TRAINING_DRILLS.length, 3, "Indoor training needs three rotating drills");
 
 // State-machine boundaries: no rewards before an encounter is resolved.
 let state = newGame();
@@ -38,6 +39,18 @@ let lootRun = { ...newGame(), attempts: 2 };
 lootRun = resolveEncounter(beginEncounter(lootRun, 8), "recover");
 assert.equal(lootRun.lastEvent.gainedItem, "bandage");
 assert.equal(lootRun.inventory.bandage, 1);
+
+// Indoor play shares the same inventory and character rewards with outdoor play.
+let trainingRun = { ...newGame(), inventory: { torch: 1, map: 0, bandage: 0 }, training: { ...newGame().training, attempts: 1 } };
+trainingRun = beginTraining(trainingRun);
+assert.equal(trainingRun.training.currentDrill.id, "darkroom");
+assert.ok(availableActions(trainingRun.training.currentDrill, trainingRun.inventory).includes("torch"));
+trainingRun = resolveTraining(trainingRun, "torch");
+assert.equal(trainingRun.training.phase, "ready");
+assert.equal(trainingRun.inventory.torch, 0);
+assert.equal(trainingRun.training.lastDrill.passed, true);
+assert.equal(trainingRun.xp, 10);
+assert.throws(() => resolveTraining(trainingRun, "torch"), /No active/);
 
 // Every event must be reachable once in a 12-minute cycle.
 let coverageRun = newGame();

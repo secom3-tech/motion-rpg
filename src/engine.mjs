@@ -24,6 +24,8 @@ export const ACTIONS = Object.freeze({
   torch: { label: "횃불 사용", description: "안개 속 길을 밝힌다", item: "torch" },
   map: { label: "지도 조각 사용", description: "표시된 길을 따른다", item: "map" },
   bandage: { label: "붕대 정비", description: "위기를 넘길 준비를 한다", item: "bandage" },
+  form: { label: "기본 동작", description: "훈련의 흐름을 유지한다" },
+  focus: { label: "집중 유지", description: "한 가지 신호에 집중한다" },
 });
 
 export const ITEMS = Object.freeze({
@@ -31,6 +33,12 @@ export const ITEMS = Object.freeze({
   map: { label: "지도 조각", description: "탐색 사건에서 사용할 수 있다" },
   bandage: { label: "붕대", description: "추격 사건에서 사용할 수 있다" },
 });
+
+export const TRAINING_DRILLS = Object.freeze([
+  { id: "guard", title: "방어 리듬", task: "한 동작의 리듬을 끝까지 유지한다", kind: "form", reward: 2, actions: ["form", "focus"] },
+  { id: "darkroom", title: "어두운 훈련장", task: "흐트러지지 않고 단서를 포착한다", kind: "focus", reward: 3, actions: ["focus", "form", "torch"] },
+  { id: "recovery", title: "회복 루틴", task: "다음 도전을 위한 흐름을 정리한다", kind: "recovery", reward: 2, actions: ["recover", "form"] },
+]);
 
 const clamp = (x, min, max) => Math.max(min, Math.min(max, x));
 const isValidPace = pace => Number.isFinite(Number(pace));
@@ -40,7 +48,8 @@ export function newGame() {
     elapsedMin: 0, distanceM: 0, energy: 100, xp: 0, gold: 0,
     level: 1, successes: 0, attempts: 0, phase: "exploring",
     inventory: { torch: 0, map: 0, bandage: 0 },
-    currentEvent: null, lastEvent: null, history: []
+    currentEvent: null, lastEvent: null, history: [],
+    training: { phase: "ready", attempts: 0, successes: 0, currentDrill: null, lastDrill: null }
   };
 }
 
@@ -52,7 +61,7 @@ function energyChange(action, pace) {
 
 function eventPassed(event, action, pace) {
   if (!event.actions.includes(action)) return false;
-  if (action === "torch" && event.kind === "fog") return true;
+  if (action === "torch" && (event.kind === "fog" || event.kind === "focus")) return true;
   if (action === "map" && event.kind === "scout") return true;
   if (action === "bandage" && event.kind === "chase") return true;
   if (event.kind === "chase") return action === "push" && pace <= 7.5 || action === "steady" && pace <= 6.5;
@@ -115,4 +124,46 @@ export function advanceGame(state, paceInput, action = "steady") {
     ? action
     : availableActions(encounter.currentEvent, encounter.inventory)[0];
   return resolveEncounter(encounter, selectedAction);
+}
+
+function trainingPassed(drill, action, energy) {
+  if (action === "torch" && drill.kind === "focus") return true;
+  if (drill.kind === "form") return action === "form" || action === "focus" && energy >= 25;
+  if (drill.kind === "focus") return action === "focus" && energy >= 20 || action === "form" && energy >= 55;
+  if (drill.kind === "recovery") return action === "recover" || action === "form" && energy >= 35;
+  return false;
+}
+
+// Indoor simulator. It shares XP, gold, energy, and the outdoor inventory.
+export function beginTraining(state) {
+  if (state.phase !== "exploring") throw Error("Finish the outdoor encounter first");
+  if (state.training.phase !== "ready") throw Error("Training is already active");
+  const drill = TRAINING_DRILLS[state.training.attempts % TRAINING_DRILLS.length];
+  const next = { ...state, training: { ...state.training } };
+  next.training.phase = "challenge";
+  next.training.currentDrill = { ...drill };
+  return next;
+}
+
+export function resolveTraining(state, action) {
+  if (state.training.phase !== "challenge" || !state.training.currentDrill) throw Error("No active training to resolve");
+  if (!ACTIONS[action]) throw Error("Unknown action");
+  const drill = state.training.currentDrill;
+  if (!availableActions(drill, state.inventory).includes(action)) throw Error("Required item is not available");
+  const passed = trainingPassed(drill, action, state.energy);
+  const gainedXp = passed ? 10 : 3;
+  const gainedGold = passed ? drill.reward : 0;
+  const usedItem = ACTIONS[action].item;
+  const next = { ...state, inventory: { ...state.inventory }, training: { ...state.training } };
+  if (usedItem) next.inventory[usedItem] -= 1;
+  next.energy = clamp(next.energy + (action === "recover" ? 5 : action === "form" ? -1 : action === "focus" ? -2 : 0), 0, 100);
+  next.xp += gainedXp;
+  next.gold += gainedGold;
+  next.level = 1 + Math.floor(next.xp / 100);
+  next.training.attempts += 1;
+  next.training.successes += passed ? 1 : 0;
+  next.training.phase = "ready";
+  next.training.currentDrill = null;
+  next.training.lastDrill = { id: drill.id, title: drill.title, task: drill.task, action, passed, gainedXp, gainedGold };
+  return next;
 }
