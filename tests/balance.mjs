@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { ACTIONS, EVENTS, ITEMS, RIDGE_EVENTS, REGIONS, QUESTS, TRAINING_DRILLS, UPGRADES, availableActions, availableRegions, newGame, adjustTreadmillSpeed, advanceTreadmill, beginEncounter, beginBossEncounter, isBossAvailable, pauseOutdoorSession, recordIndoorSignal, recordOutdoorSegment, recordOutdoorSignal, resolveEncounter, resumeOutdoorSession, advanceGame, beginTraining, resolveTraining, purchaseUpgrade, selectRegion, setTreadmillGoal, setTreadmillSpeed, startOutdoorSession, startTreadmill, stopOutdoorSession, stopTreadmill } from "../src/engine.mjs";
+import { ACTIONS, EVENTS, ITEMS, RIDGE_EVENTS, REGIONS, QUESTS, TRAINING_DRILLS, UPGRADES, availableActions, availableRegions, newGame, adjustTreadmillSpeed, advanceTreadmill, beginEncounter, beginBossEncounter, isBossAvailable, pauseOutdoorSession, recordIndoorSignal, recordOutdoorSegment, recordOutdoorSignal, resolveEncounter, resumeOutdoorSession, advanceGame, beginTraining, resolveTraining, purchaseUpgrade, selectRegion, setTrainingGoal, setTreadmillGoal, setTreadmillSpeed, startOutdoorSession, startTrainingSession, startTreadmill, stopOutdoorSession, stopTreadmill } from "../src/engine.mjs";
 
 assert.equal(new Set(EVENTS.map(e => e.id)).size, EVENTS.length, "Event IDs must be unique");
 assert.equal(new Set(Object.keys(ACTIONS)).size, Object.keys(ACTIONS).length, "Action IDs must be unique");
@@ -94,6 +94,11 @@ motionRun = resolveTraining(beginTraining(motionRun), "form");
 assert.equal(motionRun.training.lastDrill.inputBonus, 2);
 assert.equal(motionRun.training.lastDrill.gainedXp, 12);
 assert.throws(() => recordIndoorSignal(newGame(), -1), /Invalid/);
+let indoorSessionRun = setTrainingGoal(newGame(), 1);
+indoorSessionRun = resolveTraining(startTrainingSession(indoorSessionRun), "form");
+assert.equal(indoorSessionRun.training.session.active, false);
+assert.equal(indoorSessionRun.training.session.lastSummary.goal, 1);
+assert.equal(indoorSessionRun.training.session.lastSummary.gainedXp, 4);
 
 let treadmillRun = startTreadmill(newGame(), 8);
 treadmillRun = advanceTreadmill(treadmillRun, 60);

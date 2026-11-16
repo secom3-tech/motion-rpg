@@ -80,7 +80,7 @@ export function newGame() {
     level: 1, successes: 0, attempts: 0, phase: "exploring",
     inventory: { torch: 0, map: 0, bandage: 0 },
     currentEvent: null, lastEvent: null, history: [],
-    training: { phase: "ready", attempts: 0, successes: 0, currentDrill: null, lastDrill: null },
+    training: { phase: "ready", attempts: 0, successes: 0, currentDrill: null, lastDrill: null, session: { active: false, goal: 3, startAttempts: 0, lastSummary: null } },
     camp: { lantern: 0, surveyMap: 0, guards: 0 },
     region: "forest", regionAttempts: { forest: 0, ridge: 0 }, unlockedRegions: ["forest"],
     quests: { forest: { attempts: 0, successes: 0, bossDefeated: false }, ridge: { attempts: 0, successes: 0, bossDefeated: false } },
@@ -365,6 +365,20 @@ export function beginTraining(state) {
   return next;
 }
 
+export function setTrainingGoal(state, goalInput) {
+  if (state.training.phase !== "ready" || state.training.session?.active) throw Error("Finish the active training session first");
+  const goal = Number(goalInput);
+  if (![1, 3, 5].includes(goal)) throw Error("Invalid training goal");
+  return { ...state, training: { ...state.training, session: { ...(state.training.session ?? {}), goal } } };
+}
+
+export function startTrainingSession(state) {
+  if (state.training.phase !== "ready") throw Error("Training is already active");
+  const session = { goal: 3, active: false, startAttempts: state.training.attempts, lastSummary: null, ...(state.training.session ?? {}) };
+  const next = { ...state, training: { ...state.training, session: session.active ? session : { ...session, active: true, startAttempts: state.training.attempts, lastSummary: null } } };
+  return beginTraining(next);
+}
+
 // Adapter boundary for a future camera or wearable motion counter.
 export function recordIndoorSignal(state, motionCount) {
   const count = Number(motionCount);
@@ -393,5 +407,15 @@ export function resolveTraining(state, action) {
   next.training.phase = "ready";
   next.training.currentDrill = null;
   next.training.lastDrill = { id: drill.id, title: drill.title, task: drill.task, action, passed, gainedXp, gainedGold, inputBonus };
+  const session = { goal: 3, active: false, startAttempts: state.training.attempts, lastSummary: null, ...(state.training.session ?? {}) };
+  if (session.active) {
+    const completedDrills = next.training.attempts - session.startAttempts;
+    if (completedDrills >= session.goal) {
+      const sessionXp = 2 + session.goal * 2;
+      const sessionGold = Math.floor((session.goal + 1) / 2);
+      next.xp += sessionXp; next.gold += sessionGold; next.level = 1 + Math.floor(next.xp / 100);
+      next.training.session = { ...session, active: false, lastSummary: { goal: session.goal, drills: completedDrills, gainedXp: sessionXp, gainedGold: sessionGold } };
+    } else next.training.session = session;
+  }
   return next;
 }
