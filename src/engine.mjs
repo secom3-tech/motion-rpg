@@ -84,7 +84,8 @@ export function newGame() {
     camp: { lantern: 0, surveyMap: 0, guards: 0 },
     region: "forest", regionAttempts: { forest: 0, ridge: 0 }, unlockedRegions: ["forest"],
     quests: { forest: { attempts: 0, successes: 0, bossDefeated: false }, ridge: { attempts: 0, successes: 0, bossDefeated: false } },
-    outdoorInput: null
+    outdoorInput: null,
+    treadmill: { active: false, speedKmh: 8, distanceM: 0, elapsedSec: 0 }
   };
 }
 
@@ -135,7 +136,36 @@ export function recordOutdoorSignal(state, distanceM, durationSec) {
   const duration = Number(durationSec);
   if (!Number.isFinite(distance) || !Number.isFinite(duration) || distance < 20 || duration < 10) throw Error("Invalid outdoor signal");
   const pace = clamp((duration / 60) / (distance / 1000), 4, 12);
-  return { ...state, outdoorInput: { distanceM: Math.round(distance), durationSec: Math.round(duration), pace: Number(pace.toFixed(1)) } };
+  return { ...state, outdoorInput: { source: "gps", distanceM: Math.round(distance), durationSec: Math.round(duration), pace: Number(pace.toFixed(1)) } };
+}
+
+// Treadmill adapter: a future timer or BLE FTMS feed can call advanceTreadmill.
+export function startTreadmill(state, speedKmh = 8) {
+  const speed = Number(speedKmh);
+  if (!Number.isFinite(speed) || speed < 3 || speed > 14) throw Error("Invalid treadmill speed");
+  return { ...state, treadmill: { ...state.treadmill, active: true, speedKmh: Number(speed.toFixed(1)) } };
+}
+
+export function adjustTreadmillSpeed(state, deltaKmh) {
+  if (!state.treadmill.active) throw Error("Treadmill is not active");
+  const delta = Number(deltaKmh);
+  if (!Number.isFinite(delta)) throw Error("Invalid treadmill adjustment");
+  const speedKmh = clamp(state.treadmill.speedKmh + delta, 3, 14);
+  return { ...state, treadmill: { ...state.treadmill, speedKmh: Number(speedKmh.toFixed(1)) } };
+}
+
+export function advanceTreadmill(state, durationSec = 60) {
+  if (!state.treadmill.active) throw Error("Treadmill is not active");
+  const duration = Number(durationSec);
+  if (!Number.isFinite(duration) || duration <= 0 || duration > 3600) throw Error("Invalid treadmill duration");
+  const distanceM = state.treadmill.speedKmh * 1000 * duration / 3600;
+  const treadmill = { ...state.treadmill, distanceM: Math.round(state.treadmill.distanceM + distanceM), elapsedSec: state.treadmill.elapsedSec + Math.round(duration) };
+  const pace = Number((60 / treadmill.speedKmh).toFixed(1));
+  return { ...state, treadmill, outdoorInput: { source: "treadmill", distanceM: Math.round(distanceM), durationSec: Math.round(duration), pace } };
+}
+
+export function stopTreadmill(state) {
+  return { ...state, treadmill: { ...state.treadmill, active: false } };
 }
 
 export function isBossAvailable(state, regionId = state.region) {
@@ -152,7 +182,7 @@ export function beginBossEncounter(state, paceInput) {
   const pace = clamp(Number(inputPace), 4, 12);
   const next = { ...state };
   next.phase = "encounter";
-  next.currentEvent = { ...QUESTS[state.region].boss, pace, region: state.region, boss: true, inputSource: state.outdoorInput ? "signal" : "manual" };
+  next.currentEvent = { ...QUESTS[state.region].boss, pace, region: state.region, boss: true, inputSource: state.outdoorInput?.source ?? "manual" };
   return next;
 }
 
@@ -168,7 +198,7 @@ export function beginEncounter(state, paceInput) {
   next.elapsedMin += 1;
   next.distanceM = Math.round(next.distanceM + 1000 / pace);
   next.phase = "encounter";
-  next.currentEvent = { ...event, pace, region: state.region, inputSource: state.outdoorInput ? "signal" : "manual" };
+  next.currentEvent = { ...event, pace, region: state.region, inputSource: state.outdoorInput?.source ?? "manual" };
   return next;
 }
 
