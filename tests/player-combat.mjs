@@ -51,7 +51,7 @@ for(const weapon of ids){
 const sweep=attackTrailPoints(800,500,"sweep");
 const overhead=attackTrailPoints(800,500,"overhead");
 const thrust=attackTrailPoints(800,500,"thrust");
-assert.ok(sweep.at(-1).x-sweep[0].x>480);
+assert.ok(sweep[0].x-sweep.at(-1).x>480,"Trail must move right-to-left with the visible blade");
 assert.ok(overhead.at(-1).y-overhead[0].y>260);
 assert.ok(thrust.at(-1).x<thrust[0].x&&thrust.at(-1).y<thrust[0].y);
 
