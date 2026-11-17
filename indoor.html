@@ -1342,7 +1342,7 @@ el("hostStart").onclick=async()=>{
   const room=await motionHost.start();
   lastMotionSequence=-1;lastMotionAt=-Infinity;
   const url=new URL("./controller.html",location.href);
-  url.searchParams.set("v","0.43.6");url.searchParams.set("room",room);
+  url.searchParams.set("v","0.44");url.searchParams.set("room",room);
   el("controllerLink").href=url.href;
   el("motionRoom").textContent=room.replace(/^mrpg-/,"");
   el("hostStop").disabled=false;
