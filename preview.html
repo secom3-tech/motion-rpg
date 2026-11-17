@@ -55,21 +55,28 @@
 </style></head>
 <body><div class="app">
 <header class="top"><div class="mark">MOTION RPG <em> / 경계의 숲</em></div><div class="version">통합 플레이 빌드 · 0.36</div></header>
-<nav class="menu" aria-label="게임 화면"><button data-view="village" class="active">마을</button><button data-view="run">야외 탐험</button><button data-view="indoor">실내 전투</button><button data-view="character">모험가</button></nav>
+<nav class="menu" aria-label="게임 화면"><button data-view="village" class="active">마을</button><button data-view="run">야외 원정</button><button data-view="indoor">숲 사냥</button><button data-view="character">모험가</button></nav>
 <section class="page active" id="page-village">
- <div class="stage"><canvas id="village3d" aria-label="입체감 있는 숲과 마을 풍경, 장비를 착용한 모험가"></canvas><div class="village-hero-name">마을의 모험가<small>장비 시착 중</small></div><div class="stage-copy"><div class="eyebrow">THE BORDERWOOD</div><h1>경계의 숲<br>모험의 시작</h1><p>작은 숲마을을 거점으로 미지의 길을 탐험하고, 전투와 발견을 통해 성장한다.</p></div><div class="stage-bottom"><button class="cta" data-go="run">숲으로 탐험하기</button><button class="cta alt" data-go="indoor">실내 전투 시작</button><button class="cta alt" data-go="character">장비 · 성장</button></div></div>
- <p class="world-note">숲마을과 캐릭터는 장비별 외형 변화를 보여주는 3D풍 그래픽 시안이야. 실제 자유 이동형 3D 마을과 NPC 상호작용은 추후 개발할 예정이야.</p>
+ <div class="stage"><canvas id="village3d" aria-label="시장이 열리고 모닥불이 피어오르는 숲마을 풍경, 장비를 착용한 모험가"></canvas>
+ <div class="village-hero-name">마을의 모험가<small>현재 장비 외형 미리보기</small></div>
+ <div class="stage-copy"><div class="eyebrow">THE BORDERWOOD · HUNTER VILLAGE</div><h1>경계의 숲<br>사냥꾼 마을</h1><p>마을에서 장비를 갖추고 숲으로 나가자.<br>돌아올 때마다 새로운 이야기가 기다린다.</p></div>
+ <div class="village-spots" aria-label="마을 주민에게 말 걸기"><button data-town="guild">📜 길드</button><button data-town="smith">⚒️ 대장간</button><button data-town="ranger">🌲 숲 안내인</button></div>
+ <div class="stage-bottom"><button class="cta" data-go="indoor">⚔ 숲으로 사냥 떠나기</button><button class="cta alt" data-go="run">🏃 야외 원정</button><button class="cta alt" data-go="character">가방 · 장비</button></div></div>
+ <p class="world-note">마을의 시설과 주민을 눌러 말을 걸고 사냥을 준비할 수 있어. 마을 풍경은 현재 터치형 시안이며, 자유 이동은 숲 사냥 화면에서 가능해.</p>
  <div class="section-title"><h2>모험가 상태</h2><span class="badge">실내 · 야외 성장 공유</span></div>
  <div class="grid"><div class="card"><div class="stat" id="homeLevel">1<small>레벨</small></div></div><div class="card"><div class="stat" id="homeGold">0<small>골드</small></div></div><div class="card"><div class="stat" id="homeXp">0<small>누적 경험치</small></div></div></div>
- <div class="section-title"><h2>숲마을 시설</h2><span class="tiny">마을에서 원정을 준비해</span></div>
+ <div class="homeProgress"><div class="homeProgressTop"><b>다음 레벨까지</b><span id="homeNextXp">경험치 확인 중</span></div><div class="homeProgressTrack"><i id="homeXpProgress"></i></div></div>
+<div class="townRumour" aria-live="polite"><span class="rumourIcon">✧</span><div class="rumourBody"><small>마을의 소문 · 귀를 기울여 보자</small><b id="rumourWho">마을 사람</b><p id="rumourLine">오늘은 무슨 소식이 들릴까?</p><button id="rumourNext">다른 소문 듣기</button></div></div>
+<div class="townObjective"><span>📜 지금의 여정</span><b id="homeObjective">숲의 조사를 준비하는 중</b><small id="homeObjectiveDesc">길드의 소식을 확인해 보자.</small></div>
+<div class="section-title"><h2>숲마을 시설</h2><span class="tiny">주민에게 말을 걸어 원정을 준비해</span></div>
 <div class="town-facilities">
-  <button class="town-facility" data-town="guild"><span class="icon">📜</span><strong>길드 의뢰 게시판</strong><small>경계의 숲 조사 진행과 지역 보스 도전 조건 확인</small></button>
-  <button class="town-facility" data-town="smith"><span class="icon">⚒️</span><strong>사냥꾼의 대장간</strong><small>장비 외형을 입혀 보고 모험가를 준비</small></button>
+  <button class="town-facility" data-town="guild"><span class="icon">📜</span><strong>길드 의뢰 게시판</strong><small>길드 의뢰와 새로운 단서를 확인</small></button>
+  <button class="town-facility" data-town="smith"><span class="icon">⚒️</span><strong>사냥꾼의 대장간</strong><small>장비를 제작하고 다음 사냥을 준비</small></button>
   <button class="town-facility" data-town="ranger"><span class="icon">🌲</span><strong>숲길 안내인</strong><small>야외 음성 탐험과 러닝머신 원정으로 출발</small></button>
 </div>
 <div class="town-dialogue" aria-live="polite"><b id="townNpc">마을 안내인</b><div id="townMessage">숲 입구에 오신 걸 환영해요. 의뢰를 확인하고 장비를 준비한 뒤 원정을 시작하세요.</div><div class="controls"><button class="cta alt" id="townAction" data-go="run">숲으로 출발</button></div></div>
 <div class="section-title"><h2>오늘의 활동</h2></div>
- <div class="slots"><div class="slot"><b>🌲 야외 탐험 · 음성 러닝</b><p>이어폰으로 사건을 듣고, 달리기 속도 변화로 추격·은신·탐험에 대응해. 비가 오는 날에는 시뮬레이션으로 체험할 수 있어.</p><button class="cta" data-go="run">원정 준비</button></div><div class="slot"><b>⚔️ 실내 전투 · 모션 RPG</b><p>숲의 몬스터를 상대로 검·마법탄·회피를 연습해. 기존 3D 전투 화면을 연결했어. 센서 연결은 아직 개발 중이야.</p><button class="cta alt" data-go="indoor">전투 화면</button></div></div>
+ <div class="slots"><div class="slot"><b>🌲 야외 탐험 · 음성 러닝</b><p>이어폰으로 사건을 듣고, 달리기 속도 변화로 추격·은신·탐험에 대응해. 비가 오는 날에는 시뮬레이션으로 체험할 수 있어.</p><button class="cta" data-go="run">원정 준비</button></div><div class="slot"><b>⚔️ 숲 사냥 · 몸동작 전투</b><p>실제 몸동작으로 공격·회피하는 숲 사냥. S21로 이동과 무기 공격을 조작해.</p><button class="cta alt" data-go="indoor">전투 화면</button></div></div>
 </section>
 <section class="page" id="page-run">
  <div class="flex"><div><div class="mark">OUTDOOR EXPEDITION</div><h1 style="font-size:30px;margin:6px 0">숲의 원정</h1><div class="intro">화면을 보며 버튼을 누르는 게임이 아니야. 이어폰으로 사건을 듣고 <b>걷기·달리기·페이스 조절</b>로 대응하는 음성 중심 RPG야.</div></div><span class="badge">GPS · 러닝머신 · 모의 체험</span></div>
@@ -123,6 +130,8 @@
 import {createAdventure,startAdventure,advanceAdventure,endAdventure,summarizeAdventure,settleAdventure} from "./src/expedition.mjs";
 import {GEAR,DEFAULT_LOADOUT,SAMPLE_SETS,sanitizeLoadout,describeLoadout,drawAvatar} from "./src/avatar.mjs";
 import {QUESTS,REGIONS,newGame} from "./src/engine.mjs";
+import {experienceProgress} from "./src/progression.mjs?v=0.37";
+import {villageRumour,villageObjective} from "./src/town-life.mjs?v=0.37";
 import {MATERIALS,RECIPES,normalizeRpgGear,gearRequirement,craftGear,equipGear,combatStats,claimIndoorBattle,addExpeditionMaterials} from "./src/gear-game.mjs";
 const $=id=>document.getElementById(id);
 const pages=["village","run","indoor","character"];
@@ -130,6 +139,17 @@ function go(page){if(!pages.includes(page))return;const previous=pages.find(x=>$
 document.querySelectorAll("[data-view]").forEach(b=>b.onclick=()=>go(b.dataset.view));
 document.querySelectorAll("[data-go]").forEach(b=>b.onclick=()=>go(b.dataset.go));
 $("restartIndoor").onclick=()=>$("indoorFrame").src="./indoor.html?return=preview&reload="+Date.now();
+let rumorOffset=0;
+function updateTownRumour(){
+ const state=sharedCharacter(),today=new Date().toLocaleDateString("sv-SE");
+ const rumour=villageRumour(state,today,rumorOffset);
+ $("rumourWho").textContent=rumour.who;
+ $("rumourLine").textContent="“"+rumour.line+"”";
+ const objective=villageObjective(state);
+ $("homeObjective").textContent=objective.title;
+ $("homeObjectiveDesc").textContent=objective.detail;
+}
+$("rumourNext").onclick=()=>{rumorOffset++;updateTownRumour();};
 function townTalk(type){
  const s=sharedCharacter();
  const r=typeof s.region==="string"&&QUESTS[s.region]?s.region:"forest";
@@ -151,7 +171,10 @@ function townTalk(type){
 document.querySelectorAll("[data-town]").forEach(b=>b.addEventListener("click",()=>townTalk(b.dataset.town)));
 $("townAction").onclick=()=>go("run");
 function sharedCharacter(){try{const s=JSON.parse(localStorage.getItem("motion-rpg-save-v1")||"null");return s&&typeof s==="object"&&!Array.isArray(s)?s:newGame();}catch{return newGame();}}
-function syncCharacter(){const s=sharedCharacter();$("homeLevel").innerHTML=(s.level||1)+"<small>레벨</small>";$("homeXp").innerHTML=(s.xp||0)+"<small>누적 경험치</small>";$("homeGold").innerHTML=(s.gold||0)+"<small>골드</small>";$("cLevel").innerHTML=(s.level||1)+"<small>레벨</small>";$("cXp").innerHTML=(s.xp||0)+" XP<small>경험치</small>";$("cGold").innerHTML=(s.gold||0)+" G<small>골드</small>";const bag=s.inventory||{};$("cTorch").innerHTML=(bag.torch||0)+"<small>횃불</small>";$("cMap").innerHTML=(bag.map||0)+"<small>지도 조각</small>";$("cBandage").innerHTML=(bag.bandage||0)+"<small>붕대</small>";renderCrafting();}
+function syncCharacter(){const s=sharedCharacter();const exp=experienceProgress(s);
+$("homeLevel").innerHTML=(s.level||1)+"<small>레벨</small>";
+$("homeXpProgress").style.width=(exp.ratio*100).toFixed(1)+"%";
+$("homeNextXp").textContent="Lv."+(exp.level+1)+"까지 "+exp.remaining+" XP 남음";$("homeXp").innerHTML=(s.xp||0)+"<small>누적 경험치</small>";$("homeGold").innerHTML=(s.gold||0)+"<small>골드</small>";$("cLevel").innerHTML=(s.level||1)+"<small>레벨</small>";$("cXp").innerHTML=(s.xp||0)+" XP<small>경험치</small>";$("cGold").innerHTML=(s.gold||0)+" G<small>골드</small>";const bag=s.inventory||{};$("cTorch").innerHTML=(bag.torch||0)+"<small>횃불</small>";$("cMap").innerHTML=(bag.map||0)+"<small>지도 조각</small>";$("cBandage").innerHTML=(bag.bandage||0)+"<small>붕대</small>";renderCrafting();updateTownRumour();}
 // Temporary preview loadout, deliberately separate from the real RPG save.
 const EQUIPMENT_KEY="motion-rpg-preview-equipment-v1";
 function loadPreviewGear(){try{return sanitizeLoadout(JSON.parse(localStorage.getItem(EQUIPMENT_KEY)||"null"));}catch{return {...DEFAULT_LOADOUT};}}
