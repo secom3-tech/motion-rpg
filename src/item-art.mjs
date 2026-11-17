@@ -22,7 +22,11 @@ const parts={
  none:'<circle cx="40" cy="40" r="25" stroke="#a0b3a5" stroke-width="4" fill="none"/><path d="M21 58l38-38" stroke="#a0b3a5" stroke-width="4"/>',
  shield:'<path d="M40 6Q59 17 69 21L65 53Q52 72 40 77Q22 67 15 53L11 21Z" fill="#879ea9" stroke="#e4d7ae" stroke-width="5"/><path d="M40 15v54M19 36h42" stroke="#c8b17a" stroke-width="7"/>',
  orb:'<circle cx="40" cy="41" r="27" fill="#358da2" stroke="#b8e8e7" stroke-width="6"/><path d="M29 39l12-21 17 19-17 22Z" fill="#9ce9e9" opacity=".7"/><circle cx="40" cy="40" r="37" stroke="#91dae6" stroke-width="3" opacity=".45" fill="none"/>',
- lantern:'<path d="M29 22Q40 3 51 22" fill="none" stroke="#c4a56b" stroke-width="6"/><path d="M23 23h34l5 45H18Z" fill="#ad8b56" stroke="#d5b675" stroke-width="5"/><path d="M29 31h22l4 28H25Z" fill="#ffde91"/><circle cx="40" cy="45" r="31" fill="#ffd77d" opacity=".13"/>'
+ lantern:'<path d="M29 22Q40 3 51 22" fill="none" stroke="#c4a56b" stroke-width="6"/><path d="M23 23h34l5 45H18Z" fill="#ad8b56" stroke="#d5b675" stroke-width="5"/><path d="M29 31h22l4 28H25Z" fill="#ffde91"/><circle cx="40" cy="45" r="31" fill="#ffd77d" opacity=".13"/>',
+ bandage:'<g transform="rotate(-22 40 40)"><rect x="12" y="24" width="56" height="33" rx="10" fill="#dfcda9" stroke="#b49277" stroke-width="3"/><rect x="26" y="19" width="28" height="43" rx="4" fill="#f4e9c9" stroke="#b69c7c" stroke-width="2"/><path d="M34 30h12M40 24v27" stroke="#9c6e57" stroke-width="6"/><path d="M16 35l9 2M55 42l9 4M30 55l15-4" stroke="#b39a77" stroke-width="2" opacity=".8"/></g>',
+ potion:'<g stroke-linejoin="round"><path d="M34 14h12v17c12 8 17 16 17 30 0 11-10 15-23 15S17 72 17 61c0-14 5-22 17-30Z" fill="#659f8f" stroke="#cceadd" stroke-width="3"/><path d="M23 46Q40 55 57 45L58 64Q40 76 22 63Z" fill="#c66481" stroke="#f4c3cf" stroke-width="2"/><path d="M34 12h13v8H33Z" fill="#9d7551" stroke="#e6be91" stroke-width="2"/><path d="M28 39q10-9 22 0M29 57q10 3 22-1" stroke="#f7e4ec" stroke-opacity=".7" stroke-width="2" fill="none"/><circle cx="38" cy="57" r="6" fill="#f7c9d5" opacity=".75"/></g>',
+ torch:'<path d="M39 72L47 28" stroke="#a47e55" stroke-width="12" stroke-linecap="round"/><path d="M40 73L46 30" stroke="#dbb579" stroke-width="3"/><path d="M35 39L54 44" stroke="#e0c593" stroke-width="7"/><path d="M32 31Q19 16 42 4Q56 22 48 33Q65 17 59 41Q46 57 32 43Z" fill="#fdbb59" stroke="#fff1a3" stroke-width="3"/><path d="M37 38Q32 24 45 17Q51 28 46 40Z" fill="#fff3ca"/>',
+ map:'<path d="M9 20l19-7 21 5 22-8v51l-22 8-21-5-19 7Z" fill="#d8c190" stroke="#eee0bb" stroke-width="3"/><path d="M28 13v51M49 18v51" stroke="#a18865" stroke-width="2"/><path d="M18 35q10 15 24 6t17 15" stroke="#7a9479" stroke-width="4" fill="none" stroke-dasharray="3 4"/><circle cx="59" cy="28" r="5" fill="#b97665"/><path d="M16 61l9-8 9 6" stroke="#a08064" stroke-width="3" fill="none"/>'
 };
 /** Six starter and mage equipment portraits rendered as hand-painted sprite artwork. */
 const illustrated={
@@ -38,5 +42,12 @@ export function itemIllustration(id,slot="weapon"){
   return '<svg class="itemArtwork paintedEquipment" viewBox="0 0 96 96" role="img" aria-label="장비 일러스트" xmlns="http://www.w3.org/2000/svg" style="overflow:hidden;border-radius:12px"><image href="'+ATLAS+'" x="'+(-column*96)+'" y="'+(-row*96)+'" width="288" height="192" preserveAspectRatio="none"/><path d="M2 2h92v92H2z" fill="none" stroke="#e1ca8c" stroke-opacity=".36" stroke-width="2"/></svg>';
  }
  const drawing=parts[id]||parts.none;const base=tones[slot]||tones.weapon;
- return '<svg class="itemArtwork" viewBox="0 0 80 80" role="img" aria-label="장비 그림" xmlns="http://www.w3.org/2000/svg"><rect x="2" y="2" width="76" height="76" rx="16" fill="'+base+'" stroke="#9da88a" stroke-opacity=".6" stroke-width="2"/><circle cx="40" cy="30" r="32" fill="#e1d4a0" opacity=".06"/>'+drawing+'</svg>';
+ const gradient="itm-"+id.replace(/[^a-zA-Z]/g,"");
+ return '<svg class="itemArtwork" viewBox="0 0 80 80" role="img" aria-label="장비 일러스트 · '+id+'" xmlns="http://www.w3.org/2000/svg">'+
+  '<defs><radialGradient id="'+gradient+'" cx=".35" cy=".23" r=".86"><stop stop-color="#758f79" stop-opacity=".72"/><stop offset=".52" stop-color="'+base+'"/><stop offset="1" stop-color="#0a1f24"/></radialGradient></defs>'+
+  '<rect x="2" y="2" width="76" height="76" rx="15" fill="url(#'+gradient+')" stroke="#e2ce9d" stroke-opacity=".7" stroke-width="2"/>'+
+  '<path d="M7 54Q36 40 72 55V65Q40 81 7 63Z" fill="#020e15" opacity=".20"/><circle cx="40" cy="27" r="29" fill="#f4dfac" opacity=".07"/>'+
+  '<g style="filter:drop-shadow(0 4px 3px #04140fc0)">'+drawing+'</g>'+
+  '<path d="M10 13Q27 5 43 8M11 68Q36 76 61 68" fill="none" stroke="#f6e1ac" stroke-opacity=".28" stroke-width="1.5"/>'+
+  '<path d="M63 12l1 6 5 1-5 1-1 6-2-6-5-1 5-1Z" fill="#ffedc2" opacity=".45"/></svg>';
 }
