@@ -145,10 +145,11 @@ for(const needle of ['function publishSensorState(','type:"sensor-state"','coold
  'stopCooldownTicker();']){
  assert.ok(controller.includes(needle),"S21 must send readiness telemetry: "+needle);
 }
-assert.ok(bridge.includes('"sensor-state"'),"WebRTC host must route sensor readiness packets");
+
 
 const camera=fs.readFileSync(new URL("../src/pose-camera.mjs",import.meta.url),"utf8");
 const bridge=fs.readFileSync(new URL("../src/peer-bridge.mjs",import.meta.url),"utf8");
+assert.ok(bridge.includes('"sensor-state"'),"WebRTC host must route sensor readiness packets");
 for(const [name,html] of [["arena",arena],["controller",controller]]){
  const script=html.match(/<script type="module">([\s\S]*?)<\/script>/);
  assert.ok(script,name+" requires an ES module");
