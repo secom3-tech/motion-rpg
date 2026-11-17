@@ -27,7 +27,7 @@ assert.ok(html.includes('id="townEncounter"')&&html.includes('id="townProgress"'
 assert.ok(html.includes('class="village-art"')&&html.includes('./assets/village-hub.webp'),"Static village illustration must load");
 for(const name of ["guild","trader"])assert.ok(html.includes('data-town="'+name+'"'),"Village needs "+name);
 for(const mode of ["indoor","run","character"])assert.ok(html.includes('data-go="'+mode+'"'),"Village needs direct "+mode+" navigation");
-assert.ok(html.includes('class="heroPortrait"')&&html.includes('./assets/hero-concept.webp'),"High-quality hero portrait required");
+assert.ok(html.includes('class="heroPortrait mannequinPortrait"')&&html.includes('class="bodySilhouette"'),"Equipped-item silhouette required");
 assert.ok(html.includes('./src/item-art.mjs'),"Illustrated craft thumbnails required");
 assert.ok(!html.includes("advanceVillageExplorer(")&&!html.includes("requestAnimationFrame(drawVillageFrame)"),"Village cannot run continuous animation");
 assert.ok(html.includes('id="townAction"')&&html.includes("./src/avatar.mjs"),"NPC and equipment remain connected");
