@@ -99,10 +99,10 @@ for(const weapon of ids){
 }
 const arena=fs.readFileSync(new URL("../indoor.html",import.meta.url),"utf8");
 const controller=fs.readFileSync(new URL("../controller.html",import.meta.url),"utf8");
-assert.ok(arena.includes("createMeleeAction(equipped.weapon,style,clock)"));
+assert.ok(arena.includes("createMeleeAction(currentWeapon(),style,clock)"));
 assert.ok(arena.includes("if(!meleeAction.damageDone&&clock>=meleeAction.contactAt)"));
 assert.ok(arena.includes("meleeHitInfo(meleeAction,camera,enemy,yaw)"),"Actual damage uses the same arc");
-assert.ok(arena.includes("drawFirstPersonWeapon(weaponCtx,W,H,equipped.weapon"),"First person weapon must be rendered");
+assert.ok(arena.includes("drawFirstPersonWeapon(weaponCtx,W,H,currentWeapon()"),"First person weapon must be rendered");
 assert.ok(arena.includes('id="weaponCanvas"')&&arena.includes("renderPlayerProjectile(p)"));
 assert.ok(arena.includes('swordHit(packet.style)'),"Live S21 attack style must be used");
 assert.ok(arena.includes('swordHit("sweep")')&&arena.includes('swordHit("overhead")')&&arena.includes('swordHit("thrust")'));
