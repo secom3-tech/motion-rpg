@@ -34,7 +34,7 @@ export function createRemoteInput(){
  function ingest(packet,session,now=Date.now()){
   if(!validRemotePacket(packet,session)||packet.seq<=lastSeq)return {accepted:false,reason:"invalid-or-replay"};
   // A stale/replayed network packet should not move the player later.
-  if(Math.abs(now-packet.time)>3500)return {accepted:false,reason:"stale"};
+  if(Math.abs(now-packet.time)>30000)return {accepted:false,reason:"stale"};
   lastSeq=packet.seq;
   if(packet.type==="control-stop"){moving={x:0,y:0};lastMove=-Infinity;return {accepted:true,type:"stop"};}
   if(packet.type==="move"){moving=movementVector(packet.x,packet.y);lastMove=now;return {accepted:true,type:"move"};}
