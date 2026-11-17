@@ -21,6 +21,10 @@ assert.equal(dominantAxis([{alpha:5,beta:4,gamma:3}]),null);
 const detection=createGestureDetector({mode:"throw",sensitivity:3});
 let result=detection.feed(event(300),1000);
 assert.equal(result.gesture?.type,"throw","Strong movement emits one throw");
+assert.equal(detection.status(1000).cooldownRemainingMs,1900,"Throw cooldown reports 1.9 s");
+assert.equal(detection.status(1000).cooldownDurationMs,1900,"UI has the matching progress bar duration");
+assert.equal(detection.status(1900).cooldownRemainingMs,1000);
+assert.equal(detection.status(2900).ready,false,"Cooldown alone does not bypass neutral re-arm");
 assert.equal(detection.feed(event(300),1200).gesture,null,"No double trigger for held motion");
 detection.feed(event(0),2000);
 detection.feed(event(0),2370);
@@ -28,15 +32,21 @@ assert.equal(detection.feed(event(300),2500).gesture,null,"Throw return stroke w
 detection.feed(event(0),2600);
 detection.feed(event(0),3410);
 assert.equal(detection.feed(event(300),3500).gesture?.type,"throw","Second deliberate throw after cooldown and full neutral");
+assert.equal(detection.status(3500).ready,false);
+assert.equal(detection.status(3600).cooldownRemainingMs,1800);
 assert.equal(detection.count,2);
 detection.configure({mode:"melee",axis:"alpha",sensitivity:3});
 assert.equal(detection.feed(event(300),3600).gesture,null,"Changing mode must not immediately trigger");
 detection.feed(event(0),4000);
 detection.feed(event(0),4380);
 assert.equal(detection.feed(event(300),4500).gesture?.type,"melee");
+assert.equal(detection.status(4500).cooldownDurationMs,700,"Melee uses the real 700ms gate");
+assert.equal(detection.status(4900).cooldownRemainingMs,300);
+assert.equal(detection.status(5200).cooldownRemainingMs,0);
 const auto=createGestureDetector({mode:"auto",sensitivity:3});
 assert.equal(auto.feed(event(300),1000).gesture?.type,"auto");
 auto.protectThrow(1000);
+assert.equal(auto.status(1000).cooldownDurationMs,1900,"Auto-mode throw extends the gate");
 auto.feed(event(0),2000);
 auto.feed(event(0),2780);
 assert.equal(auto.feed(event(300),2810).gesture,null,"Auto throw remains refractory for 1.9 seconds");
@@ -122,6 +132,10 @@ await assert.rejects(loadPoseModel({importer:async()=>{throw Error("Offline")}})
 // 5. Browser integration smoke.
 const arena=fs.readFileSync(new URL("../indoor.html",import.meta.url),"utf8");
 const controller=fs.readFileSync(new URL("../controller.html",import.meta.url),"utf8");
+for(const needle of ['id="attackCooldown"','id="attackReadyText"','id="attackTimer"','id="attackCooldownFill"','function renderAttackCooldown(','detector.status(now)','startCooldownTicker();','stopCooldownTicker();','공격 대기','공격 가능','팔을 잠시 멈춰 줘']){
+ assert.ok(controller.includes(needle),"S21 visible cooldown is required: "+needle);
+}
+
 const camera=fs.readFileSync(new URL("../src/pose-camera.mjs",import.meta.url),"utf8");
 const bridge=fs.readFileSync(new URL("../src/peer-bridge.mjs",import.meta.url),"utf8");
 for(const [name,html] of [["arena",arena],["controller",controller]]){
