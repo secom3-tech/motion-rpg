@@ -1,0 +1,91 @@
+import assert from "node:assert/strict";
+import fs from "node:fs";
+import {axis,movementVector,validRemotePacket,createRemoteInput,lockOnYaw,rotateToward,INPUT_TIMEOUT_MS} from "../src/remote-control.mjs";
+import {FOREST_ZONES,FOREST_MONSTERS,forestZoneAt,chooseForestMonster,monsterBehaviour} from "../src/forest-encounters.mjs";
+import {ATTACKS,strikeInfo,dodgeMatches} from "../src/combat-spatial.mjs";
+import {attackArea,attackWindup,attackVisualState,warningFootprint} from "../src/attack-visual.mjs";
+
+assert.equal(FOREST_MONSTERS.length,8,"Eight real 3D monster archetypes");
+assert.equal(ATTACKS.length,FOREST_MONSTERS.length,"Every monster has a combat profile");
+assert.equal(forestZoneAt(-15,-17).id,"ruins");
+assert.equal(forestZoneAt(15,-18).id,"marsh");
+assert.equal(forestZoneAt(8,2).id,"grove");
+assert.equal(forestZoneAt(0,-15).id,"trail");
+assert.ok(FOREST_ZONES.marsh.name.includes("습지"));
+let seed=1923;
+const rng=()=>{seed=(1664525*seed+1013904223)>>>0;return seed/2**32};
+for(const zone of Object.values(FOREST_ZONES)){
+ const observed=new Set();let last=-1;
+ for(let i=0;i<1500;i++){
+  const kind=chooseForestMonster(zone.id,rng,last);
+  assert.ok(kind>=0&&kind<8);
+  observed.add(kind);last=kind;
+ }
+ assert.ok(observed.size>=6,zone.id+" must have varied spawns");
+}
+assert.ok(monsterBehaviour(6).orbitSpeed>0,"Marsh wisp must circle");
+assert.equal(monsterBehaviour(5).preferred,"charge");
+assert.equal(monsterBehaviour(7).preferred,"slam");
+const charge=attackArea(ATTACKS[5],"charge");
+const sweep=attackArea(ATTACKS[5],"sweep");
+assert.ok(charge.arc<sweep.arc*.50,"Boar charge must be narrow");
+assert.ok(charge.range>sweep.range,"Charge must be longer");
+assert.ok(dodgeMatches("charge","left"));
+assert.ok(dodgeMatches("charge","right"));
+assert.equal(dodgeMatches("charge","duck"),false);
+const enemy={x:1,z:2,facing:.4,kind:5,attackStyle:"charge",windup:1,windupTotal:2,dead:false,impactUntil:0};
+const warning=warningFootprint(enemy,ATTACKS[5],"charge",4,12);
+assert.ok(warning.edge.length>=10);
+for(const point of warning.edge){
+ assert.ok(strikeInfo(enemy,point,charge.range+.001,charge.arc+.001).canHit,"Charge warning matches real hitbox");
+}
+assert.equal(attackVisualState(enemy,100).style,"charge");
+assert.ok(attackWindup(ATTACKS[7],"slam",7)>=2.25);
+assert.equal(axis(.05),0);
+assert.ok(axis(.6)>.5&&axis(.6)<.6);
+assert.ok(Math.abs(movementVector(.8,.8).x)<=1);
+assert.ok(Math.hypot(...Object.values(movementVector(1,1)))<=1.0001);
+const room="mrpg-501234",now=1700000000000;
+let packet={type:"move",x:.9,y:-.4,seq:1,time:now,session:room};
+assert.ok(validRemotePacket(packet,room));
+assert.equal(validRemotePacket({...packet,session:"other"},room),false);
+assert.equal(validRemotePacket({...packet,x:3},room),false);
+assert.equal(validRemotePacket({...packet,seq:2.3},room),false);
+assert.equal(validRemotePacket({...packet,dx:0,type:"look"},room),false);
+assert.equal(validRemotePacket({...packet,type:"look",dx:.4,dy:-.2},room),true);
+assert.equal(validRemotePacket({...packet,type:"target",action:"teleport"},room),false);
+const remote=createRemoteInput();
+assert.equal(remote.ingest(packet,room,now).accepted,true);
+assert.ok(remote.current(now).x>.8);
+assert.equal(remote.ingest(packet,room,now+1).accepted,false,"Replay blocked");
+assert.equal(remote.current(now+INPUT_TIMEOUT_MS+1).x,0,"Lost S21 releases movement");
+assert.equal(remote.current(now+INPUT_TIMEOUT_MS+1).y,0);
+assert.equal(remote.ingest({...packet,seq:2,x:0,y:1},room,now+40).accepted,true);
+assert.equal(remote.current(now+50).y,1);
+assert.equal(remote.ingest({...packet,seq:3,type:"control-stop"},room,now+50).accepted,true);
+assert.equal(remote.current(now+60).y,0,"Screen hidden clears movement");
+assert.equal(remote.ingest({...packet,seq:4,type:"look",dx:.4,dy:-.2},room,now+80).type,"look");
+assert.equal(remote.ingest({...packet,seq:5,type:"target",action:"toggle"},room,now+90).type,"target");
+assert.equal(remote.ingest({...packet,seq:6,type:"target",action:"toggle"},room,now+100).accepted,false,"Target debounce");
+assert.equal(remote.ingest({...packet,seq:7,type:"move"},room,now+31000).accepted,false,"Stale traffic blocked");
+remote.reset();assert.equal(remote.current(now+40).x,0);
+assert.equal(lockOnYaw({x:0,z:0},{x:0,z:-4,dead:false}),0);
+assert.equal(lockOnYaw({x:0,z:0},{x:3,z:0,dead:false}),Math.PI/2);
+assert.equal(lockOnYaw({x:0,z:0},{x:3,z:0,dead:true}),null);
+assert.ok(rotateToward(0,Math.PI,0.18)<=.181);
+assert.ok(rotateToward(0,-Math.PI/2,.18)<0);
+
+const arena=fs.readFileSync(new URL("../indoor.html",import.meta.url),"utf8");
+const controller=fs.readFileSync(new URL("../controller.html",import.meta.url),"utf8");
+const paths=["movePad","lookPad","lockToggle","controlState"];
+for(const id of paths)assert.ok(controller.includes('id="'+id+'"'),"Missing remote UI: "+id);
+assert.ok(controller.includes("controlSend(\"move\"")&&controller.includes('controlSend("look"'),"Live movement and camera");
+assert.ok(controller.includes('controlSend("control-stop")'),"Safety stop");
+assert.ok(arena.includes("remoteInput.current(Date.now())"),"Remote motion must be consumed in arena loop");
+assert.ok(arena.includes("lockOnYaw(camera,enemy)"),"Lock-on view tracking");
+assert.ok(arena.includes("remoteInput.reset()"),"Connection end clears remote input");
+assert.ok(arena.includes("forestZoneAt(camera.x,camera.z)"),"HUD uses walk position");
+assert.ok(arena.includes("chooseForestMonster(area.id,rand,oldKind)"),"Encounter selected by region");
+assert.ok(arena.includes("function renderBeast")&&arena.includes("enemy.kind===5")&&arena.includes("enemy.kind===6")&&arena.includes("enemy.kind===7"));
+assert.ok(arena.includes("visual.style===")&&arena.includes('visual.style==="charge"'),"Charging has separate visible effect");
+console.log("REMOTE + FOREST PASS: 8 monsters, 4 zones, 6000 randomized encounters, movement timeout and lock-on.");
