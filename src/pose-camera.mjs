@@ -3,7 +3,7 @@
  * only an already-classified dodge event is returned to the game.
  * Uses the MediaPipe pose-lite model and a limited ~8fps cadence.
  */
-import {createPoseTracker} from "./pose-core.mjs";
+import {createPoseTracker,poseFraming} from "./pose-core.mjs";
 // Browser ESM availability depends on CDN packaging. jsDelivr package root
 // is the primary endpoint; alternate vendors/versions are tried on failure.
 const MODEL="https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_lite/float16/1/pose_landmarker_lite.task";
@@ -37,7 +37,7 @@ export async function loadPoseModel({importer=(url)=>import(url),report=()=>{}}=
  }
  throw Error("모든 자세 인식 모듈 경로가 실패했습니다. Chrome 또는 삼성 인터넷에서 열어 다시 시도하세요. "+errors.map(x=>x.slice(0,100)).join(" | "));
 }
-export function createPoseCamera({video,onStatus=()=>{},onDodge=()=>{}}={}){
+export function createPoseCamera({video,onStatus=()=>{},onDodge=()=>{},onFraming=()=>{}}={}){
  if(!video)throw Error("Camera video element missing");
  const pose=createPoseTracker({calibrationFrames:14,stableFrames:2,resetFrames:3,cooldownMs:1100});
  let active=false,stream=null,model=null,timer=null,lastTime=-1,previousLabel="",starting=false;
@@ -60,9 +60,13 @@ export function createPoseCamera({video,onStatus=()=>{},onDodge=()=>{}}={}){
     lastTime=video.currentTime;
     const now=performance.now();
     const result=model.detectForVideo(video,now);
-    const data=pose.feed(result.landmarks?.[0]||null,now);
+    const landmarks=result.landmarks?.[0]||null;
+    const data=pose.feed(landmarks,now);
+    const framing=poseFraming(landmarks);
+    onFraming({kind:framing.kind,message:framing.text,
+     calibrated:data.calibrated,progress:data.progress??(data.calibrated?1:0)});
     if(data.event)onDodge(data.event);
-    const label=data.status==="calibrating"?"기준 자세 측정 "+Math.round(data.progress*100)+"%":
+    const label=framing.kind!=="good"?framing.text:data.status==="calibrating"?"기준 자세 측정 "+Math.round(data.progress*100)+"%":
       data.status==="lost"?"몸이 잘 안 보여요 · 카메라 앞에 서 주세요":
       data.movement==="duck"?"앉기 / 몸 낮추기 감지":data.movement==="left"||data.movement==="right"?"옆으로 피하기 감지":"카메라 추적 정상 · 좌우 이동·앉기로 회피";
     if(label!==previousLabel){status(label);previousLabel=label;}
