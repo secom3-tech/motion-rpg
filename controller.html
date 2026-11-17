@@ -84,7 +84,7 @@ button{font-size:13px;padding:10px 11px;margin:4px 4px 0 0}
 <script type="module">
 import {createGestureDetector,motionSample,dominantAxis} from "./src/motion-core.mjs?v=0.43.3";
 import {classifyMeleeGesture,classifyAttackIntent,motionFeatures} from "./src/player-combat.mjs?v=0.34";
-import {createWirelessController,cleanRoom} from "./src/peer-bridge.mjs?v=0.41";
+import {createWirelessController,cleanRoom} from "./src/peer-bridge.mjs?v=0.43.4";
 import {movementVector} from "./src/remote-control.mjs?v=0.41";
 const $=id=>document.getElementById(id);
 let active=false,count=0,mode="melee",sensitivity=3,calibrating=false,calibration=[],sampleTime=0,seq=0,received=0,sensorEvents=0,sensorStartedAt=0;
