@@ -51,7 +51,7 @@ export function createWirelessHost({onStatus=()=>{},onMessage=()=>{}}={}){
    if(!active||!conn?.open||!data||typeof data!=="object")return;
    lastHeartbeat=Date.now();
    if(data.type==="pong"&&Number.isFinite(data.at)){latestPing=Math.max(0,Date.now()-data.at);status("S21 연결됨",true);return;}
-   if(["gesture","diagnostic","move","look","target","control-stop","weapon-switch","skill,"sensor-state"].includes(data.type))onMessage(data);
+   if(["gesture","diagnostic","move","look","target","control-stop","weapon-switch","skill","sensor-state"].includes(data.type))onMessage(data);
   });
   conn.on("close",()=>{if(conn===connection)conn=null;status("S21 연결 해제",false)});
   conn.on("error",e=>status("연결 오류: "+(e?.message||"통신 실패"),false));
