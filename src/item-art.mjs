@@ -24,8 +24,19 @@ const parts={
  orb:'<circle cx="40" cy="41" r="27" fill="#358da2" stroke="#b8e8e7" stroke-width="6"/><path d="M29 39l12-21 17 19-17 22Z" fill="#9ce9e9" opacity=".7"/><circle cx="40" cy="40" r="37" stroke="#91dae6" stroke-width="3" opacity=".45" fill="none"/>',
  lantern:'<path d="M29 22Q40 3 51 22" fill="none" stroke="#c4a56b" stroke-width="6"/><path d="M23 23h34l5 45H18Z" fill="#ad8b56" stroke="#d5b675" stroke-width="5"/><path d="M29 31h22l4 28H25Z" fill="#ffde91"/><circle cx="40" cy="45" r="31" fill="#ffd77d" opacity=".13"/>'
 };
+/** Six starter and mage equipment portraits rendered as hand-painted sprite artwork. */
+const illustrated={
+ sword:[0,0], bow:[1,0], hunterCap:[2,0],
+ hunter:[0,1], satchel:[1,1], staff:[2,1]
+};
+const ATLAS="./assets/gear-illustrations.webp?v=0.43.1";
 const tones={weapon:"#1d464f",head:"#35423f",armor:"#254a43",offhand:"#4b4437"};
 export function itemIllustration(id,slot="weapon"){
+ const sprite=illustrated[id];
+ if(sprite){
+  const [column,row]=sprite;
+  return '<svg class="itemArtwork paintedEquipment" viewBox="0 0 96 96" role="img" aria-label="장비 일러스트" xmlns="http://www.w3.org/2000/svg" style="overflow:hidden;border-radius:12px"><image href="'+ATLAS+'" x="'+(-column*96)+'" y="'+(-row*96)+'" width="288" height="192" preserveAspectRatio="none"/><path d="M2 2h92v92H2z" fill="none" stroke="#e1ca8c" stroke-opacity=".36" stroke-width="2"/></svg>';
+ }
  const drawing=parts[id]||parts.none;const base=tones[slot]||tones.weapon;
  return '<svg class="itemArtwork" viewBox="0 0 80 80" role="img" aria-label="장비 그림" xmlns="http://www.w3.org/2000/svg"><rect x="2" y="2" width="76" height="76" rx="16" fill="'+base+'" stroke="#9da88a" stroke-opacity=".6" stroke-width="2"/><circle cx="40" cy="30" r="32" fill="#e1d4a0" opacity=".06"/>'+drawing+'</svg>';
 }
