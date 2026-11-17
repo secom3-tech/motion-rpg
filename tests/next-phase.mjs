@@ -73,11 +73,11 @@ assert.equal(villageObjective({quests:{forest:{bossDefeated:true}}}).progress,1)
 const arena=fs.readFileSync(new URL("../indoor.html",import.meta.url),"utf8");
 const town=fs.readFileSync(new URL("../preview.html",import.meta.url),"utf8");
 for(const check of ["monsterMotionStep(enemy,camera,enemyMind,dt,clock)",
- "canAcquireTarget(camera,yaw,enemy)","retainTarget(camera,enemy)",
+ "canAutoAcquire(camera,yaw,enemy)","retainTarget(camera,enemy)",
  "enemyMind.aggro=true","enemy.moveSpeed","createMonsterMind(enemy.kind,enemy.x,enemy.z,rand())"]){
  assert.ok(arena.includes(check),"Arena AI integration missing: "+check);
 }
-assert.ok(arena.includes("let targetLocked=false"),"Lock-on cannot auto-snap every enemy at any distance");
+assert.ok(arena.includes("let targetLocked=false")&&arena.includes("AUTO_LOCK_MANUAL_PAUSE"),"Automatic lock still needs a range gate and player manual control");
 for(const id of ["homeNextXp","homeXpProgress","rumourWho","rumourLine","rumourNext","homeObjective","homeObjectiveDesc"]){
  assert.ok(town.includes('id="'+id+'"'),"Village missing "+id);
 }
