@@ -104,11 +104,18 @@ const wireless=createWirelessController({
 
  },
  onMessage:data=>{
-  if(data?.type==="hello"){$("pairStatus").textContent=active?"연결됨 · S21 동작을 감지해 봐":"연결됨 · 아래 [센서 켜기]를 눌러야 검격이 작동해.";controlSend("weapon-switch",{mode:mode==="throw"?"ranged":mode});}
+  if(data?.type==="hello"){$("pairStatus").textContent=active?"연결됨 · S21 동작을 감지해 봐":"연결됨 · 아래 [센서 켜기]를 눌러야 검격이 작동해.";}
   if(data?.type==="diagnostic-ack")$("pairStatus").textContent="통신 확인 완료 · S21 → 폴드6 연결 정상. 공격 동작은 별도로 시험해.";
   if(data?.type==="target-state"){lockWanted=!!data.enabled;$("lockToggle").textContent=lockWanted?"락온 끄기":"락온 켜기";$("controlState").textContent=data.enabled?"락온 활성 · 시점 자동 추적 중":"자유 시점 · 오른쪽 패드로 회전";}
   if(data?.type==="input-ack"){$("controlState").textContent=data.message||"S21 조작 입력 확인";}
-  if(data?.type==="weapon-state"){$("modeInfo").textContent="전투 무기: "+data.label;}
+  if(data?.type==="weapon-state"){
+   if(["melee","ranged","auto"].includes(data.mode)){
+    mode=data.mode==="ranged"?"throw":data.mode;
+    document.querySelectorAll("[data-mode]").forEach(b=>b.classList.toggle("active",b.dataset.mode===mode));
+    detector.configure({sensitivity,mode,axis:axes[mode]||""});
+   }
+   $("modeInfo").textContent="전투 무기: "+data.label;
+  }
   if(data?.type==="gesture-ack"){
    const desc=data.accepted?"폴드6 전투 입력 확인":data.reason||"전투에서 입력을 사용할 수 없어";
    $("lastSignal").textContent="최근 동작: "+desc+" · "+new Date().toLocaleTimeString("ko-KR");
