@@ -52,6 +52,40 @@
 .combat-info{display:flex;flex-wrap:wrap;gap:9px;margin:13px 0;color:#d5eecf;font-size:12px}
 .combat-info span{border:1px solid #88b39379;border-radius:30px;padding:5px 10px;background:#142d29}
 @media(max-width:520px){.material-grid{grid-template-columns:1fr 1fr}.craft-list{grid-template-columns:1fr}}
+
+/* The village is a place, not a developer dashboard. */
+.village-spots{position:absolute;z-index:4;top:18px;right:19px;display:flex;gap:7px;align-items:flex-start;flex-direction:column}
+.village-spots button{min-width:114px;text-align:left;border:1px solid #e1edcb94;background:linear-gradient(110deg,#193d34ec,#163433e9);color:#f3f6da;backdrop-filter:blur(7px);box-shadow:0 4px 16px #001f236c;border-radius:10px;padding:8px 12px;font-weight:850;font-size:12px}
+.village-spots button:hover,.village-spots button:focus-visible{border-color:#e9ebba;background:#2c5442;outline:2px solid #e1ec9a5b}
+.homeProgress{border:1px solid #98b99966;border-radius:12px;background:linear-gradient(90deg,#19392c,#193b38);padding:11px 15px;margin:11px 0 0}
+.homeProgressTop{display:flex;justify-content:space-between;gap:12px;color:#e5f3d9;font-size:12px}
+.homeProgressTop span{color:#bbddc4}
+.homeProgressTrack{height:8px;background:#09291f;border-radius:99px;overflow:hidden;margin-top:9px}
+.homeProgressTrack i{display:block;height:100%;width:0;background:linear-gradient(90deg,#76c9a6,#e4e9a2);border-radius:99px;transition:width .4s}
+.townRumour{margin:16px 0 8px;padding:17px 17px 15px;display:flex;gap:16px;border:1px solid #c2b68e7c;background:linear-gradient(130deg,#263932,#1c302d 55%,#242f2a);border-radius:17px;box-shadow:inset 0 1px 0 #e6f4cd15}
+.rumourIcon{display:flex;align-items:center;justify-content:center;flex-shrink:0;width:47px;height:47px;border:1px solid #afaa7a6b;border-radius:12px;background:#443f2c;color:#f3d89d;font-size:25px}
+.rumourBody{flex:1;min-width:0}
+.rumourBody small{display:block;font-size:11px;letter-spacing:.04em;color:#c2d5bd}
+.rumourBody b{display:block;margin-top:5px;color:#f8e3aa;font-size:13px}
+.rumourBody p{color:#e3ecda;font-size:13px;line-height:1.7;margin:6px 0 12px;min-height:22px}
+.rumourBody button{background:#244c3b;border:1px solid #93bfa488;border-radius:9px;color:#e5f2dd;font-size:12px;padding:7px 11px;font-weight:800}
+.townObjective{display:flex;gap:7px;align-items:center;flex-wrap:wrap;padding:10px 13px;background:#102b26;border:1px solid #73947670;border-radius:11px;color:#d2e8d4;font-size:12px}
+.townObjective span{color:#d3e2a9;font-weight:800}
+.townObjective b{font-weight:900;color:#e4f0d7}
+.townObjective small{color:#a4c2ad}
+@media(max-width:640px){
+ .village-spots{top:10px;right:10px;flex-direction:row;gap:5px}
+ .village-spots button{min-width:0;padding:7px 8px;font-size:10px}
+ .stage-copy{top:77px}
+ .stage-copy h1{font-size:clamp(33px,8vw,49px)}
+ .stage-copy p{font-size:12px;max-width:250px}
+ .stage-bottom{bottom:12px;gap:5px}
+ .stage-bottom .cta{font-size:11px;padding:10px 10px}
+ .village-hero-name{bottom:84px!important;font-size:10px}
+ .townRumour{padding:13px;gap:11px}
+ .rumourIcon{width:38px;height:38px;font-size:22px}
+}
+
 </style></head>
 <body><div class="app">
 <header class="top"><div class="mark">MOTION RPG <em> / 경계의 숲</em></div><div class="version">통합 플레이 빌드 · 0.36</div></header>
