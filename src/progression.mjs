@@ -14,7 +14,10 @@ export function nextLevelState(state){
  const stored=state?.levelProgress;
  if(stored?.version===LEVEL_CURVE_VERSION&&Number.isSafeInteger(stored.nextXp)&&stored.nextXp>xp)
   return {level,nextXp:stored.nextXp};
- return {level,nextXp:xp+xpRequiredForNextLevel(level)};
+ // Preserve progress within the old 100-XP level, too. A player who was
+ // 95% of the way to the next legacy level should not start from zero.
+ const oldFraction=Math.max(0,Math.min(.99,(xp-(level-1)*100)/100));
+ return {level,nextXp:xp+Math.max(1,Math.ceil(xpRequiredForNextLevel(level)*(1-oldFraction)))};
 }
 export function applyExperienceCurve(previous,updated){
  if(!updated||typeof updated!=="object")throw Error("Updated character required");
