@@ -269,6 +269,11 @@
 .craftWindow .craft-row p{font-size:11px;color:#c4d4ba}
 .craftWindow .craft-row small{white-space:normal;overflow-wrap:anywhere}
 @media(max-width:750px){.mannequinPortrait{height:350px;min-height:350px}.bodySilhouette{height:100%;width:70%;left:15%}.figureGear{width:56px;min-height:64px}.figureGear>span{width:40px;height:40px}.figHead{top:11%}.figArmor{top:41%}.figMelee{left:9%;top:32%}.figRanged{right:9%;top:32%}.figOffhand{right:9%;top:65%}.classPortrait{padding:4px;top:6px;left:6px}.classPortrait small{font-size:8px}.classPortrait b{font-size:10px}}
+
+/* dog-friendly route selection */
+.runStartActions{gap:8px}.runStartActions .runWalk{background:#31594b;border-color:#b5d1ae;color:#f8f0d7}
+.runStartActions .runWalk:not(:disabled):hover{background:#49735e}
+@media(max-width:750px){.runStartActions{bottom:105px}.runStartActions button{flex:1 1 44%;min-height:39px}.runMetrics{bottom:214px}}
 </style></head>
 <body><div class="app">
 <header class="top"><div class="mark">MOTION RPG <em> / 경계의 숲</em></div><div class="version">모험 허브 · 0.41</div></header>
@@ -333,7 +338,7 @@
     <div id="runLoot" class="runMetric">0 G<small>원정 전리품</small></div>
    </div>
    <div class="runStartActions">
-    <button class="runMain" id="startGps">GPS 원정 시작</button>
+    <button class="runMain" id="startGps">GPS 달리기</button><button class="runWalk" id="startWalk">🐾 산책 탐색</button>
     <button class="runAlt" id="startTreadmill">러닝머신 원정</button>
     <button class="runStop" id="stopRun" disabled>원정 종료</button>
    </div>
@@ -343,7 +348,7 @@
      <label>목표 시간 (선택)<select id="duration"><option value="0" selected>자유 원정 · 직접 종료</option><option value="12">12분</option><option value="20">20분</option><option value="30">30분</option><option value="45">45분</option><option value="60">60분</option></select></label>
      <label>러닝머신 속도 (km/h)<input id="tmSpeed" type="number" min="3" max="16" step=".5" value="7"></label>
     </div>
-    <p>GPS에서는 이동 기록을 기준으로 운동 페이스를 보정해. 러닝머신 속도는 수동 입력이므로 보상 정산 대상이 아니야.</p>
+    <p>달리기는 높은 성장 보상, 산책은 천천히 걷는 탐색과 채집 보상이야. GPS로 실제 이동을 확인해. 강아지와 걷는 동안에는 속도를 높일 필요가 없어. 러닝머신은 수동 입력이므로 정식 보상 대상이 아니야.</p>
    </details>
    <details class="runJournal">
     <summary>모험 소식 · 최근 사건 <span id="runRewards">전리품 0개</span></summary>
@@ -417,7 +422,7 @@
 <footer class="footer">MOTION RPG · 숲마을을 거점으로 실내 전투와 야외 탐험을 연결하는 통합 콘셉트 시안 · 기존 v0.24 본게임 보존</footer>
 </div>
 <script type="module">
-import {createAdventure,startAdventure,advanceAdventure,endAdventure,summarizeAdventure,settleAdventure} from "./src/expedition.mjs?v=0.41";
+import {createAdventure,startAdventure,advanceAdventure,endAdventure,summarizeAdventure,settleAdventure,expeditionReward} from "./src/expedition.mjs?v=0.42";
 import {GEAR} from "./src/avatar.mjs?v=0.41";
 import {itemIllustration} from "./src/item-art.mjs?v=0.41";
 import {gearBenefits,craftingDeficits,MATERIAL_SYMBOLS} from "./src/gear-details.mjs?v=0.42";
@@ -426,7 +431,7 @@ import {QUESTS,REGIONS,newGame} from "./src/engine.mjs?v=0.37";
 import {experienceProgress} from "./src/progression.mjs?v=0.37";
 import {villageRumour,villageObjective} from "./src/town-life.mjs?v=0.37";
 // Village art is static: combat, GPS and character state retain their original modules.
-import {MATERIALS,RECIPES,normalizeRpgGear,gearRequirement,craftGear,equipGear,chooseActiveWeapon,weaponSlotFor,RANGED_WEAPONS,MELEE_WEAPONS,combatStats,claimIndoorBattle,addExpeditionMaterials} from "./src/gear-game.mjs?v=0.41";
+import {MATERIALS,RECIPES,normalizeRpgGear,gearRequirement,craftGear,equipGear,chooseActiveWeapon,weaponSlotFor,RANGED_WEAPONS,MELEE_WEAPONS,combatStats,claimIndoorBattle,addExpeditionMaterials} from "./src/gear-game.mjs?v=0.42";
 const $=id=>document.getElementById(id);
 const pages=["village","run","indoor","character"];
 function go(page){if(!pages.includes(page))return;
@@ -633,7 +638,7 @@ function learnGpsPace(pace){
  if(session.elapsedSec<150&&gpsPaces.length>=5){
   const data=[...gpsPaces].sort((a,b)=>a-b),median=data[Math.floor(data.length/2)];
   session={...session,basePace:Math.max(5,Math.min(15,median))};
-  $("runMode").textContent="GPS · 개인 페이스 자동 보정";
+  $("runMode").textContent="GPS 달리기 · 개인 페이스 자동 보정";
  }
 }
 function message(head,detail){$("storyHead").textContent=head;$("storyDetail").textContent=detail;}
@@ -642,19 +647,36 @@ $("toggleVoice").onclick=()=>{voice=!voice;$("toggleVoice").textContent=voice?"�
 document.querySelectorAll("[data-pace]").forEach(b=>b.onclick=()=>{paceType=b.dataset.pace;document.querySelectorAll("[data-pace]").forEach(x=>x.classList.toggle("active",x===b));$("paceState").textContent="현재: "+(paceType==="surge"?"조금 빠르게":paceType==="quiet"?"천천히":"기본 페이스");});
 function paceForGame(){const p=session?.basePace||8.5;return paceType==="quiet"?p*1.17:paceType==="surge"?p*.9:p;}
 function timecode(n){const m=Math.floor(n/60),s=Math.floor(n%60);return String(m).padStart(2,"0")+":"+String(s).padStart(2,"0")}
-function syncRun(){if(!session)return;const st=session;$("runTime").innerHTML=timecode(st.elapsedSec)+"<small>게임 속 경과</small>";$("runDistance").innerHTML=Math.round(st.distanceM)+" m<small>이동 거리</small>";$("runWins").innerHTML=st.success+" / "+st.fail+"<small>임무 성공/실패</small>";$("runLoot").innerHTML=st.gold+" G<small>원정 골드 (시험)</small>";const phase=st.phase==="travel"?"숲을 탐험 중":st.phase==="challenge"?"돌발 상황":st.phase==="recovery"?"안전한 회복 구간":st.phase==="complete"?"원정 종료":"원정 준비";$("runPhase").textContent=(st.mode==="gps"?"GPS":st.mode==="treadmill"?"러닝머신":"시뮬레이션")+" · "+phase;$("runTitle").textContent=st.event?.name||phase;$("runSubtitle").textContent=st.event?st.event.line:st.phase==="complete"?"모험을 마쳤어. 마을로 돌아가 보자.":"새로운 사건을 기다리며 숲길을 이동하는 중";$("runMeter").style.width=Math.round(st.elapsedSec/st.durationSec*100)+"%";const feed=st.announcements.slice().reverse();$("runFeed").replaceChildren(...(feed.length?feed.map(e=>{const li=document.createElement("li");li.textContent=timecode(e.at)+" · "+e.head+" — "+e.detail;return li;}):[document.createElement("li")]));$("runRewards").textContent="전리품 "+Object.values(st.loot).reduce((a,b)=>a+b,0)+"개";$("stopRun").disabled=st.phase!=="travel"&&st.phase!=="challenge"&&st.phase!=="recovery";$("startDemo").disabled=!["ready","complete"].includes(st.phase);$("startGps").disabled=!["ready","complete"].includes(st.phase);$("startTreadmill").disabled=!["ready","complete"].includes(st.phase);}
+function syncRun(){if(!session)return;const st=session;$("runTime").innerHTML=timecode(st.elapsedSec)+"<small>게임 속 경과</small>";$("runDistance").innerHTML=Math.round(st.distanceM)+" m<small>이동 거리</small>";$("runWins").innerHTML=st.success+" / "+st.fail+"<small>임무 성공/실패</small>";$("runLoot").innerHTML=(st.mode==="gps"||st.mode==="walk"?expeditionReward(st).gold:st.gold)+" G<small>"+(st.mode==="walk"?"산책 골드":st.mode==="gps"?"달리기 보상 예상":"연습 보상 · 지급 제외")+"</small>";const phase=st.phase==="travel"?"숲을 탐험 중":st.phase==="challenge"?"돌발 상황":st.phase==="recovery"?"안전한 회복 구간":st.phase==="complete"?"원정 종료":"원정 준비";$("runPhase").textContent=(st.mode==="gps"?"GPS 달리기":st.mode==="walk"?"강아지 산책 탐색":st.mode==="treadmill"?"러닝머신":"시뮬레이션")+" · "+phase;$("runTitle").textContent=st.event?.name||phase;$("runSubtitle").textContent=st.event?st.event.line:st.phase==="complete"?"모험을 마쳤어. 마을로 돌아가 보자.":"새로운 사건을 기다리며 숲길을 이동하는 중";$("runMeter").style.width=Math.round(st.elapsedSec/st.durationSec*100)+"%";const feed=st.announcements.slice().reverse();$("runFeed").replaceChildren(...(feed.length?feed.map(e=>{const li=document.createElement("li");li.textContent=timecode(e.at)+" · "+e.head+" — "+e.detail;return li;}):[document.createElement("li")]));$("runRewards").textContent="전리품 "+Object.values(st.loot).reduce((a,b)=>a+b,0)+"개";$("stopRun").disabled=st.phase!=="travel"&&st.phase!=="challenge"&&st.phase!=="recovery";$("startDemo").disabled=!["ready","complete"].includes(st.phase);$("startGps").disabled=!["ready","complete"].includes(st.phase);$("startWalk").disabled=!["ready","complete"].includes(st.phase);$("startTreadmill").disabled=!["ready","complete"].includes(st.phase);}
 function notifyNew(before){if(!session)return;const old=before?.announcements.at(-1);const last=session.announcements.at(-1);if(last&&(!old||old.head!==last.head||old.at!==last.at)){message(last.head,last.detail);speak(last.head+". "+last.detail);}if(session.phase==="complete"&&before?.phase!=="complete")finishRun();}
 function resetTimers(){if(timer)clearInterval(timer);timer=null;if(watchId!==null)navigator.geolocation?.clearWatch(watchId);watchId=null;lastGps=null;lastGpsAt=0;}
-function start(mode){resetTimers();gpsPaces=[];let baseline=mode==="gps"?priorGpsPace():Number($("base").value);if(!Number.isFinite(baseline)||baseline<5||baseline>15){alert("기준 페이스는 5~15분/km 중에서 설정해.");return;}session=createAdventure({mode,basePace:baseline,durationMin:Number($("duration").value),style:$("style").value,seed:seed++,level:Number(sharedCharacter().level)||1});session=startAdventure(session);runId=String(Date.now())+"-"+String(seed);$("runMode").textContent=mode==="gps"?"GPS · 실제 기록":mode==="treadmill"?"러닝머신 · 입력 속도":"개발용 미리보기";notifyNew(null);syncRun();if(mode==="demo"){timer=setInterval(()=>{if(session.phase==="complete"){resetTimers();return;}stepGame(8,paceForGame());},900);}else if(mode==="treadmill"){timer=setInterval(()=>{if(session.phase==="complete"){resetTimers();return;}stepGame(1,60/clamp(Number($("tmSpeed").value)||7,3,16));},1000);}else startGeo();}
+function start(mode){resetTimers();gpsPaces=[];let baseline=mode==="walk"?15:mode==="gps"?priorGpsPace():Number($("base").value);if(!Number.isFinite(baseline)||baseline<5||baseline>15){alert("기준 페이스는 5~15분/km 중에서 설정해.");return;}session=createAdventure({mode,basePace:baseline,durationMin:Number($("duration").value),style:$("style").value,seed:seed++,level:Number(sharedCharacter().level)||1});session=startAdventure(session);runId=String(Date.now())+"-"+String(seed);$("runMode").textContent=mode==="gps"?"GPS 달리기 · 실제 기록":mode==="walk"?"산책 탐색 · GPS 기록":mode==="treadmill"?"러닝머신 · 입력 속도":"개발용 미리보기";notifyNew(null);syncRun();if(mode==="demo"){timer=setInterval(()=>{if(session.phase==="complete"){resetTimers();return;}stepGame(8,paceForGame());},900);}else if(mode==="treadmill"){timer=setInterval(()=>{if(session.phase==="complete"){resetTimers();return;}stepGame(1,60/clamp(Number($("tmSpeed").value)||7,3,16));},1000);}else startGeo();}
 function stepGame(sec,pace){if(!session||session.phase==="complete")return;const old=session;session=advanceAdventure(session,sec,pace);notifyNew(old);syncRun();}
 function stop(){if(!session)return;const old=session;session=endAdventure(session);resetTimers();notifyNew(old);syncRun();}
-function finishRun(){resetTimers();if(!session)return;
- if(session.mode==="gps"&&session.elapsedSec>=180&&gpsPaces.length>=8){try{localStorage.setItem(PACE_KEY,String(session.basePace));}catch{}}const sum=summarizeAdventure(session);const tail="성공 "+sum.success+"회 · 실패 "+sum.fail+"회 · "+sum.xp+" 경험치 · "+sum.gold+" 골드.";if(session.mode==="gps"){const char=sharedCharacter();if(char&&Object.keys(char).length){const r=settleAdventure(char,session,runId);if(r.awarded){const rewards=addExpeditionMaterials(r.state,session,runId);saveCharacter(rewards.awarded?rewards.state:r.state);message("원정 종료 · 마을에 보상 전달",tail+" 캐릭터에 정산했어.");syncCharacter();}else message("원정 종료",tail+" 보상 인정 조건을 충족하지 못했어.");}else message("원정 종료",tail+" 캐릭터 저장 자료가 없어 이번 원정은 정산하지 않았어.");}else message("시뮬레이션 종료",tail+" 연습 모드이므로 실제 보상은 없어.");}
-$("startDemo").onclick=()=>start("demo");$("startGps").onclick=()=>start("gps");$("startTreadmill").onclick=()=>start("treadmill");$("stopRun").onclick=stop;
+function finishRun(){
+ resetTimers();if(!session)return;
+ if(session.mode==="gps"&&session.elapsedSec>=180&&gpsPaces.length>=8){try{localStorage.setItem(PACE_KEY,String(session.basePace));}catch{}}
+ const summary=summarizeAdventure(session),reward=expeditionReward(session);
+ if(["gps","walk"].includes(session.mode)){
+  const r=settleAdventure(sharedCharacter(),session,runId);
+  if(r.awarded){
+   const resources=addExpeditionMaterials(r.state,session,runId);
+   const finalState=resources.awarded?resources.state:r.state;
+   saveCharacter(finalState);syncCharacter();
+   message(session.mode==="walk"?"산책 탐색 완료 · 채집 보상 지급":"달리기 원정 완료 · 성장 보상 지급",
+    "경험치 +"+r.xp+" · 골드 +"+r.gold+" · 전리품 "+Object.values(summary.loot).reduce((a,b)=>a+b,0)+"개 · 제작 재료 "+Object.values(resources.materials||{}).reduce((a,b)=>a+b,0)+"개.");
+  }else message("원정 기록 완료","GPS 이동 기록 3분·200m 이상이 확인돼야 게임 보상을 지급해. 실제 운동 기록은 계속 볼 수 있어.");
+ }else message("연습 원정 종료","게임 속 임무를 연습했어. 수동 입력이므로 골드·경험치·재료는 지급하지 않아.");
+}
+$("startDemo").onclick=()=>start("demo");$("startGps").onclick=()=>start("gps");$("startWalk").onclick=()=>start("walk");$("startTreadmill").onclick=()=>start("treadmill");$("stopRun").onclick=stop;
 $("skipMinute").onclick=()=>{if(session?.mode!=="demo"||session.phase==="complete")return;for(let i=0;i<6&&session.phase!=="complete";i++)stepGame(10,paceForGame());};
 $("skipEnd").onclick=()=>{if(session?.mode!=="demo"||session.phase==="complete")return;let loops=0;while(session.phase!=="complete"&&loops++<250)stepGame(10,paceForGame());};
 function dist(a,b){const toRad=Math.PI/180,lat=(a.latitude+b.latitude)*toRad/2,dx=(b.longitude-a.longitude)*toRad*Math.cos(lat),dy=(b.latitude-a.latitude)*toRad;return Math.hypot(dx,dy)*6371000;}
-function startGeo(){if(!navigator.geolocation){message("GPS 사용 불가","이 브라우저는 위치 기능을 지원하지 않아.");stop();return;}let lastNotice=Date.now();watchId=navigator.geolocation.watchPosition(pos=>{if(!session||session.phase==="complete"||session.mode!=="gps")return;const p=pos.coords;const t=pos.timestamp||Date.now();if(p.accuracy>45){if(Date.now()-lastNotice>15000){message("GPS 안정화 중","정확도가 낮아 기록을 일시적으로 보류하고 있어.");lastNotice=Date.now();}return;}const now={latitude:p.latitude,longitude:p.longitude,time:t};if(!lastGps){lastGps=now;message("GPS 연결","정확한 위치 신호를 받았어. 숲길 탐험을 시작해.");return;}const dt=(t-lastGps.time)/1000,d=dist(lastGps,now);if(dt<=0)return;if(dt>35){lastGps=now;return;}if(d>Math.max(20,dt*7.5)){lastGps=now;return;}lastGps=now;if(dt<2)return;const measured=d>=3?clamp(1000*dt/(d*60),5,30):99999;learnGpsPace(measured);stepGame(Math.min(dt,35),measured);},err=>{message("GPS 연결 오류",err.code===1?"위치 접근 권한을 허용해야 해.":"GPS 신호를 받지 못했어.");resetTimers();if(session)stop();},{enableHighAccuracy:true,maximumAge:2000,timeout:15000});}
+function startGeo(){if(!navigator.geolocation){message("GPS 사용 불가","이 브라우저는 위치 기능을 지원하지 않아.");stop();return;}let lastNotice=Date.now();watchId=navigator.geolocation.watchPosition(pos=>{if(!session||session.phase==="complete"||!["gps","walk"].includes(session.mode))return;const p=pos.coords;const t=pos.timestamp||Date.now();if(p.accuracy>45){if(Date.now()-lastNotice>15000){message("GPS 안정화 중","정확도가 낮아 기록을 일시적으로 보류하고 있어.");lastNotice=Date.now();}return;}const now={latitude:p.latitude,longitude:p.longitude,time:t};if(!lastGps){lastGps=now;message("GPS 연결","정확한 위치 신호를 받았어. 숲길 탐험을 시작해.");return;}const dt=(t-lastGps.time)/1000,d=dist(lastGps,now);if(dt<=0)return;if(dt>35){lastGps=now;return;}if(d>Math.max(20,dt*7.5)){lastGps=now;return;}lastGps=now;if(dt<2)return;
+ if(session.mode==="walk"&&d<3)return;
+ const measured=d>=3?clamp(1000*dt/(d*60),5,session.mode==="walk"?65:30):99999;
+ if(session.mode==="gps")learnGpsPace(measured);
+ stepGame(Math.min(dt,35),measured);},err=>{message("GPS 연결 오류",err.code===1?"위치 접근 권한을 허용해야 해.":"GPS 신호를 받지 못했어.");resetTimers();if(session)stop();},{enableHighAccuracy:true,maximumAge:2000,timeout:15000});}
 function clamp(n,lo,hi){return Math.max(lo,Math.min(hi,n));}
 window.addEventListener("pagehide",()=>resetTimers());
 // The visual hub has no canvas, joystick, character mesh, or perpetual animation loop.
