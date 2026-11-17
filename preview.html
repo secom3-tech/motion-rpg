@@ -147,10 +147,17 @@
 .villageJournal[open]>summary{border-bottom:1px solid #9eb69851}
 .villageJournal .townRumour{margin-top:15px}
 .avatar-display:before{display:none}
-.avatar-art{position:absolute;inset:0;z-index:1;display:grid;place-items:center}
-.avatar-art svg{display:block;width:100%;height:100%;object-fit:contain;filter:drop-shadow(0 10px 20px #031b1c8a)}
-.avatar-display{height:490px;background:#132e2a}
-.avatar-caption{background:linear-gradient(90deg,transparent,#0b2526bc 16%,#0b2526bc 84%,transparent);padding:7px 13px}
+.avatar-display{height:490px;background:#142f2c}
+.avatar-concept{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center 20%;z-index:1}
+.avatar-display::after{content:"";position:absolute;inset:0;z-index:1;pointer-events:none;background:linear-gradient(180deg,#041b1c99,transparent 21%,transparent 65%,#041b1dcb)}
+.avatar-art{position:absolute;right:10px;bottom:73px;width:133px;height:185px;z-index:2;display:grid;place-items:center;border:1px solid #e6d19b;
+ border-radius:13px;overflow:hidden;background:#173d35;box-shadow:0 9px 25px #071915dc}
+.avatar-art::after{content:"시착 외형";position:absolute;right:6px;bottom:5px;background:#071f21c9;color:#f2e1b1;font-size:9px;padding:3px 5px;border-radius:5px}
+.avatar-art svg{display:block;width:100%;height:100%}
+.avatar-title{z-index:3}
+.avatar-caption{z-index:3;display:flex;flex-direction:column;gap:2px;align-items:flex-start;right:155px;text-align:left;padding:8px 10px}
+.avatar-caption small{font-size:10px;color:#e1d7b6}
+@media(max-width:420px){.avatar-art{width:108px;height:153px;bottom:66px}.avatar-caption{right:118px;font-size:10px}}
 @media(max-width:750px){.loadout-layout{grid-template-columns:1fr}.avatar-display{height:430px}}
 @media(max-width:650px){
  #villageStage{height:clamp(490px,73svh,620px);min-height:490px}
@@ -233,7 +240,7 @@
 <section class="page" id="page-character"><div class="mark">CHARACTER & PROGRESSION</div><h1 style="font-size:30px;margin:9px 0">모험가의 성장</h1><p class="intro">숲의 전투와 야외 러닝은 별개 게임이 아니라 같은 캐릭터를 성장시키는 다른 방법이야. 저장된 진행 상황을 확인해 봐.</p>
 <div class="section-title"><h2>내 캐릭터 · 장비 외형 미리보기</h2><span class="badge">실전 장비 · 제작 가능</span></div>
 <div class="loadout-layout">
- <div class="avatar-display"><div id="avatarPortrait" class="avatar-art" aria-label="장착한 장비에 따라 외형이 바뀌는 모험가 일러스트"></div><div class="avatar-title"><span class="badge">ADVENTURER</span><span class="badge">장비별 외형 반영</span></div><div class="avatar-caption" id="avatarCaption">선택한 장비의 외형을 미리 보고 있어</div></div>
+ <div class="avatar-display"><img class="avatar-concept" src="./assets/hero-concept.webp" width="640" height="960" loading="lazy" decoding="async" alt="숲 사냥꾼의 기본 컨셉 일러스트"><div id="avatarPortrait" class="avatar-art" aria-label="장비를 변경하면 외형이 바뀌는 작은 시착 일러스트"></div><div class="avatar-title"><span class="badge">ADVENTURER</span><span class="badge">기본 캐릭터 아트</span></div><div class="avatar-caption"><small>우측 작은 시착 그림에 장비 변경 반영</small><span id="avatarCaption">선택한 장비의 외형을 확인해</span></div></div>
  <div class="loadout-panel"><h2>모험가 장비실</h2><p class="gear-intro">숲 모험가 장비를 제작해 장착하면 실제 전투에도 능력치가 반영돼. 아래 메뉴는 자유롭게 외형을 미리 보는 <b>시착 기능</b>이야.</p>
   <div class="gear-list">
    <label><span>무기</span><select id="gear-weapon"></select></label>
