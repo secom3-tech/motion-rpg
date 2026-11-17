@@ -7,7 +7,7 @@ const html=fs.readFileSync(new URL("../preview.html",import.meta.url),"utf8");
 const art=fs.readFileSync(new URL("../assets/village-hub.svg",import.meta.url),"utf8");
 assert.ok(art.startsWith("<svg")&&art.includes('viewBox="0 0 1600 900"'),"Static village SVG must be available");
 assert.ok(html.includes('./assets/village-hub.webp'),"Hub must reference the static artwork");
-assert.ok(html.includes('./assets/hero-concept.webp'),"Equipment screen must show polished character artwork");
+assert.ok(html.includes('class="bodySilhouette"')&&html.includes('id="figureArt-meleeWeapon"'),"Equipment screen shows dynamic gear silhouette");
 assert.ok(!html.includes('id="village3d"'),"No 3D-style canvas required for village");
 assert.ok(!html.includes('id="townMovePad"'),"Village should not require walking/joystick");
 assert.ok(!html.includes("requestAnimationFrame(drawVillageFrame)"),"No village animation loop");
