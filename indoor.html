@@ -241,7 +241,7 @@
   <p class="motionLead">폴드6에서는 3D 전투와 전면 카메라 회피를 사용하고, S21에서는 실제 휘두르기·투척 동작을 전송해. 둘 다 선택 기능이야.</p>
   <section class="motionSection">
    <h3>① S21 무기 컨트롤러 연결 · 숫자 6자리</h3>
-   <p>여기서 연결 코드를 만들고, S21에서 아래 주소를 열어 코드를 입력해.</p>
+   <p>폴드6에서 [연결 코드 만들기] → S21의 Chrome/삼성 인터넷에서 연결 주소 열기 → 같은 6자리 코드로 연결 → S21에서 [센서 켜기]를 눌러. 게임과 컨트롤러는 각각 열린 상태여야 해.</p>
    <div class="motionRow"><button id="hostStart">연결 코드 만들기</button><button id="hostStop" class="subtle" disabled>연결 종료</button><button id="copyController" class="subtle" disabled>연결 주소 복사</button></div>
    <div class="roomCode" id="motionRoom">연결 전</div>
    <a id="controllerLink" href="./controller.html" target="_blank" rel="noopener">S21 컨트롤러 화면</a>
@@ -1197,7 +1197,7 @@ el("hostStart").onclick=async()=>{
   const room=await motionHost.start();
   lastMotionSequence=-1;lastMotionAt=-Infinity;
   const url=new URL("./controller.html",location.href);
-  url.searchParams.set("v","0.38");url.searchParams.set("room",room);
+  url.searchParams.set("v","0.43.2");url.searchParams.set("room",room);
   el("controllerLink").href=url.href;
   el("motionRoom").textContent=room.replace(/^mrpg-/,"");
   el("hostStop").disabled=false;
