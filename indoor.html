@@ -806,6 +806,14 @@ function updatePlayerActions(){
   if(clock>=rangedAction.endsAt)rangedAction=null;
  }
 }
+function updateQueuedSkill(){
+ if(queuedSkillUntil<0)return;
+ if(clock>queuedSkillUntil||clock<skillCooldownUntil){queuedSkillUntil=-1;return;}
+ if(!meleeAction&&!rangedAction&&activateSkill()){
+  queuedSkillUntil=-1;
+  if(motionHost.connected)motionHost.send({type:"input-ack",message:"✦ 예약한 스킬 발동 완료"});
+ }
+}
 function activateSkill(){
  if(!active||clock<skillCooldownUntil||meleeAction||rangedAction)return false;
  const ok=activeWeaponMode==="melee"?swordHit("sweep"):magic();
@@ -968,7 +976,7 @@ camera.y=1.7+(len>.02?Math.sin(clock*10)*.045:Math.sin(clock*1.5)*.015)-(lastDod
  el("skillAttack").disabled=clock<skillCooldownUntil;
  syncBandage();
  el("skillAttack").querySelector("b").textContent=clock<skillCooldownUntil?"스킬 "+Math.ceil(skillCooldownUntil-clock)+"초":"스킬";el("dodgeInfo").textContent=clock<dodgeMessageUntil?dodgeMessage:clock<dodgeCooldown?"회피 재사용 "+(dodgeCooldown-clock).toFixed(1)+"초":"경고 시 좌우 이동·숙이기 / Q";
-updatePlayerActions();updateEnemy(dt);
+updatePlayerActions();updateAutoWeaponMode();updateQueuedSkill();updateEnemy(dt);
 // Enemy projectiles travel in world coordinates; the player has time to
 // change position or actually sidestep instead of taking instant damage.
 for(let i=enemyShots.length-1;i>=0;i--){
@@ -1228,7 +1236,8 @@ const motionHost=createWirelessHost({
   const action=packet.gesture==="throw"?"투척":({sweep:"가로 베기",overhead:"내려찍기",thrust:"찌르기"}[packet.style]||"검격");
   const skillRequested=packet.skillHeld===true;
   const respond=(accepted,reason)=>{
-   motionHost.send({type:"gesture-ack",seq:packet.seq,accepted,skill:accepted&&skillRequested,reason,time:Date.now()});
+   const queued=accepted&&reason==="스킬 예약";
+   motionHost.send({type:"gesture-ack",seq:packet.seq,accepted,skill:accepted&&skillRequested&&!queued,queued,reason,time:Date.now()});
    el("remoteStatus").textContent="S21 "+(skillRequested?"스킬 + ":"")+action+
      " 감지됨 · "+(accepted?(skillRequested?"스킬 공격 발동":"일반 공격 실행"):reason)+" · 강도 "+packet.strength;
   };
@@ -1253,7 +1262,11 @@ const motionHost=createWirelessHost({
     reason="스킬 재사용 대기 "+Math.ceil(skillCooldownUntil-clock)+"초";
    }else{
     accepted=activateSkill();
-    if(!accepted)reason="공격 동작 또는 스킬 사용 대기 중";
+    if(!accepted){
+     queuedSkillUntil=clock+1.2;
+     accepted=true;reason="스킬 예약";
+     showReaction("skill","✦ 스킬 예약 · 공격 동작 종료 후 발동");
+    }
    }
   }else{
    accepted=attackMode==="ranged"?magic():swordHit(packet.gesture==="melee"?packet.style:null);
@@ -1342,16 +1355,18 @@ function renderMotionCooldown(){
 // Low-cost HUD refresh between 5Hz S21 reports; no extra 3D rendering.
 setInterval(renderMotionCooldown,100);
 
+let poseFeedbackUntil=0;
 const poseCamera=createPoseCamera({
  video:el("posePreview"),
- onStatus:state=>{el("poseStatus").textContent=state.message;refreshMotionIndicator();},
+ onStatus:state=>{if(performance.now()>poseFeedbackUntil)el("poseStatus").textContent=state.message;refreshMotionIndicator();},
  onDodge:event=>{
   poseEvents++;
   const description=event.direction==="duck"?"앉기":event.direction==="left"?"왼쪽 이동":"오른쪽 이동";
+  poseFeedbackUntil=performance.now()+1500;
   if(dodge(event.direction)){
-   el("poseStatus").textContent="카메라 회피 "+description+" 인식 · "+poseEvents+"회";
+   el("poseStatus").textContent="회피 동작 "+description+" 인식 · 타격 순간 성공 여부 결정";
   }else{
-   el("poseStatus").textContent="카메라 동작 "+description+" 감지 · 회피 재사용 대기 중";
+   el("poseStatus").textContent="카메라 "+description+" 감지 · 회피 재사용 대기";
   }
  }
 });
@@ -1364,7 +1379,7 @@ function refreshMotionIndicator(){
 el("retryCombat").onclick=()=>{
  // Test-mode recovery, keeps earned kills in the same capped battle session.
  heroHp=stats.maxHp;showHero();camera.x=0;camera.z=5.5;camera.y=1.7;
- yaw=0;pitch=-.032;lastFire=-999;dodgeCooldown=0;dodgeUntil=0;projectiles=[];enemyShots=[];sparks=[];meleeAction=null;rangedAction=null;
+ yaw=0;pitch=-.032;lastFire=-999;dodgeCooldown=0;dodgeUntil=0;dodgeMessageUntil=0;queuedSkillUntil=-1;projectiles=[];enemyShots=[];sparks=[];meleeAction=null;rangedAction=null;
  el("retryWrap").hidden=true;active=true;spawnEnemy();
  el("status").textContent="전투 재개 · S21 연결은 그대로 유지 중";
 };
@@ -1379,7 +1394,7 @@ el("hostStart").onclick=async()=>{
   const room=await motionHost.start();
   lastMotionSequence=-1;lastMotionAt=-Infinity;
   const url=new URL("./controller.html",location.href);
-  url.searchParams.set("v","0.45");url.searchParams.set("room",room);
+  url.searchParams.set("v","0.46");url.searchParams.set("room",room);
   el("controllerLink").href=url.href;
   el("motionRoom").textContent=room.replace(/^mrpg-/,"");
   el("hostStop").disabled=false;
