@@ -13,7 +13,7 @@ const configs=[
  {name:"wolf",aggro:13,space:4.05,strafe:.56,walk:1.03},
  {name:"golem",aggro:18.5,space:8.0,strafe:.18,walk:1.08},
  {name:"boar",aggro:12,space:4.15,strafe:.33,walk:1.08},
- {name:"wisp",aggro:16,space:7.2,strafe:.68,walk:1.11},
+ {name:"wisp",aggro:16,space:4.05,strafe:.48,walk:1.03},
  {name:"treant",aggro:10.5,space:4.45,strafe:.20,walk:.66}
 ];
 export function monsterMovementProfile(index){return configs[index]||configs[0]}
