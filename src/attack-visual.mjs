@@ -11,7 +11,7 @@ export function attackArea(attack,style){
 }
 export function attackWindup(attack,style,kind){
  if(!attack||!Number.isFinite(attack.windup))throw Error("Attack timing required");
- const base=kind===7?2.25:kind===4?2.15:kind===5?1.65:kind===3?1.60:1.75;
+ const base=style==="rock"?2.3:style==="bolt"?1.6:kind===7?2.25:kind===4?2.15:kind===5?1.65:kind===3?1.60:1.75;
  return Math.max(base,attack.windup,style==="sweep"?1.72:1.65);
 }
 export function attackVisualState(enemy,now){
@@ -20,13 +20,13 @@ export function attackVisualState(enemy,now){
  const duration=Number.isFinite(enemy.windupTotal)&&enemy.windupTotal>0?enemy.windupTotal:1;
  if(remaining>0){
   const progress=clamp(1-remaining/duration,0,1);
-  return {stage:"windup",progress,charge:.28+.72*progress,impact:0,style:["sweep","slam","charge"].includes(enemy.attackStyle)?enemy.attackStyle:"slam"};
+  return {stage:"windup",progress,charge:.28+.72*progress,impact:0,style:["sweep","slam","charge","rock","bolt"].includes(enemy.attackStyle)?enemy.attackStyle:"slam"};
  }
  const until=Number.isFinite(enemy.impactUntil)?enemy.impactUntil:0;
  if(until>now){
   const span=Number.isFinite(enemy.impactDuration)&&enemy.impactDuration>0?enemy.impactDuration:.48;
   const impact=clamp((until-now)/span,0,1);
-  return {stage:"impact",progress:1,charge:0,impact,style:["sweep","slam","charge"].includes(enemy.attackStyle)?enemy.attackStyle:"slam"};
+  return {stage:"impact",progress:1,charge:0,impact,style:["sweep","slam","charge","rock","bolt"].includes(enemy.attackStyle)?enemy.attackStyle:"slam"};
  }
  return {stage:"idle",progress:0,charge:0,impact:0};
 }
