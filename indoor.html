@@ -101,7 +101,7 @@
 <div id="err"></div><div id="retryWrap" hidden><strong>기력이 소진됐어</strong><p>S21 연결은 유지돼. 바로 재도전하면 새 연결 코드를 입력할 필요 없어.</p><button id="retryCombat">기력 회복 · 다시 싸우기</button></div>
 <div id="motionPanel" hidden role="dialog" aria-modal="true" aria-label="실전 모션 입력 설정">
  <div class="motionDialog">
-  <div class="motionTop"><div><small>MOTION RPG / v0.34</small><h2>실전 모션 전투 설정</h2></div><button id="motionClose" class="subtle">게임으로 돌아가기</button></div>
+  <div class="motionTop"><div><small>MOTION RPG / v0.35</small><h2>실전 모션 전투 설정</h2></div><button id="motionClose" class="subtle">게임으로 돌아가기</button></div>
   <p class="motionLead">폴드6에서는 3D 전투와 전면 카메라 회피를 사용하고, S21에서는 실제 휘두르기·투척 동작을 전송해. 둘 다 선택 기능이야.</p>
   <section class="motionSection">
    <h3>① S21 무기 컨트롤러 연결 · 숫자 6자리</h3>
@@ -127,13 +127,13 @@ import {combatStats,normalizeRpgGear} from "./src/gear-game.mjs";
 import {GEAR} from "./src/avatar.mjs";
 import {weaponProfile,normalizeMeleeStyle,createMeleeAction,actionProgress,meleeHitInfo,projectileProfile} from "./src/player-combat.mjs?v=0.34";
 import {drawFirstPersonWeapon} from "./src/weapon-view.mjs?v=0.34";
-import {attackArea,attackWindup,attackVisualState,warningFootprint} from "./src/attack-visual.mjs?v=0.32";
+import {attackArea,attackWindup,attackVisualState,warningFootprint} from "./src/attack-visual.mjs?v=0.35";
 import {createWirelessHost} from "./src/peer-bridge.mjs?v=0.31";
 import {createRemoteInput,lockOnYaw,rotateToward} from "./src/remote-control.mjs?v=0.35";
 import {FOREST_MONSTERS,forestZoneAt,chooseForestMonster,monsterBehaviour} from "./src/forest-encounters.mjs?v=0.35";
 import {validMotionPacket} from "./src/motion-core.mjs?v=0.34";
 import {createPoseCamera} from "./src/pose-camera.mjs?v=0.31";
-import {ATTACKS,angleToTarget,turnToTarget,strikeInfo,spawnAroundPlayer,distance2d,dodgeMatches} from "./src/combat-spatial.mjs";
+import {ATTACKS,angleToTarget,turnToTarget,strikeInfo,spawnAroundPlayer,distance2d,dodgeMatches} from "./src/combat-spatial.mjs?v=0.35";
 (()=>{'use strict';
 const cvs=document.getElementById('game'),gl=cvs.getContext('webgl',{antialias:true,alpha:true,premultipliedAlpha:false,powerPreference:'high-performance'})||cvs.getContext('experimental-webgl');
 const el=id=>document.getElementById(id),RESULT_KEY='motion-rpg-indoor-result-v1',worldMode=new URLSearchParams(location.search).get('mode')==='world';if(worldMode){document.title='Motion RPG · 경계의 숲';el('brand').innerHTML='<div id="sigil">✦</div><div><h1>경계의 숲</h1><p>MOTION RPG · WORLD</p></div>';el('enemyHud').style.display='none';el('location').innerHTML='<span>VILLAGE GATE</span>숲 입구 마을<br><small style="opacity:.85">오늘의 원정을 선택하세요</small>';el('introCard').innerHTML='<div class="emblem">✦ 🌲 ✦</div><h2>경계의 숲</h2><p>마을을 거점으로 숲을 달리고,<br>발견한 마력체를 사냥하며 성장한다.</p><div id="worldMenu"><a href="./index.html?view=outdoor">🌲 숲 탐험 시작</a><a href="./index.html?view=indoor" class="secondary">🏃 러닝머신 원정</a><a href="./index.html" class="secondary">🏘️ 마을 정리</a></div><small>사냥 전투는 숲에서 마력체를 발견했을 때 시작된다</small>'}let active=false,last=0,clock=0,yaw=0,pitch=-0.032,weaponKick=0,impactTint=0,score=0,kills=0,projectiles=[],sparks=[],flares=[],enemy={x:.1,z:-7.2,hp:100,max:100,bob:0,dead:worldMode,respawn:0,name:'이끼 슬라임',speed:0.25,kind:0,attackTimer:2.5,windup:0,windupTotal:0,impactUntil:0,impactDuration:.5,attackStyle:"slam",facing:0};
@@ -813,7 +813,7 @@ el("hostStart").onclick=async()=>{
   const room=await motionHost.start();
   lastMotionSequence=-1;lastMotionAt=-Infinity;
   const url=new URL("./controller.html",location.href);
-  url.searchParams.set("v","0.34");url.searchParams.set("room",room);
+  url.searchParams.set("v","0.35");url.searchParams.set("room",room);
   el("controllerLink").href=url.href;
   el("motionRoom").textContent=room.replace(/^mrpg-/,"");
   el("hostStop").disabled=false;
