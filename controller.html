@@ -103,11 +103,11 @@ function publishSensorState(force=false,now=Date.now()){
  lastStatusSent=now;
  return wireless.send({
   type:"sensor-state",session:wireless.room,seq:++seq,time:now,
-  sensorActive:active,mode,
+  sensorActive:active,sensorReceiving:sensorEvents>0,mode,
   cooldownRemainingMs:active?Math.round(state.cooldownRemainingMs):0,
   cooldownDurationMs:active?Math.round(state.cooldownDurationMs):0,
-  ready:active&&state.ready,
-  waitingForNeutral:active&&state.waitingForNeutral
+  ready:active&&sensorEvents>0&&state.ready,
+  waitingForNeutral:active&&sensorEvents>0&&state.waitingForNeutral
  });
 }
 function startCooldownTicker(){
