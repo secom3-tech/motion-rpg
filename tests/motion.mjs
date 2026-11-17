@@ -55,6 +55,10 @@ auto.feed(event(0),3700);
 assert.equal(auto.feed(event(300),3750).gesture?.type,"auto","Auto can attack again after deliberate reset");
 let packet={type:"gesture",gesture:"melee",strength:76,time:Date.now(),seq:1,session:"mrpg-abcdefghj"};
 assert.ok(validMotionPacket(packet,packet.session));
+assert.ok(validMotionPacket({...packet,skillHeld:true},packet.session),"Skill modifier is an optional boolean on motion packets");
+assert.ok(validMotionPacket({...packet,skillHeld:false},packet.session),"Plain attacks carry an explicit false modifier");
+assert.equal(validMotionPacket({...packet,skillHeld:"true"},packet.session),false,"Reject malformed skill flags");
+assert.equal(validMotionPacket({...packet,skillHeld:1},packet.session),false,"Reject truthy non-boolean flags");
 assert.equal(validMotionPacket({...packet,gesture:"destroy"},packet.session),false);
 assert.equal(validMotionPacket({...packet,strength:500},packet.session),false);
 assert.equal(validMotionPacket({...packet,session:"other"},packet.session),false);
@@ -172,6 +176,16 @@ for(const id of ["roomCode","connect","disconnect","diagnostic","start","calibra
 assert.ok(arena.includes("createWirelessHost")&&arena.includes("validMotionPacket"),"Arena connects to motion bridge");
 assert.ok(arena.includes("createPoseCamera")&&arena.includes("dodge(event.direction)"),"Camera dodge connected to actual game");
 assert.ok(controller.includes("createWirelessController")&&controller.includes("wireless.send(packet)"),"Controller sends gestures");
+assert.ok(controller.includes('id="remoteSkill"')&&controller.includes('skillHeld:pending.skillHeld===true'),
+ "S21 attaches held-skill intent to a real motion gesture");
+assert.ok(controller.includes('skillButton.addEventListener("pointerdown"')&&
+ controller.includes('releaseSkillHold()')&&
+ controller.includes('pendingAttack={startAt:now'),
+ "S21 skill requires the user to hold the button during the motion");
+assert.ok(!controller.includes('controlSend("skill")'),"Skill button alone must not trigger an attack");
+assert.ok(arena.includes('const skillRequested=packet.skillHeld===true')&&
+ arena.includes('accepted=activateSkill();')&&arena.includes('reason="스킬 재사용 대기 '),
+ "Fold6 activates the skill only when a gesture carries the skill-held flag");
 assert.ok(camera.includes("getUserMedia")&&camera.includes("detectForVideo"),"Camera pose inference required");
 
 assert.ok(arena.includes('if(!el("motionPanel").hidden||document.hidden)return;'),"Arena must pause enemy activity during settings");
