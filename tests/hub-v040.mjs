@@ -16,7 +16,7 @@ assert.ok(html.includes('id="townProgressBar"'),"Guild needs quest progress");
 for(const view of ["indoor","run","character"])assert.ok(html.includes('data-go="'+view+'"'));
 assert.ok(html.includes("claimIndoorBattle")&&html.includes("settleAdventure"),"Reward settlement preserved");
 assert.ok(html.includes('motion-rpg-save-v1'),"Saved game key must remain stable");
-assert.ok(html.includes('motion-rpg-preview-equipment-v1'),"Preview gear storage key must remain stable");
+assert.ok(!html.includes('motion-rpg-preview-equipment-v1'),"Free look-preview key no longer used");
 
 const title={textContent:""};
 const avatar={dataset:{},querySelector(selector){return selector==="title"?title:null}};
