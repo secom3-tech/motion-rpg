@@ -4,7 +4,7 @@ import os from "node:os";
 import path from "node:path";
 import {spawnSync} from "node:child_process";
 import {MELEE_STYLES,WEAPON_PROFILES,weaponProfile,normalizeMeleeStyle,
- classifyMeleeGesture,createMeleeAction,actionProgress,contactDue,meleeHitInfo,projectileProfile}
+ classifyMeleeGesture,classifyAttackIntent,motionFeatures,motionSimilarity,createMeleeAction,actionProgress,contactDue,meleeHitInfo,projectileProfile}
  from "../src/player-combat.mjs";
 import {attackTrailPoints,drawFirstPersonWeapon} from "../src/weapon-view.mjs";
 import {validMotionPacket} from "../src/motion-core.mjs";
@@ -19,6 +19,21 @@ assert.equal(classifyMeleeGesture({acceleration:{x:1,y:9,z:2}}),"overhead");
 assert.equal(classifyMeleeGesture({acceleration:{x:0,y:1,z:9}}),"thrust");
 assert.equal(classifyMeleeGesture({acceleration:{x:9,y:1,z:2}},"overhead"),"overhead");
 assert.equal(classifyMeleeGesture({}, "auto"),"sweep");
+const windowSamples=[
+ {rotationRate:{alpha:28,beta:4,gamma:3},acceleration:{x:1,y:4,z:0}},
+ {rotationRate:{alpha:53,beta:110,gamma:12},acceleration:{x:1,y:11,z:1}},
+ {rotationRate:{alpha:31,beta:10,gamma:20},acceleration:{x:2,y:6,z:1}}
+];
+assert.equal(classifyMeleeGesture(windowSamples),"overhead","Detect peak vertical motion in the full swing");
+assert.equal(classifyAttackIntent([{acceleration:{x:0,y:0,z:11}}],"auto").type,"throw");
+assert.equal(classifyAttackIntent([{acceleration:{x:12,y:1,z:0}}],"auto").type,"melee");
+assert.equal(classifyAttackIntent([{acceleration:{x:0,y:0,z:11}}],"melee").style,"thrust","Manual melee allows thrust");
+assert.equal(classifyAttackIntent([{acceleration:{x:12,y:1,z:0}}],"throw").type,"throw","Manual throw overrides inferred style");
+const samples=motionFeatures(windowSamples);
+const templates={sweep:motionFeatures({acceleration:{x:11,y:1,z:0}}),overhead:samples,thrust:motionFeatures({acceleration:{x:0,y:1,z:11}})};
+assert.ok(motionSimilarity(samples,templates.overhead)>.99);
+assert.equal(classifyMeleeGesture(windowSamples,"auto",templates),"overhead","Calibrated styles must work");
+assert.equal(createMeleeAction("bow","sweep",10).style,"thrust","A bow must shove, never slash like a sword");
 const packet={type:"gesture",gesture:"melee",seq:1,strength:70,time:Date.now(),session:"mrpg-123456",style:"overhead"};
 assert.ok(validMotionPacket(packet,packet.session));
 assert.equal(validMotionPacket({...packet,style:"invalid"},packet.session),false);
@@ -90,6 +105,7 @@ assert.ok(arena.includes('id="weaponCanvas"')&&arena.includes("renderPlayerProje
 assert.ok(arena.includes('swordHit(packet.style)'),"Live S21 attack style must be used");
 assert.ok(arena.includes('swordHit("sweep")')&&arena.includes('swordHit("overhead")')&&arena.includes('swordHit("thrust")'));
 assert.ok(!arena.includes("el('slashFx').classList"),"Old static slash effect must be replaced");
+assert.ok(controller.includes('data-mode="auto"')&&controller.includes('id="cutStyle"'),"Automatic and manual combat modes");
 assert.ok(controller.includes('id="cutStyle"')&&controller.includes("classifyMeleeGesture(e,cutStyle)"));
 const script=arena.match(/<script type="module">([\s\S]*?)<\/script>/)?.[1];
 assert.ok(script);
