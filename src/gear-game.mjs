@@ -5,6 +5,7 @@
  */
 import {GEAR,DEFAULT_LOADOUT,sanitizeLoadout} from "./avatar.mjs";
 import {completeArcadeGame} from "./engine.mjs";
+import {applyExperienceCurve} from "./progression.mjs";
 
 export const MATERIALS=Object.freeze({
  wood:{name:"튼튼한 목재",source:"숲 탐험 · 몬스터"},
@@ -130,8 +131,7 @@ export function claimIndoorBattle(state,result){
  // so crafting is achievable through actual victories, not an idle clicker.
  const extraXp=Math.min(16,kills),extraGold=Math.min(36,kills*2);
  const earned={...capped,xp:capped.xp+extraXp,gold:capped.gold+extraGold};
- earned.level=1+Math.floor(earned.xp/100);
- const next=withRpgGear(earned);
+ const next=withRpgGear(applyExperienceCurve(capped,earned));
  const materials=rewardMaterials(kills);
  for(const [key,n] of Object.entries(materials))next.rpgGear.materials[key]+=n;
  next.rpgGear.totalKills+=kills;
