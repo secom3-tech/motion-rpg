@@ -4,6 +4,6 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "test": "node tests/balance.mjs && node tests/expedition.mjs && node tests/preview-check.mjs && node tests/avatar.mjs && node tests/gear.mjs && node tests/combat-spatial.mjs && node tests/motion.mjs && node tests/network.mjs && node tests/attack-visual.mjs && node tests/player-combat.mjs && node tests/remote-forest.mjs && node tests/combat-navigation.mjs && node tests/next-phase.mjs && node tests/enemy-ranged.mjs && node tests/village-world.mjs && node tests/hub-v040.mjs && node tests/v041-bridge.mjs && node tests/v042-gameplay.mjs && node tests/v043-report.mjs"
+    "test": "node tests/balance.mjs && node tests/expedition.mjs && node tests/preview-check.mjs && node tests/avatar.mjs && node tests/gear.mjs && node tests/combat-spatial.mjs && node tests/motion.mjs && node tests/network.mjs && node tests/attack-visual.mjs && node tests/player-combat.mjs && node tests/remote-forest.mjs && node tests/combat-navigation.mjs && node tests/next-phase.mjs && node tests/enemy-ranged.mjs && node tests/village-world.mjs && node tests/hub-v040.mjs && node tests/v041-bridge.mjs && node tests/v042-gameplay.mjs && node tests/v043-report.mjs && node tests/auto-lock.mjs"
   }
 }
