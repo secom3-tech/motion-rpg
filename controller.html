@@ -25,6 +25,9 @@
 #lookPad .cross{border-style:solid;border-color:#5fa5ce65}
 #lockToggle{display:inline-flex;align-items:center;justify-content:center;min-width:130px}
 #controlState{font-size:12px;margin-top:7px}
+#remoteSkill{touch-action:none;user-select:none;-webkit-user-select:none;min-height:55px;min-width:165px;border:1px solid #dbbe7c;cursor:pointer}
+#remoteSkill.skillHeld{background:#986a30!important;color:#fff6d8!important;box-shadow:0 0 22px #d6b15b88}
+#remoteSkill:disabled{opacity:.45;box-shadow:none}
 .lookSensitivityControl{border-radius:12px;border:1px solid #79b2b17a;background:#071d29b8;padding:9px 12px 8px;margin-bottom:10px}
 .lookSensitivityControl label{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:12px;font-weight:750;color:#d5eeea}
 .lookSensitivityControl label strong{color:#aaf2c3;font-size:12px;white-space:nowrap}
@@ -53,7 +56,7 @@ button{font-size:13px;padding:10px 11px;margin:4px 4px 0 0}
   </style>
 </head>
 <body><main>
-  <div class="eyebrow">MOTION RPG · S21 CONTROLLER v0.43.5</div>
+  <div class="eyebrow">MOTION RPG · S21 CONTROLLER v0.43.6</div>
   <h1>S21 전투 조작</h1>
   <p class="muted">이 화면은 S21에서 실행해. 검격·투척 동작은 폴드6 3D 전투로 무선 전송하고, 폴드6은 화면과 카메라 회피를 담당해.</p>
   <section class="card" id="pairing"><b>폴드6 무선 연결</b>
@@ -72,7 +75,7 @@ button{font-size:13px;padding:10px 11px;margin:4px 4px 0 0}
     <div id="lookPad" class="touchPad" aria-label="시점 드래그"><b>시점 회전</b><span class="cross"></span></div>
    </div>
    <div class="lookSensitivityControl"><label for="lookSensitivity">시점 회전 민감도 <strong id="lookSensitivityLabel">보통 · 1.0배</strong></label><input id="lookSensitivity" type="range" min="1" max="5" step="1" value="3" aria-label="시점 회전 민감도" /><small>오른쪽 시점 패드에만 적용 · 공격 동작 민감도와 별개</small></div>
-   <button id="lockToggle" class="secondary">락온 켜기</button><button id="remoteSkill" class="secondary">✦ 스킬 사용</button>
+   <button id="lockToggle" class="secondary">락온 켜기</button><button id="remoteSkill" class="secondary" type="button" aria-label="누르고 공격 모션으로 스킬 발동" aria-pressed="false">✦ 스킬 준비 · 누르고 공격</button>
    <div id="controlState" class="muted" role="status">이동/시점 입력 대기 · 연결 시 활성</div>
   </section>
   
@@ -95,7 +98,7 @@ import {createWirelessController,cleanRoom} from "./src/peer-bridge.mjs?v=0.43.4
 import {movementVector} from "./src/remote-control.mjs?v=0.41";
 const $=id=>document.getElementById(id);
 let active=false,count=0,mode="melee",sensitivity=3,calibrating=false,calibration=[],sampleTime=0,seq=0,received=0,sensorEvents=0,sensorStartedAt=0;
-let recentMotion=[],pendingAttack=null,trainingStyle=null,trainingSamples=[],trained={};
+let recentMotion=[],pendingAttack=null,trainingStyle=null,trainingSamples=[],trained={},skillHeld=false,skillPointerId=null;
 try{const saved=JSON.parse(localStorage.getItem("motion-rpg-s21-style-templates-v1")||"{}");if(saved&&typeof saved==="object")trained=saved;}catch{}
 try{sensitivity=Math.max(1,Math.min(5,Number(localStorage.getItem("motion-rpg-s21-sensitivity")||3)));}catch{}
 let axes={};try{const saved=JSON.parse(localStorage.getItem("motion-rpg-s21-axes")||"{}");if(saved&&typeof saved==="object")axes=saved;}catch{}
@@ -134,7 +137,7 @@ const wireless=createWirelessController({
   $("disconnect").disabled=!state.connected;
   $("diagnostic").disabled=!state.connected;
   if(state.connected){startControl();publishSensorState(true);$("controlState").textContent="전투 조작 준비 완료 · 조이스틱/락온을 사용할 수 있어";}
-  else{stopControl();lockWanted=false;$("lockToggle").textContent="락온 켜기";$("controlState").textContent="무선 미연결 · 조작 대기";}
+  else{releaseSkillHold();stopControl();lockWanted=false;$("lockToggle").textContent="락온 켜기";$("controlState").textContent="무선 미연결 · 조작 대기";}
 
  },
  onMessage:data=>{
@@ -151,7 +154,7 @@ const wireless=createWirelessController({
    $("modeInfo").textContent="전투 무기: "+data.label;
   }
   if(data?.type==="gesture-ack"){
-   const desc=data.accepted?"폴드6 전투 입력 확인":data.reason||"전투에서 입력을 사용할 수 없어";
+   const desc=data.accepted?(data.skill?"폴드6 스킬 발동 확인":"폴드6 전투 입력 확인"):data.reason||"전투에서 입력을 사용할 수 없어";
    $("lastSignal").textContent="최근 동작: "+desc+" · "+new Date().toLocaleTimeString("ko-KR");
   }
  }
@@ -234,14 +237,50 @@ function bindLookPad(){
  pad.addEventListener("pointerup",end);pad.addEventListener("pointercancel",end);
 }
 bindMovePad();bindLookPad();
-$("remoteSkill").onclick=()=>{const sent=controlSend("skill");$("controlState").textContent=sent?"스킬 명령 전송":"게임 연결 후 사용할 수 있어."};
+/** Skill is armed only while this button is physically held during the gesture.
+ * A tap alone never starts a skill or sends an attack command.
+ */
+function setSkillHeld(value){
+ skillHeld=!!value;
+ $("remoteSkill").classList.toggle("skillHeld",skillHeld);
+ $("remoteSkill").setAttribute("aria-pressed",String(skillHeld));
+ $("remoteSkill").textContent=skillHeld?"✦ 스킬 준비 중 · 공격 동작":"✦ 스킬 준비 · 누르고 공격";
+ if(skillHeld)$("controlState").textContent="스킬 준비 중 · 버튼을 누른 채 S21을 휘둘러 줘";
+}
+function releaseSkillHold(){
+ skillPointerId=null;setSkillHeld(false);
+}
+const skillButton=$("remoteSkill");
+skillButton.addEventListener("pointerdown",e=>{
+ e.preventDefault();
+ if(skillPointerId!==null)return;
+ if(!wireless.connected||!active){
+  $("controlState").textContent="S21을 연결하고 센서를 켜야 스킬 모션을 사용할 수 있어";
+  return;
+ }
+ skillPointerId=e.pointerId;
+ try{skillButton.setPointerCapture(e.pointerId)}catch{}
+ setSkillHeld(true);
+});
+for(const kind of ["pointerup","pointercancel","lostpointercapture"]){
+ skillButton.addEventListener(kind,e=>{if(e.pointerId===skillPointerId)releaseSkillHold()});
+}
+skillButton.addEventListener("keydown",e=>{
+ if(e.repeat)return;
+ if(e.code==="Space"||e.code==="Enter"){
+  e.preventDefault();
+  if(wireless.connected&&active)setSkillHeld(true);
+ }
+});
+skillButton.addEventListener("keyup",e=>{if(e.code==="Space"||e.code==="Enter"){e.preventDefault();releaseSkillHold()}});
+skillButton.addEventListener("click",e=>e.preventDefault());
 $("lockToggle").onclick=()=>{
  if(!wireless.connected){$("controlState").textContent="폴드6 연결 후 사용할 수 있어.";return;}
  lockWanted=!lockWanted;controlSend("target",{action:"toggle"});
  $("lockToggle").textContent=lockWanted?"락온 끄기":"락온 켜기";
 };
-document.addEventListener("visibilitychange",()=>{if(document.hidden)stopControl();else if(wireless.connected)startControl()});
-window.addEventListener("blur",stopControl);
+document.addEventListener("visibilitychange",()=>{if(document.hidden){releaseSkillHold();stopControl();}else if(wireless.connected)startControl()});
+window.addEventListener("blur",()=>{releaseSkillHold();stopControl()});
 window.addEventListener("focus",()=>{if(wireless.connected)startControl()});
 const codeFromUrl=new URLSearchParams(location.search).get("room");if(codeFromUrl)$("roomCode").value=codeFromUrl;
 function setStatus(message){$("status").textContent=message;}
@@ -278,7 +317,7 @@ function onMotion(e){
   publishSensorState(false,now);
  }
  if(calibrating||trainingStyle||!result.gesture||pendingAttack)return;
- pendingAttack={startAt:now,mode,gesture:result.gesture,samples:recentMotion.map(entry=>entry.event)};
+ pendingAttack={startAt:now,mode,gesture:result.gesture,samples:recentMotion.map(entry=>entry.event),skillHeld};
  // Read the motion peak through the stroke, instead of classifying only the
  // very first sensor frame that exceeded the threshold.
  setTimeout(flushPendingAttack,150);
@@ -291,12 +330,12 @@ function flushPendingAttack(){
  if(action.type==="throw")detector.protectThrow(pending.startAt);
  publishSensorState(true);
  count++;$("count").textContent=count;
- const packet={type:"gesture",gesture:action.type,autoSwitch:mode==="auto",strength:pending.gesture.strength,
+ const packet={type:"gesture",gesture:action.type,autoSwitch:mode==="auto",skillHeld:pending.skillHeld===true,strength:pending.gesture.strength,
    time:pending.startAt,seq:++seq,session:wireless.room};
  if(action.type==="melee")packet.style=action.style;
  const sent=wireless.send(packet);
  const label=action.type==="throw"?"투척":({sweep:"가로 베기",overhead:"세로 내려찍기",thrust:"찌르기"}[action.style]||"검격");
- setStatus(label+" 감지 "+count+"회 · "+(sent?"폴드6 전송":"무선 미연결 · 로컬 감지만"));
+ setStatus((pending.skillHeld?"✦ 스킬 ":"")+label+" 감지 "+count+"회 · "+(sent?"폴드6 전송":"무선 미연결 · 로컬 감지만"));
  $("lastSignal").textContent="최근 동작: "+label+" "+count+"회"+(sent?" · 폴드6 응답 대기":" · 전송 안 됨");
  try{navigator.vibrate?.(35)}catch{}
 }
@@ -315,7 +354,7 @@ async function startSensor(){
   setTimeout(()=>{if(active&&sensorEvents===0){$("sensorDetail").textContent="센서 이벤트 0회 · 이 브라우저에서 동작 센서가 차단됐을 수 있어. Chrome/삼성 인터넷에서 열어 줘.";}},2500);
  }catch(e){setStatus("센서 켜기 실패: "+e.message);}
 }
-function stopSensor(){pendingAttack=null;trainingStyle=null;recentMotion=[];window.removeEventListener("devicemotion",onMotion);active=false;stopCooldownTicker();$("start").disabled=false;$("stop").disabled=true;setStatus("센서 종료");$("sensorDetail").textContent="센서 수신: 꺼짐";}
+function stopSensor(){releaseSkillHold();pendingAttack=null;trainingStyle=null;recentMotion=[];window.removeEventListener("devicemotion",onMotion);active=false;stopCooldownTicker();$("start").disabled=false;$("stop").disabled=true;setStatus("센서 종료");$("sensorDetail").textContent="센서 수신: 꺼짐";}
 async function connect(){
  const code=cleanRoom($("roomCode").value);
  if(!code){$("pairStatus").textContent="6자리 숫자 연결 코드를 확인해 줘.";return;}
