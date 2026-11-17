@@ -29,6 +29,8 @@ assert.equal(classifyAttackIntent([{acceleration:{x:0,y:0,z:11}}],"auto").type,"
 assert.equal(classifyAttackIntent([{acceleration:{x:12,y:1,z:0}}],"auto").type,"melee");
 assert.equal(classifyAttackIntent([{acceleration:{x:0,y:0,z:11}}],"melee").style,"thrust","Manual melee allows thrust");
 assert.equal(classifyAttackIntent([{acceleration:{x:12,y:1,z:0}}],"throw").type,"throw","Manual throw overrides inferred style");
+assert.equal(classifyAttackIntent([{acceleration:{x:0,y:0,z:11}}],"auto",null,"sweep").type,"throw","Melee cut preference must not disable automatic ranged attack");
+assert.equal(classifyAttackIntent([{acceleration:{x:10,y:0,z:0}}],"auto",null,"thrust").type,"melee","Melee cut preference must not force all gestures into ranged attacks");
 const samples=motionFeatures(windowSamples);
 const templates={sweep:motionFeatures({acceleration:{x:11,y:1,z:0}}),overhead:samples,thrust:motionFeatures({acceleration:{x:0,y:1,z:11}})};
 assert.ok(motionSimilarity(samples,templates.overhead)>.99);
