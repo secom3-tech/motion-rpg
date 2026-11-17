@@ -267,7 +267,7 @@
 <div id="err"></div><div id="retryWrap" hidden><strong>기력이 소진됐어</strong><p>S21 연결은 유지돼. 바로 재도전하면 새 연결 코드를 입력할 필요 없어.</p><button id="retryCombat">기력 회복 · 다시 싸우기</button></div>
 <div id="motionPanel" hidden role="dialog" aria-modal="true" aria-label="실전 모션 입력 설정">
  <div class="motionDialog">
-  <div class="motionTop"><div><small>MOTION RPG / v0.44.1</small><h2>실전 모션 전투 설정</h2></div><button id="motionClose" class="subtle">게임으로 돌아가기</button></div>
+  <div class="motionTop"><div><small>MOTION RPG / v0.45</small><h2>실전 모션 전투 설정</h2></div><button id="motionClose" class="subtle">게임으로 돌아가기</button></div>
   <p class="motionLead">폴드6에서는 3D 전투와 전면 카메라 회피를 사용하고, S21에서는 실제 휘두르기·투척 동작을 전송해. 둘 다 선택 기능이야.</p>
   <section class="motionSection">
    <h3>① S21 무기 컨트롤러 연결 · 숫자 6자리</h3>
@@ -304,6 +304,7 @@ import {createRemoteInput,lockOnYaw,rotateToward} from "./src/remote-control.mjs
 import {FOREST_MONSTERS,forestZoneAt,chooseForestMonster,monsterBehaviour} from "./src/forest-encounters.mjs?v=0.35";
 import {createMonsterMind,monsterMotionStep,retainTarget} from "./src/monster-ai.mjs?v=0.44";
 import {canAutoAcquire,followTargetYaw,assistedAimYaw,AUTO_LOCK_MANUAL_PAUSE} from "./src/target-assist.mjs?v=0.44";
+import {automaticWeaponMode,autoMotionAttackMode} from "./src/auto-weapon.mjs?v=0.45";
 import {rangedProfile,isRangedStyle,canStartRanged,fireRangedProjectile,projectileStep} from "./src/enemy-ranged.mjs?v=0.38";
 import {dodgePrompt} from "./src/dodge-cue.mjs?v=0.44.1";
 import {relativeTarget,radarTarget,projectEnemyHead,enemyEdgePointer,monsterHeadHeight,compassDirection,RADAR_RANGE} from "./src/combat-navigation.mjs?v=0.36";
@@ -317,7 +318,7 @@ let enemyMind=createMonsterMind(enemy.kind,enemy.x,enemy.z,.39);enemy.moveSpeed=
 const shared=(()=>{try{return JSON.parse(localStorage.getItem("motion-rpg-save-v1")||"null")||{}}catch{return{}}})();
 const battleGear=normalizeRpgGear(shared);
 const equipped=battleGear.equipped,stats=combatStats(shared);
-let activeWeaponMode=battleGear.activeWeapon||"melee",autoSwitchEnabled=false,skillCooldownUntil=-1,skillPrimed=false;
+let activeWeaponMode=battleGear.activeWeapon||"melee",autoSwitchEnabled=true,skillCooldownUntil=-1,skillPrimed=false;
 const currentWeapon=()=>activeWeaponMode==="melee"?equipped.meleeWeapon:equipped.rangedWeapon;
 const equippedWeapon=()=>GEAR.weapon.find(item=>item.id===currentWeapon())?.name||"기본 장비";
 const sessionId="arena-"+Date.now()+"-"+Math.random().toString(36).slice(2,11);
@@ -337,13 +338,13 @@ const weaponNames={
 };
 function syncWeaponHud(){
  const weapon=currentWeapon(),name=equippedWeapon(),melee=activeWeaponMode==="melee",n=weaponNames[weapon]||weaponNames.sword;
- el("gearHud").textContent=(melee?"⚔ 근접 · ":"➶ 원거리 · ")+name;
+ el("gearHud").textContent=(melee?"⚔ 근접 · ":"➶ 원거리 · ")+name+(autoSwitchEnabled?" · 거리 자동":"");
  el("sword").querySelector("b").textContent=n.melee;
  el("sword").querySelector(".icon").innerHTML=itemIllustration(weapon,"weapon");
  el("fire").querySelector("b").textContent=n.ranged;
  el("fire").querySelector(".icon").innerHTML=itemIllustration(weapon,"weapon");
  el("sword").hidden=!melee;el("fire").hidden=melee;
- el("weaponStatus").textContent=melee?"검 준비 · S21 휘두르기 / F·E·R":"활 준비 · S21 투척 / Space";
+ el("weaponStatus").textContent=(melee?"검 준비 · S21 휘두르기 / F·E·R":"활 준비 · S21 투척 / Space")+(autoSwitchEnabled?" · 자동 선택":"");
  el("weaponToggle").innerHTML='<span class="toggleIcon">'+itemIllustration(melee?equipped.rangedWeapon:equipped.meleeWeapon,"weapon")+"</span><small>"+(melee?"활로 전환":"검으로 전환")+"</small>";
 }
 function showReaction(kind,label){
@@ -351,12 +352,31 @@ function showReaction(kind,label){
  fx.className="";void fx.offsetWidth;fx.className="reaction "+kind;
  fx.textContent=label;fx.setAttribute("aria-label",label);
 }
+function syncWeaponState(){
+ if(motionHost.connected)motionHost.send({
+  type:"weapon-state",mode:autoSwitchEnabled?"auto":activeWeaponMode,
+  weaponMode:activeWeaponMode,label:(autoSwitchEnabled?"거리 자동 · ":"")+equippedWeapon()
+ });
+}
 function switchWeapon(mode,notice=true){
  if(!["melee","ranged"].includes(mode))return false;
  if(meleeAction||rangedAction){if(notice)toast("공격이 끝나면 무기를 전환할 수 있어");return false;}
- activeWeaponMode=mode;syncWeaponHud();
+ if(activeWeaponMode===mode)return true;
+ activeWeaponMode=mode;syncWeaponHud();syncWeaponState();
  if(notice){showReaction("switch",mode==="melee"?"⚔ 검 장착":"➶ 활 장착");beep(570,.09,"sine",.05);}
  return true;
+}
+function updateAutoWeaponMode(){
+ if(!autoSwitchEnabled||worldMode||enemy.dead||meleeAction||rangedAction)return;
+ const next=automaticWeaponMode(camera,enemy,activeWeaponMode,weaponProfile(equipped.meleeWeapon).reach);
+ if(next!==activeWeaponMode&&switchWeapon(next,false)){
+  attackFeedback(next==="melee"?"가까운 적 · 검 자동 장착":"먼 적 · 활 자동 장착");
+ }
+}
+function setAutoSwitchEnabled(enabled){
+ autoSwitchEnabled=Boolean(enabled);
+ if(autoSwitchEnabled)updateAutoWeaponMode();
+ syncWeaponHud();syncWeaponState();
 }
 syncWeaponHud();
 function showHero(){el('heroHpText').textContent="기력 "+heroHp+" / "+stats.maxHp;el('heroHp').style.width=Math.max(0,heroHp/stats.maxHp*100)+"%";}
@@ -939,6 +959,7 @@ if(!enemy.dead){
   camera.z=Math.max(-31,Math.min(7,enemy.z+az*minDist));
  }
 }
+updateAutoWeaponMode();
 camera.y=1.7+(len>.02?Math.sin(clock*10)*.045:Math.sin(clock*1.5)*.015)-((lastDodgeKind==="duck"&&clock<dodgeVisualUntil)?0.36:0);weaponKick=Math.max(0,weaponKick-dt*3.2);el("dodge").disabled=clock<dodgeCooldown;
  el("skillAttack").disabled=clock<skillCooldownUntil;
  syncBandage();
@@ -1143,7 +1164,7 @@ const motionHost=createWirelessHost({
   el("linkStatus").textContent=state.message+(state.connected&&state.latencyMs?" · 연결 지연 "+state.latencyMs+"ms":"");
   if(state.connected&&!wasLinked){
    sensorReport=null;sensorReportAt=0;lastSensorSeq=-1;
-   motionHost.send({type:"weapon-state",mode:activeWeaponMode,label:equippedWeapon()});
+   syncWeaponState();
    lastMotionSequence=-1;lastMotionAt=-Infinity;remoteInput.reset();
    syncTargetUi(true);
   }
@@ -1177,10 +1198,12 @@ const motionHost=createWirelessHost({
    const remote=remoteInput.ingest(packet,motionHost.room,Date.now());
    if(!remote.accepted)return;
    if(remote.type==="weapon-switch"){
-    autoSwitchEnabled=remote.mode==="auto";
-    const desired=remote.mode==="ranged"?"ranged":"melee";
-    if(!autoSwitchEnabled)switchWeapon(desired);
-    motionHost.send({type:"weapon-state",mode:autoSwitchEnabled?"auto":activeWeaponMode,label:(autoSwitchEnabled?"자동 전환 시험 · ":"")+equippedWeapon()});
+    if(remote.mode==="auto")setAutoSwitchEnabled(true);
+    else{
+     setAutoSwitchEnabled(false);
+     switchWeapon(remote.mode==="ranged"?"ranged":"melee",false);
+     syncWeaponState();
+    }
    }else if(remote.type==="skill"){
     const ok=activateSkill();
     motionHost.send({type:"input-ack",message:ok?"스킬 발동":"스킬 대기 중 또는 전투 중"});
@@ -1213,9 +1236,11 @@ const motionHost=createWirelessHost({
   const now=performance.now();
   if(now-lastMotionAt<620){respond(false,"공격 대기 시간");return;}
   lastMotionAt=now;
-  // This is a prototype, not an authoritative anti-cheat sensor verifier.
-  if(autoSwitchEnabled&&packet.autoSwitch===true)switchWeapon(packet.gesture==="throw"?"ranged":"melee",false);
-  const mismatch=packet.gesture==="throw"&&activeWeaponMode!=="ranged"||packet.gesture==="melee"&&activeWeaponMode!=="melee";
+  // Distance is authoritative in auto mode; swinging/throwing is only an
+  // input gesture, never a reason to change the equipped weapon.
+  if(autoSwitchEnabled)updateAutoWeaponMode();
+  const attackMode=autoMotionAttackMode(autoSwitchEnabled,activeWeaponMode,packet.gesture);
+  const mismatch=!autoSwitchEnabled&&attackMode!==activeWeaponMode;
   let accepted=false,reason="";
   if(mismatch){
    reason="무기 전환 후 시도해";
@@ -1227,7 +1252,7 @@ const motionHost=createWirelessHost({
     if(!accepted)reason="공격 동작 또는 스킬 사용 대기 중";
    }
   }else{
-   accepted=packet.gesture==="throw"?magic():swordHit(packet.style);
+   accepted=attackMode==="ranged"?magic():swordHit(packet.gesture==="melee"?packet.style:null);
    if(!accepted)reason="공격 쿨다운 중";
   }
   if(accepted){
@@ -1350,7 +1375,7 @@ el("hostStart").onclick=async()=>{
   const room=await motionHost.start();
   lastMotionSequence=-1;lastMotionAt=-Infinity;
   const url=new URL("./controller.html",location.href);
-  url.searchParams.set("v","0.44.1");url.searchParams.set("room",room);
+  url.searchParams.set("v","0.45");url.searchParams.set("room",room);
   el("controllerLink").href=url.href;
   el("motionRoom").textContent=room.replace(/^mrpg-/,"");
   el("hostStop").disabled=false;
@@ -1403,7 +1428,7 @@ window.addEventListener("message",e=>{
  if(e.data?.type==="motion-rpg-pause-input")stopMotionInputs();
 });
 const begin=el('begin');if(begin)begin.addEventListener('click',()=>{active=true;el('intro').classList.add('hidden');if(!worldMode)spawnEnemy();toast('숲에서 몬스터의 흔적을 찾아보세요!');try{if(window.AudioContext)ctx=new AudioContext()}catch(e){}});
-el("weaponToggle").addEventListener("click",()=>switchWeapon(activeWeaponMode==="melee"?"ranged":"melee"));
+el("weaponToggle").addEventListener("click",()=>{setAutoSwitchEnabled(false);switchWeapon(activeWeaponMode==="melee"?"ranged":"melee");});
 el("skillAttack").addEventListener("click",activateSkill);
 el("bandage").addEventListener("click",useBandage);
 el('dodge').addEventListener('pointerdown',e=>{e.preventDefault();dodge()});el('fire').addEventListener('pointerdown',e=>{e.preventDefault();magic()});const meleeButton=el("sword");let meleePointer=null;
@@ -1440,13 +1465,13 @@ function returnToVillage(){
  bankProgress();
  if(new URLSearchParams(location.search).get("return")==="preview"){
   if(window.parent!==window)window.parent.postMessage({type:"motion-rpg-indoor-return",sessionId},location.origin);
-  else location.href="./preview.html?v=0.43&from=indoor";
+  else location.href="./preview.html?v=0.45&from=indoor";
  }else location.href="./index.html?from=indoor";
 }
 el("campReturn").addEventListener("click",showHuntSummary);
 el("resumeHunt").addEventListener("click",()=>{el("huntExit").hidden=true;active=huntWasActive&&heroHp>0;});
 el("confirmHuntReturn").addEventListener("click",returnToVillage);
-window.addEventListener('keydown',e=>{keys[e.code]=true;if(['Space','ArrowLeft','ArrowRight','ArrowDown','ArrowUp'].includes(e.code))e.preventDefault();if(e.code==='KeyH'&&!e.repeat)useBandage();if(e.code==='KeyT'&&!e.repeat)switchWeapon(activeWeaponMode==='melee'?'ranged':'melee');if(e.code==='KeyG'&&!e.repeat)activateSkill();if(e.code==='Space'&&!e.repeat)magic();if(e.code==='KeyF'&&!e.repeat)swordHit("sweep");
+window.addEventListener('keydown',e=>{keys[e.code]=true;if(['Space','ArrowLeft','ArrowRight','ArrowDown','ArrowUp'].includes(e.code))e.preventDefault();if(e.code==='KeyH'&&!e.repeat)useBandage();if(e.code==='KeyT'&&!e.repeat){setAutoSwitchEnabled(false);switchWeapon(activeWeaponMode==='melee'?'ranged':'melee');}if(e.code==='KeyG'&&!e.repeat)activateSkill();if(e.code==='Space'&&!e.repeat)magic();if(e.code==='KeyF'&&!e.repeat)swordHit("sweep");
 if(e.code==='KeyE'&&!e.repeat)swordHit("overhead");
 if(e.code==='KeyR'&&!e.repeat)swordHit("thrust");if((e.code==='ShiftLeft'||e.code==='KeyQ')&&!e.repeat)dodge()});window.addEventListener('keyup',e=>{keys[e.code]=false});document.addEventListener('visibilitychange',()=>{last=performance.now()});window.addEventListener('resize',resize);dragCamera();joystick();requestAnimationFrame(loop);
 })();
