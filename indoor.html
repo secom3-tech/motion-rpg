@@ -80,6 +80,9 @@
 #attackFeedback.go{animation:weaponFeedback .6s ease-out}
 @keyframes weaponFeedback{0%{opacity:1;transform:translate(-50%,8px)}100%{opacity:0;transform:translate(-50%,-20px)}}
 @media(max-width:580px){#weaponStatus{top:calc(48% + 43px);font-size:10px}#attackFeedback{font-size:13px}}
+
+#lockHud{position:fixed;top:calc(50% + 68px);left:50%;transform:translateX(-50%);z-index:6;pointer-events:none;border:1px solid #c9e7b8a6;background:#102f32ac;border-radius:20px;font-size:12px;font-weight:800;color:#d7fbd0;padding:5px 12px;letter-spacing:.04em}
+#lockHud[hidden]{display:none}
 </style></head><body>
 <div id="sky"></div><canvas id="game"></canvas><div id="vignette"></div><div id="bottomShade"></div><div id="screenFx"></div><canvas id="weaponCanvas" aria-hidden="true"></canvas>
 <div class="ui" id="brand"><div id="sigil">✦</div><div><h1>Motion RPG</h1><p>INDOOR COMBAT · ALPHA</p></div></div>
@@ -87,7 +90,7 @@
 <div class="ui" id="location"><span>FOREST RIFT</span>경계의 숲 · 균열 지대<br><small id="status" style="opacity:.85">마력체가 앞을 가로막는다</small></div>
 <div class="ui" id="enemyHud"><div id="enemyName"><span class="label" id="monName">🌿 이끼 슬라임</span><span class="dist" id="distance">12 m</span></div><div id="barwrap"><div id="enemyHP"></div></div><div id="attackCue" role="status" aria-live="polite">적의 움직임을 살펴보세요</div></div>
 <div id="attackBanner" hidden aria-live="off"><b id="attackBannerText">공격 준비</b><div class="attackMeter"><i id="attackBannerMeter"></i></div><small id="attackBannerHint"></small></div>
-<div class="ui glass" id="playerHud"><b id="gearHud">숲 사냥꾼</b><div id="heroHpText">기력 100 / 100</div><div id="heroHpWrap"><div id="heroHp"></div></div><small id="dodgeInfo">적의 경고에 맞춰 회피</small></div><div id="cross"><div class="ring"></div></div><div class="ui" id="instruction">화면을 드래그하면 시야가 움직입니다</div><div id="weaponStatus">무기 준비 중</div><div id="attackFeedback"></div><div id="toast"></div><div id="hitFx" aria-hidden="true"></div><div id="damageNumber" aria-hidden="true"></div>
+<div class="ui glass" id="playerHud"><b id="gearHud">숲 사냥꾼</b><div id="heroHpText">기력 100 / 100</div><div id="heroHpWrap"><div id="heroHp"></div></div><small id="dodgeInfo">적의 경고에 맞춰 회피</small></div><div id="lockHud" aria-live="off" hidden>◎ 락온 · 적 추적 중</div><div id="cross"><div class="ring"></div></div><div class="ui" id="instruction">화면을 드래그하면 시야가 움직입니다</div><div id="weaponStatus">무기 준비 중</div><div id="attackFeedback"></div><div id="toast"></div><div id="hitFx" aria-hidden="true"></div><div id="damageNumber" aria-hidden="true"></div>
 <div class="ui" id="controls"><div id="moveArea"><div id="joy"><div id="stick">✦</div></div><span>이동 · 키보드 WASD</span></div><div id="actions"><button class="action" id="dodge" aria-label="회피"><span class="icon">↪</span><b>회피</b></button><button class="action" id="sword" aria-label="근접 휘두르기"><span class="icon">⚔️</span><b>근접 휘두르기</b></button><button class="action" id="fire" aria-label="마법 투척"><span class="icon">✨</span><b>마법 투척</b></button></div></div><div id="footerNote">근접 버튼: 좌우 드래그 = 가로 베기 · 아래 = 내려찍기 · 위 = 찌르기</div>
 <div id="intro"><div id="introCard"><div class="emblem">✦ 🧙 ✦</div><h2>숲의 균열</h2><p>경계의 숲에서 새어 나온 마력체를 조준하고<br><b>마법 투척</b> 또는 <b>근접 휘두르기</b>로 격파해 봐.<br>몬스터의 반격 경고에 맞춰 회피하면서 싸우자. 장착한 장비의 공격력과 방어력이 반영된다.</p><button id="begin">균열에 진입하기</button><small>드래그: 시야 이동 · 근접 버튼 방향 드래그: 가로/세로/찌르기<br>오른쪽 상단 [모션 설정]에서 S21 무선 무기와 전면 카메라 회피를 연결할 수 있어</small></div></div>
 <div id="err"></div><div id="retryWrap" hidden><strong>기력이 소진됐어</strong><p>S21 연결은 유지돼. 바로 재도전하면 새 연결 코드를 입력할 필요 없어.</p><button id="retryCombat">기력 회복 · 다시 싸우기</button></div>
@@ -121,6 +124,7 @@ import {weaponProfile,normalizeMeleeStyle,createMeleeAction,actionProgress,melee
 import {drawFirstPersonWeapon} from "./src/weapon-view.mjs?v=0.34";
 import {attackArea,attackWindup,attackVisualState,warningFootprint} from "./src/attack-visual.mjs?v=0.32";
 import {createWirelessHost} from "./src/peer-bridge.mjs?v=0.31";
+import {createRemoteInput,lockOnYaw,rotateToward} from "./src/remote-control.mjs?v=0.35";
 import {validMotionPacket} from "./src/motion-core.mjs?v=0.34";
 import {createPoseCamera} from "./src/pose-camera.mjs?v=0.31";
 import {ATTACKS,angleToTarget,turnToTarget,strikeInfo,spawnAroundPlayer,distance2d,dodgeMatches} from "./src/combat-spatial.mjs";
@@ -471,7 +475,13 @@ function updateEnemy(dt){
  el("distance").textContent=Math.round(distance2d(enemy,camera))+" m";
  el("cross").classList.toggle("aim",radiusAiming());
 }
-function update(dt){if(!el("motionPanel").hidden||document.hidden)return;clock+=dt;if(!active)return;let f=forward(),forwardX=Math.sin(yaw),forwardZ=-Math.cos(yaw),rightX=Math.cos(yaw),rightZ=Math.sin(yaw),mx=stick.x+(keys.KeyD||keys.ArrowRight?1:0)-(keys.KeyA||keys.ArrowLeft?1:0),my=stick.y+(keys.KeyS||keys.ArrowDown?1:0)-(keys.KeyW||keys.ArrowUp?1:0);let len=Math.hypot(mx,my);if(len>1){mx/=len;my/=len}let speed=4.0;camera.x+=(forwardX*-my+rightX*mx)*speed*dt;camera.z+=(forwardZ*-my+rightZ*mx)*speed*dt;camera.x=Math.max(-22,Math.min(22,camera.x));camera.z=Math.max(-31,Math.min(7,camera.z));
+function update(dt){if(!el("motionPanel").hidden||document.hidden)return;clock+=dt;if(!active)return;if(targetLocked&&motionHost.connected){
+ const direction=lockOnYaw(camera,enemy);
+ if(direction!==null)yaw=rotateToward(yaw,direction,dt*2.6);
+}
+el("lockHud").hidden=!(targetLocked&&motionHost.connected&&!enemy.dead);
+const remote=motionHost.connected?remoteInput.current(Date.now()):{x:0,y:0};
+let f=forward(),forwardX=Math.sin(yaw),forwardZ=-Math.cos(yaw),rightX=Math.cos(yaw),rightZ=Math.sin(yaw),mx=stick.x+remote.x+(keys.KeyD||keys.ArrowRight?1:0)-(keys.KeyA||keys.ArrowLeft?1:0),my=stick.y+remote.y+(keys.KeyS||keys.ArrowDown?1:0)-(keys.KeyW||keys.ArrowUp?1:0);let len=Math.hypot(mx,my);if(len>1){mx/=len;my/=len}let speed=4.0;camera.x+=(forwardX*-my+rightX*mx)*speed*dt;camera.z+=(forwardZ*-my+rightZ*mx)*speed*dt;camera.x=Math.max(-22,Math.min(22,camera.x));camera.z=Math.max(-31,Math.min(7,camera.z));
 if(!enemy.dead){
  const dx=camera.x-enemy.x,dz=camera.z-enemy.z;
  const dist=Math.hypot(dx,dz),minDist=enemy.kind===4?1.9:enemy.kind===3?1.5:1.48;
@@ -555,7 +565,11 @@ function joystick(){const area=el('joy'),stickEl=el('stick');let pid=null;functi
 const motionHost=createWirelessHost({
  onStatus:state=>{
   el("linkStatus").textContent=state.message+(state.connected&&state.latencyMs?" · 연결 지연 "+state.latencyMs+"ms":"");
-  if(state.connected&&!wasLinked){lastMotionSequence=-1;lastMotionAt=-Infinity;}
+  if(state.connected&&!wasLinked){
+   lastMotionSequence=-1;lastMotionAt=-Infinity;remoteInput.reset();
+   targetLocked=true;motionHost.send({type:"target-state",enabled:true});
+  }
+  if(!state.connected&&wasLinked)remoteInput.reset();
   wasLinked=state.connected;
   refreshMotionIndicator();
  },
@@ -565,7 +579,23 @@ const motionHost=createWirelessHost({
    el("remoteStatus").textContent="통신 시험 수신 · 공격은 실행되지 않음";
    return;
   }
-  if(!motionHost.connected||!validMotionPacket(packet,motionHost.room))return;
+  if(!motionHost.connected)return;
+  if(["move","look","target","control-stop"].includes(packet.type)){
+   const remote=remoteInput.ingest(packet,motionHost.room,Date.now());
+   if(!remote.accepted)return;
+   if(remote.type==="look"&&active&&!worldMode&&el("motionPanel").hidden){
+    targetLocked=false;
+    yaw+=remote.dx*.125;
+    pitch=Math.max(-.72,Math.min(.57,pitch-remote.dy*.105));
+    motionHost.send({type:"target-state",enabled:false});
+   }else if(remote.type==="target"){
+    targetLocked=remote.action==="toggle"?!targetLocked:true;
+    motionHost.send({type:"target-state",enabled:targetLocked});
+    el("lockHud").hidden=!targetLocked;
+   }
+   return;
+  }
+  if(!validMotionPacket(packet,motionHost.room))return;
   if(packet.seq<=lastMotionSequence)return;
   lastMotionSequence=packet.seq;
   // Diagnose every authentic sensor event, including ones that cannot attack.
@@ -587,6 +617,7 @@ const motionHost=createWirelessHost({
   respond(!!accepted,accepted?"":"공격 쿨다운 중");
  }
 });
+const remoteInput=createRemoteInput();let targetLocked=true;
 let lastMotionSequence=-1,lastMotionAt=-Infinity,poseEvents=0,wasLinked=false;
 const poseCamera=createPoseCamera({
  video:el("posePreview"),
@@ -667,7 +698,7 @@ el("cameraStop").onclick=()=>{
 };
 el("cameraReset").onclick=()=>poseCamera.recalibrate();
 function stopMotionInputs(){
- poseCamera.stop();motionHost.stop();
+ remoteInput.reset();poseCamera.stop();motionHost.stop();
  el("hostStart").disabled=false;el("hostStop").disabled=true;el("copyController").disabled=true;
  el("motionRoom").textContent="연결 전";
  el("cameraStart").disabled=false;el("cameraStop").disabled=true;el("cameraReset").disabled=true;
