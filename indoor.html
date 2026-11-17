@@ -237,7 +237,7 @@
 <div id="err"></div><div id="retryWrap" hidden><strong>기력이 소진됐어</strong><p>S21 연결은 유지돼. 바로 재도전하면 새 연결 코드를 입력할 필요 없어.</p><button id="retryCombat">기력 회복 · 다시 싸우기</button></div>
 <div id="motionPanel" hidden role="dialog" aria-modal="true" aria-label="실전 모션 입력 설정">
  <div class="motionDialog">
-  <div class="motionTop"><div><small>MOTION RPG / v0.42</small><h2>실전 모션 전투 설정</h2></div><button id="motionClose" class="subtle">게임으로 돌아가기</button></div>
+  <div class="motionTop"><div><small>MOTION RPG / v0.43</small><h2>실전 모션 전투 설정</h2></div><button id="motionClose" class="subtle">게임으로 돌아가기</button></div>
   <p class="motionLead">폴드6에서는 3D 전투와 전면 카메라 회피를 사용하고, S21에서는 실제 휘두르기·투척 동작을 전송해. 둘 다 선택 기능이야.</p>
   <section class="motionSection">
    <h3>① S21 무기 컨트롤러 연결 · 숫자 6자리</h3>
@@ -260,7 +260,7 @@
 </div>
 <script type="module">
 import {combatStats,normalizeRpgGear,claimIndoorBattle} from "./src/gear-game.mjs?v=0.43";
-import {summarizeHuntResult} from "./src/session-report.mjs?v=0.43";
+import {summarizeHuntResult} from "./src/session-report.mjs?v=0.43.1";
 import {newGame} from "./src/engine.mjs?v=0.43";
 import {GEAR} from "./src/avatar.mjs?v=0.41";
 import {weaponProfile,normalizeMeleeStyle,createMeleeAction,actionProgress,meleeHitInfo,projectileProfile} from "./src/player-combat.mjs?v=0.34";
