@@ -56,7 +56,7 @@ button{font-size:13px;padding:10px 11px;margin:4px 4px 0 0}
   </style>
 </head>
 <body><main>
-  <div class="eyebrow">MOTION RPG · S21 CONTROLLER v0.43.6</div>
+  <div class="eyebrow">MOTION RPG · S21 CONTROLLER v0.44</div>
   <h1>S21 전투 조작</h1>
   <p class="muted">이 화면은 S21에서 실행해. 검격·투척 동작은 폴드6 3D 전투로 무선 전송하고, 폴드6은 화면과 카메라 회피를 담당해.</p>
   <section class="card" id="pairing"><b>폴드6 무선 연결</b>
@@ -75,7 +75,7 @@ button{font-size:13px;padding:10px 11px;margin:4px 4px 0 0}
     <div id="lookPad" class="touchPad" aria-label="시점 드래그"><b>시점 회전</b><span class="cross"></span></div>
    </div>
    <div class="lookSensitivityControl"><label for="lookSensitivity">시점 회전 민감도 <strong id="lookSensitivityLabel">보통 · 1.0배</strong></label><input id="lookSensitivity" type="range" min="1" max="5" step="1" value="3" aria-label="시점 회전 민감도" /><small>오른쪽 시점 패드에만 적용 · 공격 동작 민감도와 별개</small></div>
-   <button id="lockToggle" class="secondary">락온 켜기</button><button id="remoteSkill" class="secondary" type="button" aria-label="누르고 공격 모션으로 스킬 발동" aria-pressed="false">✦ 스킬 준비 · 누르고 공격</button>
+   <button id="lockToggle" class="secondary">자동 락온 확인 중</button><button id="remoteSkill" class="secondary" type="button" aria-label="누르고 공격 모션으로 스킬 발동" aria-pressed="false">✦ 스킬 준비 · 누르고 공격</button>
    <div id="controlState" class="muted" role="status">이동/시점 입력 대기 · 연결 시 활성</div>
   </section>
   
@@ -143,7 +143,13 @@ const wireless=createWirelessController({
  onMessage:data=>{
   if(data?.type==="hello"){$("pairStatus").textContent=active?"연결됨 · S21 동작을 감지해 봐":"연결됨 · 아래 [센서 켜기]를 눌러야 검격이 작동해.";publishSensorState(true);}
   if(data?.type==="diagnostic-ack")$("pairStatus").textContent="통신 확인 완료 · S21 → 폴드6 연결 정상. 공격 동작은 별도로 시험해.";
-  if(data?.type==="target-state"){lockWanted=!!data.enabled;$("lockToggle").textContent=lockWanted?"락온 끄기":"락온 켜기";$("controlState").textContent=data.enabled?"락온 활성 · 시점 자동 추적 중":"자유 시점 · 오른쪽 패드로 회전";}
+  if(data?.type==="target-state"){
+   lockWanted=data.autoEnabled===undefined?!!data.enabled:!!data.autoEnabled;
+   $("lockToggle").textContent=lockWanted?"자동 락온 끄기":"자동 락온 켜기";
+   $("controlState").textContent=lockWanted?
+    (data.enabled?"자동 락온 · 몬스터 추적 중":"자동 락온 대기 · 적 발견 시 시점 추적"):
+    "자동 락온 OFF · 오른쪽 시점 패드로 직접 회전";
+  }
   if(data?.type==="input-ack"){$("controlState").textContent=data.message||"S21 조작 입력 확인";}
   if(data?.type==="weapon-state"){
    if(["melee","ranged","auto"].includes(data.mode)){
@@ -276,8 +282,8 @@ skillButton.addEventListener("keyup",e=>{if(e.code==="Space"||e.code==="Enter"){
 skillButton.addEventListener("click",e=>e.preventDefault());
 $("lockToggle").onclick=()=>{
  if(!wireless.connected){$("controlState").textContent="폴드6 연결 후 사용할 수 있어.";return;}
- lockWanted=!lockWanted;controlSend("target",{action:"toggle"});
- $("lockToggle").textContent=lockWanted?"락온 끄기":"락온 켜기";
+ const sent=controlSend("target",{action:"toggle"});
+ $("controlState").textContent=sent?"자동 락온 설정 전송 · 폴드6 상태 확인 중":"연결 상태 확인 필요";
 };
 document.addEventListener("visibilitychange",()=>{if(document.hidden){releaseSkillHold();stopControl();}else if(wireless.connected)startControl()});
 window.addEventListener("blur",()=>{releaseSkillHold();stopControl()});
