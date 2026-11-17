@@ -113,10 +113,44 @@
  #enemyArrowText{font-size:9px}
  #spawnNotice{font-size:11px;top:38%}
 }
+
+/* Game HUD rather than a stack of tools: retain only combat-essential cues. */
+#brand{left:12px;top:max(12px,env(safe-area-inset-top))}
+#sigil{width:27px;height:31px;font-size:19px}
+#brand h1{font-size:15px}
+#brand p{font-size:8px;letter-spacing:.09em}
+#hudR{right:11px;top:max(11px,env(safe-area-inset-top));gap:5px}
+#hudR>button{border-radius:10px;background:#0b282bc7;border:1px solid #a7c7a871;font-size:10px;padding:7px 8px}
+#roundtag{border-radius:10px;padding:6px 8px;font-size:10px;background:#0c272bbb;border-color:#aacfa254}
+#scorecard{border-radius:10px;padding:5px 8px;min-width:58px;box-shadow:none;background:#0d2f2ca9}
+#scorecard strong{font-size:14px}
+#scorecard small{font-size:8px}
+#location{left:11px;top:21%;font-size:10px;opacity:.82;max-width:220px}
+#enemyHud{width:min(300px,52vw);top:max(55px,calc(env(safe-area-inset-top) + 56px))}
+#enemyName{font-size:10px;margin-bottom:4px}
+#barwrap{height:8px}
+#playerHud{background:#0c272ba6;border-color:#b0d0ae5c;box-shadow:none;border-radius:11px;top:max(57px,calc(env(safe-area-inset-top) + 58px));left:11px;padding:8px 9px;min-width:120px}
+#forestZoneHud{border-radius:9px;padding:5px 9px;background:#143c38a7}
+#attackBanner{top:24%;width:min(260px,55vw);border-width:1px;border-radius:12px}
+#enemyArrowText{border-radius:9px}
+@media(max-width:640px){
+ #brand h1{font-size:13px}
+ #brand p{font-size:7px}
+ #hudR{top:max(10px,env(safe-area-inset-top))}
+ #hudR>button{font-size:9px;padding:6px 5px}
+ #roundtag{font-size:9px;padding:5px}
+ #scorecard{display:none}
+ #location{top:calc(35% - 15px);opacity:.65;max-width:155px;font-size:9px}
+ #playerHud{top:max(75px,calc(env(safe-area-inset-top) + 71px));left:8px;min-width:125px}
+ #enemyHud{top:max(68px,calc(env(safe-area-inset-top) + 64px));width:min(260px,54vw)}
+ #enemyName{font-size:9px}
+ #forestZoneHud{font-size:10px}
+}
+
 </style></head><body>
 <div id="sky"></div><canvas id="game"></canvas><div id="vignette"></div><div id="bottomShade"></div><div id="screenFx"></div><canvas id="weaponCanvas" aria-hidden="true"></canvas>
 <div class="ui" id="brand"><div id="sigil">✦</div><div><h1>Motion RPG</h1><p>INDOOR COMBAT · ALPHA</p></div></div>
-<div class="ui" id="hudR"><button id="motionOpen" title="S21 무선 연결과 폴드6 카메라 인식 설정">모션 설정</button><button id="campReturn">마을 복귀</button><div id="roundtag">⚔️ WAVE <span id="stage">01</span></div><div id="scorecard" class="glass"><small>획득한 정수</small><strong>✦ <span id="score">000</span></strong></div></div>
+<div class="ui" id="hudR"><button id="motionOpen" title="S21 무선 연결과 폴드6 카메라 인식 설정">모션 설정</button><button id="campReturn">마을 복귀</button><div id="roundtag">⚔ 사냥 <span id="stage">01</span></div><div id="scorecard" class="glass"><small>사냥 점수</small><strong>✦ <span id="score">000</span></strong></div></div>
 <div class="ui" id="location"><span>FOREST RIFT</span>경계의 숲 · 균열 지대<br><small id="status" style="opacity:.85">마력체가 앞을 가로막는다</small></div>
 <div class="ui" id="enemyHud"><div id="enemyName"><span class="label" id="monName">🌿 이끼 슬라임</span><span class="dist" id="distance">12 m</span></div><div id="barwrap"><div id="enemyHP"></div></div><div id="attackCue" role="status" aria-live="polite">적의 움직임을 살펴보세요</div></div>
 <div id="radarBox" aria-label="숲 전투 미니맵"><div class="radarTitle">◈ 숲 탐색</div><canvas id="radarCanvas" width="144" height="144" aria-label="정면 위쪽 기준, 적 위치 붉은색 표시"></canvas><small>▲ 나　● 몬스터</small></div>
