@@ -43,10 +43,27 @@ h1{font-size:24px;margin:7px 0}
 button{font-size:13px;padding:10px 11px;margin:4px 4px 0 0}
 #padLayout{margin:10px 0}
 @media(max-width:410px){.touchPad{height:126px}#pairing{padding:11px}}
+
+/* S21 cooldown: separate from the motion strength bar. */
+#attackCooldown{border:1px solid #8abdb373;border-radius:14px;background:#0a2830;padding:12px;margin:12px 0;transition:border-color .2s,background .2s}
+.attackCooldownHeader{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.attackCooldownHeader strong{font-size:17px;letter-spacing:-.02em}
+#attackTimer{font-size:20px;font-variant-numeric:tabular-nums;font-weight:900;color:#ffe5a2}
+.attackCooldownTrack{height:11px;border-radius:100px;background:#03161d;overflow:hidden;border:1px solid #87bebd50;margin:9px 0}
+#attackCooldownFill{display:block;width:0;height:100%;background:linear-gradient(90deg,#d5a365,#f8df90);transition:width .08s linear}
+#attackCooldownHelp{font-size:11px;color:#b4cbd0;display:block;line-height:1.5}
+#attackCooldown.ready{border-color:#87efae;background:#11382c}
+#attackCooldown.ready strong,#attackCooldown.ready #attackTimer{color:#a6f2b1}
+#attackCooldown.ready #attackCooldownFill{background:#7be7a0}
+#attackCooldown.neutral{border-color:#85c8dd;background:#0b303a}
+#attackCooldown.neutral strong,#attackCooldown.neutral #attackTimer{color:#b0e6ed}
+#attackCooldown.neutral #attackCooldownFill{background:#70c4d6}
+#attackCooldown.off{opacity:.65}
+@media(prefers-reduced-motion:reduce){#attackCooldownFill{transition:none}}
   </style>
 </head>
 <body><main>
-  <div class="eyebrow">MOTION RPG · S21 CONTROLLER v0.43.2</div>
+  <div class="eyebrow">MOTION RPG · S21 CONTROLLER v0.43.3</div>
   <h1>S21 전투 조작</h1>
   <p class="muted">이 화면은 S21에서 실행해. 검격·투척 동작은 폴드6 3D 전투로 무선 전송하고, 폴드6은 화면과 카메라 회피를 담당해.</p>
   <section class="card" id="pairing"><b>폴드6 무선 연결</b>
@@ -55,7 +72,12 @@ button{font-size:13px;padding:10px 11px;margin:4px 4px 0 0}
    <div><button id="connect">게임 연결</button><button id="disconnect" class="secondary" disabled>연결 끊기</button><button id="diagnostic" class="secondary" disabled>통신 시험</button></div>
    <div class="muted" id="pairStatus" aria-live="polite">연결 대기 중 · 휴대폰 두 대에서 페이지를 열어 주세요.</div>
   </section>
-  <section class="card"><div>현재 동작</div><div class="score" id="count">0</div><div class="meter"><i id="meter"></i></div><div class="muted" id="status">센서를 켜고 한 번 시험해 봐.</div><div id="sensorDetail" class="muted">센서 수신: 꺼짐 · 인식 민감도 확인 전</div><div id="lastSignal" class="muted">마지막 동작: 없음</div><button id="start">센서 켜기</button><button id="stop" class="secondary" disabled>센서 끄기</button></section>
+  <section class="card"><div>현재 동작</div><div class="score" id="count">0</div><div class="meter"><i id="meter"></i></div><div class="muted" id="status">센서를 켜고 한 번 시험해 봐.</div><div id="sensorDetail" class="muted">센서 수신: 꺼짐 · 인식 민감도 확인 전</div><div id="lastSignal" class="muted">마지막 동작: 없음</div>
+   <div id="attackCooldown" class="attackCooldown off" aria-label="공격 재입력 상태">
+    <div class="attackCooldownHeader"><strong id="attackReadyText">센서 대기</strong><span id="attackTimer">—</span></div>
+    <div class="attackCooldownTrack" role="progressbar" aria-label="공격 재준비" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" id="attackCooldownTrack"><i id="attackCooldownFill"></i></div>
+    <small id="attackCooldownHelp">센서를 켜면 공격 재입력 시간을 확인할 수 있어.</small>
+   </div><button id="start">센서 켜기</button><button id="stop" class="secondary" disabled>센서 끄기</button></section>
   <section class="card" id="remotePad">
    <b>전투 조작 패드</b>
    <p class="muted">왼쪽으로 이동하고 오른쪽에서 시야를 돌려. 적을 직접 찾은 뒤 전방 약 13m 이내에서 락온을 누르면 시점이 적을 따라가. 멀어지면 자동 해제돼. 마을에서는 폴드6 터치를 사용해.</p>
@@ -92,6 +114,44 @@ try{sensitivity=Math.max(1,Math.min(5,Number(localStorage.getItem("motion-rpg-s2
 let axes={};try{const saved=JSON.parse(localStorage.getItem("motion-rpg-s21-axes")||"{}");if(saved&&typeof saved==="object")axes=saved;}catch{}
 let cutStyle="auto";try{const saved=localStorage.getItem("motion-rpg-s21-cut-style");if(["auto","sweep","overhead","thrust"].includes(saved))cutStyle=saved;}catch{}
 const detector=createGestureDetector({mode,sensitivity,axis:axes[mode]||""});
+let cooldownTicker=null;
+function renderAttackCooldown(now=Date.now()){
+ const panel=$("attackCooldown"),heading=$("attackReadyText"),timer=$("attackTimer"),help=$("attackCooldownHelp");
+ const track=$("attackCooldownTrack"),fill=$("attackCooldownFill");
+ const state=detector.status(now);
+ let phase,percent=0;
+ if(!active){
+  phase="off";heading.textContent="센서 대기";timer.textContent="—";
+  help.textContent="센서를 켜면 다음 공격까지 남은 시간이 표시돼.";
+ }else if(state.cooldownRemainingMs>0){
+  phase="cooldown";
+  heading.textContent="공격 대기";
+  timer.textContent=(state.cooldownRemainingMs/1000).toFixed(1)+"초";
+  help.textContent="중복 공격 인식 방지 중 · 팔을 멈추면 다음 공격이 더 빨리 준비돼.";
+  percent=100*(1-state.cooldownRemainingMs/Math.max(state.cooldownDurationMs,1));
+ }else if(!state.ready){
+  phase="neutral";heading.textContent="다시 공격 준비 중";
+  timer.textContent="대기";
+  help.textContent="팔을 잠시 멈춰 줘 · 움직임이 안정되면 자동으로 준비돼.";
+  percent=100;
+ }else{
+  phase="ready";heading.textContent="공격 가능";timer.textContent="READY";
+  help.textContent=wireless.connected?"동작을 시작해도 돼.":"센서 준비 완료 · 폴드6 게임 연결이 필요해.";
+  percent=100;
+ }
+ panel.className="attackCooldown "+phase;
+ fill.style.width=Math.max(0,Math.min(100,percent)).toFixed(1)+"%";
+ track.setAttribute("aria-valuenow",String(Math.round(percent)));
+}
+function startCooldownTicker(){
+ if(cooldownTicker!==null)clearInterval(cooldownTicker);
+ cooldownTicker=setInterval(()=>renderAttackCooldown(),80);
+ renderAttackCooldown();
+}
+function stopCooldownTicker(){
+ if(cooldownTicker!==null){clearInterval(cooldownTicker);cooldownTicker=null;}
+ renderAttackCooldown();
+}
 const wireless=createWirelessController({
  onStatus:state=>{
   $("pairStatus").textContent=state.connected?(active?"폴드6 연결됨 · 센서도 켜짐":"폴드6 연결됨 · 아래 [센서 켜기]를 눌러야 공격 동작이 인식돼"):state.message;
@@ -207,7 +267,7 @@ function changeMode(next){
  $("modeInfo").textContent="전투 모드: "+({auto:"자동 전환 시험",throw:"원거리",melee:"근접"}[mode]);
  controlSend("weapon-switch",{mode:mode==="throw"?"ranged":mode});
  pendingAttack=null;recentMotion=[];
- syncSettings();
+ syncSettings();renderAttackCooldown();
 }
 function onMotion(e){
  if(!active)return;
@@ -223,6 +283,7 @@ function onMotion(e){
   else setStatus("센서 수신 중 · "+(wireless.connected?"게임 연결됨":"무선 미연결"));
   $("sensorDetail").textContent="수신 "+sensorEvents+"회 · 강도 "+Math.round(result.score)+"/100 · 기준 "+Math.round(result.threshold)+" · "+(result.cooldownRemainingMs>0?"쿨타임 "+(result.cooldownRemainingMs/1000).toFixed(1)+"초":result.armed?"공격 준비 완료":"팔을 가만히 두면 공격 준비");
   sampleTime=now;
+  renderAttackCooldown(now);
  }
  if(calibrating||trainingStyle||!result.gesture||pendingAttack)return;
  pendingAttack={startAt:now,mode,gesture:result.gesture,samples:recentMotion.map(entry=>entry.event)};
@@ -236,6 +297,7 @@ function flushPendingAttack(){
  if(!pending||!active||calibrating||trainingStyle)return;
  const action=classifyAttackIntent(pending.samples,pending.mode,trained,cutStyle);
  if(action.type==="throw")detector.protectThrow(pending.startAt);
+ renderAttackCooldown();
  count++;$("count").textContent=count;
  const packet={type:"gesture",gesture:action.type,autoSwitch:mode==="auto",strength:pending.gesture.strength,
    time:pending.startAt,seq:++seq,session:wireless.room};
@@ -254,20 +316,21 @@ async function startSensor(){
   if(!window.DeviceMotionEvent)throw Error("동작 센서가 지원되지 않는 기기야.");
   window.addEventListener("devicemotion",onMotion,{passive:true});
   detector.reset();active=true;sensorEvents=0;sensorStartedAt=Date.now();
+  startCooldownTicker();
   $("start").disabled=true;$("stop").disabled=false;
   setStatus("센서 시작 · 투척 후 1.9초 쉬고 팔을 가만히 두면 다음 공격이 준비돼.");
   $("sensorDetail").textContent="센서 이벤트 수신 대기...";
   setTimeout(()=>{if(active&&sensorEvents===0){$("sensorDetail").textContent="센서 이벤트 0회 · 이 브라우저에서 동작 센서가 차단됐을 수 있어. Chrome/삼성 인터넷에서 열어 줘.";}},2500);
  }catch(e){setStatus("센서 켜기 실패: "+e.message);}
 }
-function stopSensor(){pendingAttack=null;trainingStyle=null;recentMotion=[];window.removeEventListener("devicemotion",onMotion);active=false;$("start").disabled=false;$("stop").disabled=true;setStatus("센서 종료");$("sensorDetail").textContent="센서 수신: 꺼짐";}
+function stopSensor(){pendingAttack=null;trainingStyle=null;recentMotion=[];window.removeEventListener("devicemotion",onMotion);active=false;stopCooldownTicker();$("start").disabled=false;$("stop").disabled=true;setStatus("센서 종료");$("sensorDetail").textContent="센서 수신: 꺼짐";}
 async function connect(){
  const code=cleanRoom($("roomCode").value);
  if(!code){$("pairStatus").textContent="6자리 숫자 연결 코드를 확인해 줘.";return;}
  $("connect").disabled=true;$("pairStatus").textContent="폴드6에 연결하는 중...";
  try{await wireless.connect(code);}catch(e){$("pairStatus").textContent="연결 실패: "+(e.message||e);$("connect").disabled=false;}
 }
-$("sensitivity").value=sensitivity;syncSettings();
+$("sensitivity").value=sensitivity;syncSettings();renderAttackCooldown();
 $("cutStyle").value=cutStyle;
 $("cutStyle").onchange=()=>{
  cutStyle=$("cutStyle").value;
