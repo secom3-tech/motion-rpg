@@ -13,7 +13,7 @@ export const MATERIALS=Object.freeze({
  essence:{name:"정령 조각",source:"어려운 전투 · 원정"},
  ore:{name:"단단한 광석",source:"전투 중 희귀 획득"}
 });
-export const STARTER_OWNED=Object.freeze(["hunterCap","hunter","bow","satchel"]);
+export const STARTER_OWNED=Object.freeze(["hunterCap","hunter","sword","bow","satchel"]);
 const I=(slot,id,price,wood,fang,essence,ore,minLevel=1,boss=false,description="")=>Object.freeze({
  id,slot,price,materials:{wood,fang,essence,ore},minLevel,boss,description
 });
@@ -41,17 +41,37 @@ const int=n=>Number.isSafeInteger(n)&&n>=0?n:0;
 const clamp=(n,low,high)=>Math.min(high,Math.max(low,n));
 export const recipeFor=id=>RECIPES.find(item=>item.id===id)||null;
 function validGame(state){return state&&typeof state==="object"&&!Array.isArray(state);}
+/** Old saves held only equipped.weapon; keep that item without granting locked gear. */
+export const RANGED_WEAPONS=Object.freeze(["bow","staff"]);
+export const MELEE_WEAPONS=Object.freeze(["sword","greatsword","axe"]);
+export const weaponSlotFor=id=>RANGED_WEAPONS.includes(id)?"rangedWeapon":MELEE_WEAPONS.includes(id)?"meleeWeapon":null;
 export function normalizeRpgGear(state){
  const raw=state?.rpgGear&&typeof state.rpgGear==="object"?state.rpgGear:{};
  const owned=[...new Set([...STARTER_OWNED,...(Array.isArray(raw.owned)?raw.owned:[]).filter(id=>ALL_IDS.has(id))])];
- const source=sanitizeLoadout(raw.equipped);
+ const oldWeapon=raw.equipped?.weapon;
+ const oldSlot=weaponSlotFor(oldWeapon);
  const equipped={};
- for(const slot of Object.keys(GEAR)){equipped[slot]=owned.includes(source[slot])?source[slot]:DEFAULT_LOADOUT[slot];}
+ for(const slot of ["head","armor","offhand"]){
+  const chosen=raw.equipped?.[slot];
+  equipped[slot]=VALID_SLOTS[slot].has(chosen)&&owned.includes(chosen)?chosen:DEFAULT_LOADOUT[slot];
+ }
+ const melee=raw.equipped?.meleeWeapon||(oldSlot==="meleeWeapon"?oldWeapon:"sword");
+ const ranged=raw.equipped?.rangedWeapon||(oldSlot==="rangedWeapon"?oldWeapon:"bow");
+ equipped.meleeWeapon=MELEE_WEAPONS.includes(melee)&&owned.includes(melee)?melee:"sword";
+ equipped.rangedWeapon=RANGED_WEAPONS.includes(ranged)&&owned.includes(ranged)?ranged:"bow";
+ const activeWeapon=["melee","ranged"].includes(raw.activeWeapon)?raw.activeWeapon:
+   (oldSlot==="rangedWeapon"?"ranged":"melee");
+ equipped.weapon=activeWeapon==="ranged"?equipped.rangedWeapon:equipped.meleeWeapon;
  const materials={};for(const key of Object.keys(MATERIALS))materials[key]=clamp(int(raw.materials?.[key]),0,9999);
  const combatClaims=Array.isArray(raw.combatClaims)?raw.combatClaims.filter(s=>typeof s==="string").slice(-100):[];
  const expeditionClaims=Array.isArray(raw.expeditionClaims)?raw.expeditionClaims.filter(s=>typeof s==="string").slice(-100):[];
- return {version:1,owned,equipped,materials,combatClaims,expeditionClaims,
- totalKills:clamp(int(raw.totalKills),0,99999)};
+ return {version:2,owned,equipped,activeWeapon,materials,combatClaims,expeditionClaims,totalKills:clamp(int(raw.totalKills),0,99999)};
+}
+export function chooseActiveWeapon(state,mode){
+ if(!["melee","ranged"].includes(mode))throw Error("Invalid weapon mode");
+ const p=normalizeRpgGear(state);
+ p.activeWeapon=mode;p.equipped.weapon=mode==="melee"?p.equipped.meleeWeapon:p.equipped.rangedWeapon;
+ return {...state,rpgGear:p};
 }
 export function withRpgGear(state){
  if(!validGame(state))throw Error("Invalid shared character save");
@@ -76,7 +96,9 @@ export function craftGear(state,id){
  next.gold=int(state.gold)-recipe.price;
  for(const material of Object.keys(MATERIALS))next.rpgGear.materials[material]-=recipe.materials[material];
  next.rpgGear.owned.push(id);
- next.rpgGear.equipped[recipe.slot]=id;
+ const equipSlot=recipe.slot==="weapon"?weaponSlotFor(id):recipe.slot;
+ next.rpgGear.equipped[equipSlot]=id;
+ if(recipe.slot==="weapon"&&next.rpgGear.activeWeapon===(equipSlot==="meleeWeapon"?"melee":"ranged"))next.rpgGear.equipped.weapon=id;
  return next;
 }
 export function equipGear(state,id){
@@ -84,16 +106,19 @@ export function equipGear(state,id){
  if(!p.owned.includes(id))throw Error("Craft the equipment before equipping");
  const slot=Object.keys(VALID_SLOTS).find(key=>VALID_SLOTS[key].has(id));
  if(!slot)throw Error("Unknown equipment");
- return {...state,rpgGear:{...p,equipped:{...p.equipped,[slot]:id}}};
+ const equipSlot=slot==="weapon"?weaponSlotFor(id):slot;
+ const equipped={...p.equipped,[equipSlot]:id};
+ if(slot==="weapon"&&p.activeWeapon===(equipSlot==="meleeWeapon"?"melee":"ranged"))equipped.weapon=id;
+ return {...state,rpgGear:{...p,equipped}};
 }
 export function combatStats(state){
- const p=normalizeRpgGear(state),{weapon,armor,head,offhand}=p.equipped;
+ const p=normalizeRpgGear(state),{meleeWeapon,rangedWeapon,armor,head,offhand}=p.equipped;
  let slash=1,magic=1,hp=100,defence=0,attackDelay=0;
- if(weapon==="bow"){slash=.80;magic=1.10;}
- else if(weapon==="sword"){slash=1.18;magic=.92;}
- else if(weapon==="axe"){slash=1.36;magic=.80;attackDelay=.16;}
- else if(weapon==="staff"){slash=.74;magic=1.34;}
- else if(weapon==="greatsword"){slash=1.52;magic=.82;attackDelay=.22;}
+ if(meleeWeapon==="sword")slash=1.18;
+ if(meleeWeapon==="axe"){slash=1.36;attackDelay=.16;}
+ if(meleeWeapon==="greatsword"){slash=1.52;attackDelay=.22;}
+ if(rangedWeapon==="bow")magic=1.10;
+ if(rangedWeapon==="staff")magic=1.34;
  if(armor==="hunter"){hp+=10;defence+=.03;}
  else if(armor==="leather"){hp+=17;defence+=.07;}
  else if(armor==="forest"){hp+=24;defence+=.11;}
@@ -106,7 +131,7 @@ export function combatStats(state){
  if(offhand==="orb")magic+=.16;
  if(offhand==="lantern")hp+=5;
  return {slash:Number(slash.toFixed(2)),magic:Number(magic.toFixed(2)),hp,maxHp:hp,
- defence:clamp(Number(defence.toFixed(2)),0,.5),attackDelay,weapon};
+  defence:clamp(Number(defence.toFixed(2)),0,.5),attackDelay,weapon:p.equipped.weapon,meleeWeapon,rangedWeapon,activeWeapon:p.activeWeapon};
 }
 function rewardMaterials(kills){
  const count=clamp(int(kills),0,24);
