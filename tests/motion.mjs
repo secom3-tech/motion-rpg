@@ -132,9 +132,20 @@ await assert.rejects(loadPoseModel({importer:async()=>{throw Error("Offline")}})
 // 5. Browser integration smoke.
 const arena=fs.readFileSync(new URL("../indoor.html",import.meta.url),"utf8");
 const controller=fs.readFileSync(new URL("../controller.html",import.meta.url),"utf8");
-for(const needle of ['id="attackCooldown"','id="attackReadyText"','id="attackTimer"','id="attackCooldownFill"','function renderAttackCooldown(','detector.status(now)','startCooldownTicker();','stopCooldownTicker();','공격 대기','공격 가능','팔을 잠시 멈춰 줘']){
- assert.ok(controller.includes(needle),"S21 visible cooldown is required: "+needle);
+// Users watch the game, not the handheld sensor controller.
+for(const needle of ['id="motionCooldown"','id="motionCooldownState"','id="motionCooldownTime"',
+ 'id="motionCooldownFill"','function renderMotionCooldown()','sensorReport.cooldownRemainingMs',
+ 'sensorReport.ready','sensorReport.sensorReceiving','packet.type==="sensor-state"',
+ '공격 대기','공격 가능','팔을 잠시 멈춰']){
+ assert.ok(arena.includes(needle),"Fold6 HUD must display real S21 readiness: "+needle);
 }
+assert.ok(!controller.includes('id="attackCooldown"'),"Do not keep cooldown display on S21");
+for(const needle of ['function publishSensorState(','type:"sensor-state"','cooldownRemainingMs:',
+ 'cooldownDurationMs:','sensorReceiving:sensorEvents>0','startCooldownTicker();',
+ 'stopCooldownTicker();']){
+ assert.ok(controller.includes(needle),"S21 must send readiness telemetry: "+needle);
+}
+assert.ok(bridge.includes('"sensor-state"'),"WebRTC host must route sensor readiness packets");
 
 const camera=fs.readFileSync(new URL("../src/pose-camera.mjs",import.meta.url),"utf8");
 const bridge=fs.readFileSync(new URL("../src/peer-bridge.mjs",import.meta.url),"utf8");
