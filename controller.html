@@ -130,7 +130,7 @@ function bindMovePad(){
  };
  pad.addEventListener("pointerdown",e=>{
   e.preventDefault();if(!wireless.connected)return;
-  movePointer=e.pointerId;try{pad.setPointerCapture(e.pointerId)}catch{}update(e);
+  movePointer=e.pointerId;if(moveInterval===null)startControl();try{pad.setPointerCapture(e.pointerId)}catch{}update(e);
  });
  pad.addEventListener("pointermove",e=>{if(movePointer!==e.pointerId)return;e.preventDefault();update(e)});
  const end=e=>{if(movePointer!==e.pointerId)return;movePointer=null;zeroMovement()};
@@ -158,8 +158,9 @@ $("lockToggle").onclick=()=>{
  lockWanted=!lockWanted;controlSend("target",{action:"toggle"});
  $("lockToggle").textContent=lockWanted?"락온 끄기":"락온 켜기";
 };
-document.addEventListener("visibilitychange",()=>{if(document.hidden)stopControl()});
+document.addEventListener("visibilitychange",()=>{if(document.hidden)stopControl();else if(wireless.connected)startControl()});
 window.addEventListener("blur",stopControl);
+window.addEventListener("focus",()=>{if(wireless.connected)startControl()});
 const codeFromUrl=new URLSearchParams(location.search).get("room");if(codeFromUrl)$("roomCode").value=codeFromUrl;
 function setStatus(message){$("status").textContent=message;}
 function syncSettings(){
