@@ -175,9 +175,80 @@
  #villageStage .town-dialogue{padding:17px 18px}
  .avatar-display{height:385px}
 }
+
+/* v0.41: one-screen fitness/RPG hub – no stacked page cards. */
+#page-village{position:relative}#villageStage{height:min(82svh,780px);min-height:570px}
+.villageJournal{position:absolute;z-index:6;left:13px;bottom:12px;width:min(296px,43%);max-height:75%;overflow:auto;margin:0;background:#0c2926ed;border:1px solid #d7d9af87;box-shadow:0 15px 33px #0006}
+.villageJournal>summary{padding:11px 13px}.villageJournal[open]{width:min(390px,90%);background:#102b29f7}
+.villageJournal .townRumour{padding:10px;margin:9px 0}.villageJournal .villageStats{margin-top:10px}
+#page-village>.world-note{display:none}
+#page-run,#page-character{padding:0;margin:0}
+.runBoard{position:relative;height:min(86svh,800px);min-height:670px;overflow:hidden;border:1px solid #bad9bb7a;border-radius:20px;background:#173c39;color:#fff7e2;isolation:isolate}
+.runArt,.runShade{position:absolute;inset:0;pointer-events:none}
+.runArt{background:#2b5550 url("./assets/forest-run.svg") center/cover no-repeat}
+.runShade{background:linear-gradient(180deg,#071f21bd 0%,transparent 28%,#071b1cbf 76%,#071a1be8)}
+.runHeader,.runNarrative,.runMetrics,.runStartActions,.runOptions,.runJournal{position:absolute;z-index:1}
+.runHeader{top:16px;left:18px;right:18px;display:flex;align-items:center;justify-content:space-between;gap:12px}.runHeader>div{display:flex;flex-direction:column;align-items:center;gap:3px}.runHeader b{font-size:22px}.runHeader small{color:#bbddd1}
+.runBack,.runVoice{border:1px solid #dfdfc27a;border-radius:12px;background:#143b38cf;color:#fff6de;padding:10px 15px;font-weight:800;cursor:pointer}
+.runNarrative{top:27%;left:8%;right:8%;text-align:center;text-shadow:0 3px 18px #06171ae9}
+.runNarrative small{display:inline-block;background:#16463bd9;border:1px solid #adcbb790;border-radius:99px;padding:5px 15px;color:#d3f4e9}
+.runNarrative h2{font-size:clamp(30px,4.7vw,55px);margin:12px auto 8px}.runNarrative p{font-size:clamp(12px,1.4vw,17px);line-height:1.65}
+.runProgress{height:5px;max-width:370px;margin:20px auto;background:#112d30aa;border-radius:30px;overflow:hidden}.runProgress i{display:block;height:100%;width:0;background:#9be2bc}
+.runMetrics{bottom:177px;left:20px;right:20px;display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.runMetric{padding:13px 10px;background:#0b302fd9;border:1px solid #a7cbb277;border-radius:12px;text-align:center;font-size:clamp(17px,2vw,27px);font-weight:900}
+.runMetric small{display:block;font-size:11px;font-weight:600;color:#ccdfcf;margin-top:3px}
+.runStartActions{bottom:102px;left:20px;right:20px;display:flex;gap:9px;justify-content:center}
+.runStartActions button{min-height:51px;border:1px solid #c4d5b8a9;border-radius:12px;color:#f3f6df;font-size:13px;font-weight:900;padding:9px 18px;background:#1e5042e8;cursor:pointer}
+.runStartActions .runMain{background:#a8dec0;color:#0d3230}.runStartActions button:disabled{opacity:.45;cursor:default}
+.runOptions{bottom:14px;left:18px;width:min(320px,46%);border:1px solid #bccda774;border-radius:11px;background:#122f2bdb;font-size:12px}
+.runJournal{bottom:14px;right:18px;width:min(340px,46%);border:1px solid #bccda774;border-radius:11px;background:#122f2bdb;font-size:12px}
+.runOptions summary,.runJournal summary{padding:12px;cursor:pointer;font-weight:800}.runJournal summary span{font-size:10px;color:#aaddbb;float:right}
+.runOptions[open],.runJournal[open]{background:#122e2df7;max-height:62%;overflow:auto;box-shadow:0 5px 29px #0009}
+.runOptionGrid{display:grid;gap:10px;padding:0 12px 12px}.runOptionGrid label{display:grid;gap:5px;color:#cbded0}.runOptionGrid input,.runOptionGrid select{background:#0c2929;color:#f6f2df;border:1px solid #9cbf9c99;border-radius:8px;padding:9px;min-width:0}
+.runOptions p{padding:0 12px 13px;color:#b1cfba}.runStory{padding:0 12px}.runStory p{color:#d2e4d2}.runJournal .feed{padding:0 12px 12px 30px;max-height:165px;overflow:auto}
+.gearScreen{position:relative;min-height:min(87svh,840px);border:1px solid #adc8b176;border-radius:19px;background:linear-gradient(140deg,#0f2628,#1b3a32);overflow:hidden;padding:13px 17px}
+.gearScreenHead{display:flex;align-items:center;gap:15px;margin:0 0 10px}.gearScreenHead>div{flex:1}.gearScreenHead h1{font-size:25px;margin:2px 0}.gearScreenHead small{font-size:10px;letter-spacing:.12em;color:#a3e0c6}
+.gearCraftOpen,.gearHuntBtn{border:1px solid #c4d8ba96;border-radius:11px;background:#245b48;color:#f6f4dc;padding:11px 16px;font-weight:800;cursor:pointer}
+.gearStage{display:grid;grid-template-columns:minmax(0,42%) minmax(0,58%);gap:14px;height:min(75svh,680px);min-height:510px}
+.heroPortrait{position:relative;overflow:hidden;border:1px solid #b8c9a472;border-radius:15px;background:#253e37}
+.heroPortrait .avatar-concept{display:block;width:100%;height:100%;object-fit:cover;object-position:center 28%}
+.heroPortraitInfo{position:absolute;bottom:0;left:0;right:0;padding:28px 13px 13px;background:linear-gradient(0deg,#071b1be8,transparent);display:flex;flex-direction:column;gap:3px}
+.heroPortraitInfo b{font-size:16px}.heroPortraitInfo span{font-size:11px;color:#d9e6d6;line-height:1.6}
+.gearEquipment{overflow:auto;min-height:0;padding:5px 9px 8px;color:#eaf2de}.gearEquipment .section-title{margin:4px 0 7px}.gearEquipment .section-title h2{font-size:18px}
+.gearSlots{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.gearSlots label{display:flex;align-items:center;gap:8px;padding:7px;border:1px solid #8ab39466;background:#123534;min-width:0;border-radius:10px;color:#d2e6cd}
+.gearSlots label>span:last-child{flex:1;min-width:0;font-size:11px}.gearSlots select{display:block;max-width:100%;width:100%;margin-top:4px;background:#09272c;border:1px solid #5f978c;border-radius:6px;padding:7px 4px;color:#eaf4e5;font-size:11px}
+.slotArt{display:block;flex:0 0 53px;width:53px;height:53px}.slotArt svg,.itemArtwork{width:100%;height:100%;display:block}
+.equippedStyle{display:flex;gap:8px;margin:10px 0}.equippedStyle button{flex:1;background:#19433f;color:#e6ecd9;border:1px solid #9cb8a985;border-radius:9px;padding:8px;font-size:11px}
+.equippedStyle button.active{background:#a3d9b9;color:#12352c;font-weight:900}
+.gearEquipment .gear-status{font-size:12px;margin:8px 0}.gearEquipment .combat-info{margin:7px 0;font-size:11px}
+.gearQuick{display:grid;grid-template-columns:repeat(6,1fr);gap:5px;margin:10px 0}
+.gearQuick>div{min-width:0;text-align:center;padding:9px 3px;background:#0a2a29;border:1px solid #799a8970;border-radius:9px;font-size:14px;font-weight:800}
+.gearQuick small{display:block;font-weight:500;font-size:9px;color:#bed0c3;margin-top:3px}
+.gearHuntBtn{width:100%;background:#2a594b}
+.craftDialog[hidden]{display:none!important}.craftDialog{position:fixed;z-index:95;inset:0;display:grid;place-items:center;padding:12px;background:#041919d9;backdrop-filter:blur(8px)}
+.craftWindow{width:min(860px,100%);max-height:91svh;overflow:auto;background:#122e2c;border:1px solid #bfceb28f;box-shadow:0 30px 90px #000c;border-radius:18px;padding:16px}
+.craftHeader{display:flex;justify-content:space-between;gap:15px;align-items:start}.craftHeader h2{font-size:23px;margin:3px 0}.craftHeader p{font-size:12px;color:#c0d1c6}.craftHeader button{background:#214641;color:#fff;border:1px solid #95b5a2;border-radius:10px;padding:8px 12px;cursor:pointer}
+.craftWindow .craft-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.craftWindow .craft-row{display:grid;grid-template-columns:65px 1fr auto;align-items:center;gap:4px 10px}
+.craftWindow .craftArt{grid-row:1 / 5;width:60px;height:60px}.craftWindow .craft-row strong,.craftWindow .craft-row p,.craftWindow .craft-row small{grid-column:2;min-width:0}
+.craftWindow .craft-row button{grid-column:3;grid-row:1 / 5;align-self:center}.craftWindow .craft-row p{min-height:0}
+.footer{display:none}
+@media(max-width:750px){
+ #villageStage{height:min(84svh,820px);min-height:550px}.villageJournal{bottom:176px;left:8px;width:44%;max-height:53%}.villageJournal[open]{width:95%;z-index:10}
+ .runBoard{height:86svh;min-height:610px}.runHeader{top:9px;left:8px;right:8px}.runHeader b{font-size:17px}.runHeader button{padding:8px;font-size:11px}
+ .runNarrative{top:24%;left:5%;right:5%}.runNarrative h2{font-size:32px}
+ .runMetrics{bottom:201px;left:8px;right:8px;grid-template-columns:repeat(2,1fr);gap:6px}.runMetric{font-size:18px;padding:7px 5px}.runMetric small{font-size:9px}
+ .runStartActions{bottom:97px;left:8px;right:8px;gap:5px;flex-wrap:wrap}.runStartActions button{padding:8px;min-height:45px;font-size:11px;flex:1}
+ .runOptions{left:7px;bottom:9px;width:48%}.runJournal{right:7px;bottom:9px;width:48%}
+ .gearScreen{padding:9px}.gearStage{grid-template-columns:1fr;height:auto;min-height:0}.heroPortrait{height:210px}.heroPortrait .avatar-concept{object-position:center 27%}.gearEquipment{max-height:calc(90svh - 300px);padding:3px}
+ .gearSlots{gap:5px}.gearSlots label{padding:5px}.slotArt{flex-basis:36px;width:36px;height:36px}
+ .gearQuick{grid-template-columns:repeat(3,1fr)}.gearScreenHead h1{font-size:20px}.gearScreenHead button{padding:8px;font-size:11px}
+ .craftWindow .craft-list{grid-template-columns:1fr}
+}
 </style></head>
 <body><div class="app">
-<header class="top"><div class="mark">MOTION RPG <em> / 경계의 숲</em></div><div class="version">거점 허브 · 0.40</div></header>
+<header class="top"><div class="mark">MOTION RPG <em> / 경계의 숲</em></div><div class="version">모험 허브 · 0.41</div></header>
 <nav class="menu" aria-label="게임 메뉴"><button data-view="village" class="active">🏘 마을</button><button data-view="character">🎒 가방 · 장비</button></nav>
 <section class="page active" id="page-village">
  <div class="stage" id="villageStage">
@@ -205,9 +276,7 @@
   <div id="townProgress" class="town-progress" hidden><span id="townProgressBar"></span></div>
   <div class="controls"><button class="cta alt" id="townAction" data-go="indoor">숲 사냥 출발</button></div>
  </div>
-</div>
-<p class="world-note">마을은 휴식과 준비를 위한 거점이야. 이동 조작 없이 건물과 숲길을 터치해 이용할 수 있어.</p>
- <details class="villageJournal" id="villageJournal"><summary>📜 소문 · 성장 기록 보기</summary>
+<details class="villageJournal" id="villageJournal"><summary>📜 소문 · 성장 기록 보기</summary>
 <div class="section-title"><h2>모험가 상태</h2><span class="badge">실내 · 야외 성장 공유</span></div>
  <div class="grid villageStats"><div class="card"><div class="stat" id="homeLevel">1<small>레벨</small></div></div><div class="card"><div class="stat" id="homeGold">0<small>골드</small></div></div><div class="card"><div class="stat" id="homeXp">0<small>누적 경험치</small></div></div></div>
  <div class="homeProgress"><div class="homeProgressTop"><b>다음 레벨까지</b><span id="homeNextXp">경험치 확인 중</span></div><div class="homeProgressTrack"><i id="homeXpProgress"></i></div></div>
@@ -216,55 +285,96 @@
 
 
 </details>
+</div>
+
 </section>
 <section class="page" id="page-run">
- <div class="runTopNav"><button class="cta alt" data-go="village">← 마을로 돌아가기</button></div>
- <div class="flex"><div><div class="mark">OUTDOOR EXPEDITION</div><h1 style="font-size:30px;margin:6px 0">숲의 원정</h1><div class="intro">화면을 보며 버튼을 누르는 게임이 아니야. 이어폰으로 사건을 듣고 <b>걷기·달리기·페이스 조절</b>로 대응하는 음성 중심 RPG야.</div></div><span class="badge">야외 GPS · 러닝머신</span></div>
- <div class="mode-hero"><div class="forest"><div class="floating"><div class="tag" id="runPhase">원정 준비</div><h2 id="runTitle">숲의 문이 열린다</h2><p id="runSubtitle">걷고 달리면서 숲의 새로운 길을 발견해.</p></div></div><div class="tracker"><div class="card"><div class="stat" id="runTime">00:00<small>게임 속 경과</small></div></div><div class="card"><div class="stat" id="runDistance">0 m<small>이동 거리</small></div></div><div class="card"><div class="stat" id="runWins">0 / 0<small>임무 성공/실패</small></div></div><div class="card"><div class="stat" id="runLoot">0 G<small>원정 골드 (시험)</small></div></div></div></div>
- <div class="card" style="margin-top:15px">
-  <div class="flex"><h3>원정 설정</h3><span class="tiny" id="runMode">원정 준비</span></div>
-  <div class="settings"><div><label for="base">기준 페이스 (분/km)</label><input id="base" type="number" value="8.5" min="5" max="15" step="0.5"></div><div><label for="duration">모험 시간</label><select id="duration"><option value="12">12분</option><option value="20" selected>20분</option><option value="30">30분</option></select></div><div><label for="style">전투 성향</label><select id="style"><option value="scout">정찰: 은신형</option><option value="vanguard">선봉: 추격형</option><option value="guardian">수호: 안정형</option></select></div></div><div class="settings"><div><label for="tmSpeed">러닝머신 속도 (km/h)</label><input id="tmSpeed" type="number" min="3" max="16" step=".5" value="7"></div></div>
-  <div class="controls"><button id="startDemo" class="devOnly" hidden aria-hidden="true" tabindex="-1">개발 모드</button><button id="startGps">GPS 탐험 시작</button><button id="startTreadmill">러닝머신 원정</button><button id="stopRun" disabled>원정 종료</button><button id="toggleVoice">음성 안내 켜기</button></div>
-  <div class="msg">야외 탐험은 <b>실제 GPS</b>를 사용하지만 아직 실기기 검증 전이야. 안전한 길에서만 사용하고, 달리는 동안 화면을 조작하지 말아야 해. 러닝머신 원정은 입력한 속도에 따라 진행돼.</div>
-  <div class="devOnly" hidden aria-hidden="true">
-  <div class="flex"><h3>달리기 조작 (시뮬레이션 전용)</h3><span class="tiny" id="paceState">현재: 기본 페이스</span></div>
-  <div class="controls"><button data-pace="quiet">천천히 · 은신</button><button data-pace="steady" class="active">보통 · 이동</button><button data-pace="surge">조금 빠르게 · 도주</button><button id="skipMinute">1분 빠르게</button><button id="skipEnd">원정 끝까지 보기</button></div>
+  <div class="runBoard" id="runBoard">
+   <div class="runArt" role="img" aria-label="숲속 오솔길과 나무가 보이는 원정 지도"></div>
+   <div class="runShade"></div>
+   <div class="runHeader">
+    <button class="runBack" data-go="village" type="button">← 마을</button>
+    <div><b>숲의 원정</b><small id="runMode">GPS · 러닝머신</small></div>
+    <button id="toggleVoice" class="runVoice" type="button">음성 켜기</button>
+   </div>
+   <div class="runNarrative">
+    <small id="runPhase">원정 준비</small>
+    <h2 id="runTitle">숲의 문이 열린다</h2>
+    <p id="runSubtitle">운동을 시작하면 탐험도 시작돼.</p>
+    <div class="runProgress"><i id="runMeter"></i></div>
+   </div>
+   <div class="runMetrics" aria-label="원정 실시간 기록">
+    <div id="runTime" class="runMetric">00:00<small>운동 시간</small></div>
+    <div id="runDistance" class="runMetric">0 m<small>이동 거리</small></div>
+    <div id="runWins" class="runMetric">0 / 0<small>임무 성공/실패</small></div>
+    <div id="runLoot" class="runMetric">0 G<small>원정 전리품</small></div>
+   </div>
+   <div class="runStartActions">
+    <button class="runMain" id="startGps">GPS 원정 시작</button>
+    <button class="runAlt" id="startTreadmill">러닝머신 원정</button>
+    <button class="runStop" id="stopRun" disabled>원정 종료</button>
+   </div>
+   <details class="runOptions" id="runOptions">
+    <summary>원정 설정</summary>
+    <div class="runOptionGrid">
+     <label>목표 시간 (선택)<select id="duration"><option value="0" selected>자유 원정 · 직접 종료</option><option value="12">12분</option><option value="20">20분</option><option value="30">30분</option><option value="45">45분</option><option value="60">60분</option></select></label>
+     <label>러닝머신 속도 (km/h)<input id="tmSpeed" type="number" min="3" max="16" step=".5" value="7"></label>
+    </div>
+    <p>GPS에서는 이동 기록을 기준으로 운동 페이스를 보정해. 러닝머신 속도는 수동 입력이므로 보상 정산 대상이 아니야.</p>
+   </details>
+   <details class="runJournal">
+    <summary>모험 소식 · 최근 사건 <span id="runRewards">전리품 0개</span></summary>
+    <div class="runStory"><b id="storyHead">경계의 숲에서 기다리는 중</b><p id="storyDetail">원정을 시작하면 음성과 함께 이야기가 진행돼.</p></div>
+    <ol class="feed" id="runFeed"><li>아직 시작하지 않았어.</li></ol>
+   </details>
+   <div hidden class="devOnly">
+    <input id="base" type="number" value="8.5">
+    <input id="style" value="scout">
+    <button id="startDemo" hidden>개발 모드</button>
+    <button id="skipMinute" hidden>1분</button><button id="skipEnd" hidden>종료</button>
+    <span id="paceState">현재: 기본 페이스</span>
+    <button data-pace="quiet">천천히</button><button data-pace="steady">보통</button><button data-pace="surge">빠르게</button>
+   </div>
   </div>
-  <div class="story" role="status" aria-live="polite"><b id="storyHead">경계의 숲에서 기다리는 중</b><p id="storyDetail">원정을 시작하면 상황이 음성과 화면으로 전달돼.</p><div class="meter"><span id="runMeter"></span></div></div>
-  <div class="section-title"><h2>최근 사건</h2><span id="runRewards" class="tiny">전리품 0개</span></div><ol class="feed" id="runFeed"><li>아직 시작하지 않았어.</li></ol>
- </div>
 </section>
 <section class="page" id="page-indoor"><div class="mark">INDOOR ACTION RPG</div><h1 style="font-size:30px;margin:9px 0">숲의 전투</h1><p class="intro"><b>1인칭 3D 전투</b>에 <b>S21의 실제 검격·투척 동작</b>과 <b>폴드6 전면 카메라 회피</b>를 연결했어. 전투 전체화면의 <b>모션 설정</b>에서 S21과 폴드6 카메라를 켜. 연결 코드는 숫자 6자리야. 설정 중에는 전투가 멈추고, 전투 패배 후에도 연결을 유지한 채 다시 시작할 수 있어.</p>
 <div class="indoor-stage"><iframe id="indoorFrame" title="기존 3D 실내 전투 프로토타입" loading="lazy" allow="camera; accelerometer; gyroscope"></iframe></div><div class="controls"><a class="cta" href="./indoor.html?v=0.38&return=preview" target="_blank" rel="noopener">3D 전투 전체화면 열기</a><button id="restartIndoor" class="cta alt">전투 화면 다시 불러오기</button><a class="cta alt" href="./controller.html?v=0.38" target="_blank" rel="noopener">S21 무기 컨트롤러</a></div>
 <div class="msg">S21로 이동·시점·공격을 조작하고 폴드6에서는 전투를 보며 몸으로 회피해. 숲길·유적·버섯 습지·공터를 탐험하면서 8종 몬스터를 만나게 돼. 적이 등장하면 방향·거리 알림과 미니맵으로 위치를 확인할 수 있어. 시야에 보이는 적은 머리 위 이름·체력 표시가 뜨고, 시야 밖의 적은 화살표가 안내해. 돌진·가로 공격·내려찍기를 몸으로 피하자. S21 컨트롤러의 휘두르기는 검격·투척으로 전송돼. 카메라·통신이 불안정하면 기존 화면 버튼으로 계속 전투할 수 있어. 외부 연결 서버와 모델 다운로드가 필요해 실기기 검증 전이야.</div></section>
-<section class="page" id="page-character"><div class="mark">CHARACTER & PROGRESSION</div><h1 style="font-size:30px;margin:9px 0">모험가의 성장</h1><p class="intro">숲의 전투와 야외 러닝은 별개 게임이 아니라 같은 캐릭터를 성장시키는 다른 방법이야. 저장된 진행 상황을 확인해 봐.</p>
-<div class="section-title"><h2>내 캐릭터 · 장비 외형 미리보기</h2><span class="badge">실전 장비 · 제작 가능</span></div>
-<div class="loadout-layout">
- <div class="avatar-display"><img class="avatar-concept" src="./assets/hero-concept.webp" width="640" height="960" loading="lazy" decoding="async" alt="숲 사냥꾼의 기본 컨셉 일러스트"><div id="avatarPortrait" class="avatar-art" aria-label="장비를 변경하면 외형이 바뀌는 작은 시착 일러스트"></div><div class="avatar-title"><span class="badge">ADVENTURER</span><span class="badge">기본 캐릭터 아트</span></div><div class="avatar-caption"><small>우측 작은 시착 그림에 장비 변경 반영</small><span id="avatarCaption">선택한 장비의 외형을 확인해</span></div></div>
- <div class="loadout-panel"><h2>모험가 장비실</h2><p class="gear-intro">숲 모험가 장비를 제작해 장착하면 실제 전투에도 능력치가 반영돼. 아래 메뉴는 자유롭게 외형을 미리 보는 <b>시착 기능</b>이야.</p>
-  <div class="gear-list">
-   <label><span>무기</span><select id="gear-weapon"></select></label>
-   <label><span>투구 · 머리장식</span><select id="gear-head"></select></label>
-   <label><span>갑옷</span><select id="gear-armor"></select></label>
-   <label><span>보조장비</span><select id="gear-offhand"></select></label>
+<section class="page" id="page-character">
+ <div class="gearScreen">
+  <div class="gearScreenHead"><button type="button" class="runBack" data-go="village">← 마을</button><div><small>CHARACTER / INVENTORY</small><h1>장비 · 성장</h1></div><button id="openCraft" class="gearCraftOpen">⚒ 대장간 · 제작</button></div>
+  <div class="gearStage">
+   <div class="heroPortrait"><img class="avatar-concept" src="./assets/hero-concept.webp" loading="lazy" decoding="async" alt="숲의 모험가 기본 일러스트"><div class="heroPortraitInfo"><b>나의 모험가</b><span id="avatarCaption">장착 중인 장비</span></div></div>
+   <div class="gearEquipment">
+    <div class="section-title"><h2>모험가 장비실</h2><span class="badge">보유 장비만 장착</span></div>
+    <div class="gearSlots">
+     <label><span id="slotArt-meleeWeapon" class="slotArt"></span><span>근접 무기<select id="gear-meleeWeapon"></select></span></label>
+     <label><span id="slotArt-rangedWeapon" class="slotArt"></span><span>원거리 무기<select id="gear-rangedWeapon"></select></span></label>
+     <label><span id="slotArt-head" class="slotArt"></span><span>머리 장비<select id="gear-head"></select></span></label>
+     <label><span id="slotArt-armor" class="slotArt"></span><span>갑옷<select id="gear-armor"></select></span></label>
+     <label><span id="slotArt-offhand" class="slotArt"></span><span>보조장비<select id="gear-offhand"></select></span></label>
+    </div>
+    <div class="equippedStyle"><button id="selectMelee" data-active-weapon="melee">⚔ 전투 시작 검</button><button id="selectRanged" data-active-weapon="ranged">➶ 전투 시작 활</button></div>
+    <div class="combat-info" id="combatStats"></div>
+    <div class="gear-status" id="gearStatus" role="status" aria-live="polite">장착 상태 확인 중</div>
+    <div class="gearQuick">
+     <div id="cLevel">1<small>레벨</small></div><div id="cXp">0 XP<small>경험치</small></div><div id="cGold">0 G<small>골드</small></div>
+     <div id="cTorch">0<small>횃불</small></div><div id="cMap">0<small>지도 조각</small></div><div id="cBandage">0<small>붕대</small></div>
+    </div>
+    <button id="startCombat" class="gearHuntBtn">착용 장비로 숲 사냥 출발</button>
+   </div>
   </div>
-  <div class="gear-presets"><button data-outfit="hunter">숲 사냥꾼</button><button data-outfit="beginner">여행 모험가</button><button data-outfit="scout">숲 정찰병</button><button data-outfit="knight">철갑 기사</button><button data-outfit="mage">숲의 마도사</button></div>
-  <div class="gear-status" id="gearStatus" role="status" aria-live="polite">착용 장비를 불러오는 중이야.</div>
-  <p class="gear-disclaimer">시착은 보유 장비를 바꾸지 않아. 아래에서 골드와 재료를 사용해 제작하고 <b>실제 장착</b>해야 전투 능력치가 달라져.</p>
  </div>
-</div>
-<section id="craftBench" aria-label="장비 제작과 전리품">
- <div class="flex"><h2 style="font-size:21px;margin:0">숲마을 대장간 · 장비 제작</h2><span class="badge">전투 보상으로 성장</span></div>
- <p class="gear-intro">실내 3D 사냥이나 야외 GPS 원정에서 골드와 제작 재료를 획득해 장비를 만들 수 있어. 고급 장비는 레벨과 보스 격파가 필요해.</p>
- <div class="combat-info" id="combatStats"></div>
- <div class="material-grid" id="craftMaterials"></div>
- <div id="craftStatus" role="status" aria-live="polite">제작 재료를 확인하는 중...</div>
- <div class="controls"><button id="claimCombat" class="primary">전투 결과 정산</button><button id="startCombat" class="cta alt">숲 사냥으로 출발</button></div>
- <div class="section-title"><h2 style="font-size:17px">제작 · 장착 목록</h2><span class="tiny">필요 재료와 레벨을 확인해</span></div>
- <div class="craft-list" id="craftList"></div>
+ <section id="craftBench" class="craftDialog" aria-label="대장간 · 장비 제작" hidden>
+  <div class="craftWindow">
+   <div class="craftHeader"><div><small>BLACKSMITH / CRAFTING</small><h2>대장간 · 장비 제작</h2><p>재료로 만들고, 보유한 장비만 장착할 수 있어.</p></div><button id="closeCraft" type="button" aria-label="제작 창 닫기">✕</button></div>
+   <div class="material-grid" id="craftMaterials"></div>
+   <div id="craftStatus" role="status" aria-live="polite">제작 재료를 확인하는 중...</div>
+   <div class="controls"><button id="claimCombat" class="primary">전투 결과 정산</button></div>
+   <div class="craft-list" id="craftList"></div>
+  </div>
+ </section>
 </section>
-<div class="grid"><div class="card"><div class="stat" id="cLevel">1<small>레벨</small></div></div><div class="card"><div class="stat" id="cXp">0 XP<small>경험치</small></div></div><div class="card"><div class="stat" id="cGold">0 G<small>골드</small></div></div></div><div class="section-title"><h2>탐험 가방</h2></div><div class="grid"><div class="card"><div class="stat" id="cTorch">0<small>횃불</small></div></div><div class="card"><div class="stat" id="cMap">0<small>지도 조각</small></div></div><div class="card"><div class="stat" id="cBandage">0<small>붕대</small></div></div></div>
-<div class="msg">숲에서 얻은 전리품을 확인하고, 대장간에서 실제 사용할 장비로 제작해 보자.</div></section>
 <footer class="footer">MOTION RPG · 숲마을을 거점으로 실내 전투와 야외 탐험을 연결하는 통합 콘셉트 시안 · 기존 v0.24 본게임 보존</footer>
 </div>
 <script type="module">
