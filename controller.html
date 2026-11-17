@@ -63,11 +63,11 @@ button{font-size:13px;padding:10px 11px;margin:4px 4px 0 0}
     <div id="movePad" class="touchPad" aria-label="가상 이동 조이스틱"><b>이동</b><span class="cross"></span><div id="moveKnob"></div></div>
     <div id="lookPad" class="touchPad" aria-label="시점 드래그"><b>시점 회전</b><span class="cross"></span></div>
    </div>
-   <button id="lockToggle" class="secondary">락온 켜기</button>
+   <button id="lockToggle" class="secondary">락온 켜기</button><button id="remoteSkill" class="secondary">✦ 스킬 사용</button>
    <div id="controlState" class="muted" role="status">이동/시점 입력 대기 · 연결 시 활성</div>
   </section>
   
-  <section class="card"><b>동작 타입 · 버튼 없이 전환 가능</b><div><button class="mode active" data-mode="auto">자동 전투</button><button class="mode secondary" data-mode="throw">투척 고정</button><button class="mode secondary" data-mode="melee">근접 고정</button></div><p class="muted" id="hint">자동: 앞으로 뻗으면 투척, 가로·세로 휘두르면 근접. 휴대폰을 잡는 각도에 따라 달라질 수 있어.</p><p class="muted" id="modeInfo">전투 모드: 자동</p></section>
+  <section class="card"><b>장착 무기 전환</b><div class="weaponChoice"><button class="mode active" data-mode="melee">⚔ 근접 · 검</button><button class="mode secondary" data-mode="throw">➶ 원거리 · 활</button><button class="mode secondary" data-mode="auto">자동 전환 시험</button></div><p class="muted" id="hint">기본은 버튼으로 무기 전환. 자동 전환은 선택 기능이며 센서 인식이 불안정할 수 있어.</p><p class="muted" id="modeInfo">현재 무기: 근접</p></section>
   <section class="card"><b>동작 민감도 · <span id="sensitivityLabel">보통</span></b><input id="sensitivity" type="range" min="1" max="5" step="1" value="3" /><div class="muted">낮음은 강한 회전만 인식하고, 높음은 작은 손목 회전도 인식한다. 지금은 <b>낮음</b>부터 권장.</div></section>
   <details id="advancedSettings"><summary>검격 방향 · 센서축 보정 · 고급 설정</summary>
   <section class="card"><b>검격 방향</b><p class="muted">근접 모드일 때 가로·세로·찌르기 궤적을 따로 전송해. 자동은 휴대폰 센서축으로 추정하므로 쥔 방향에 따라 오판할 수 있어.</p><label for="cutStyle" class="muted">인식 방식</label><select id="cutStyle" aria-label="검격 스타일"><option value="auto">동작 방향 자동 추정 (시험용)</option><option value="sweep">가로 베기 고정</option><option value="overhead">세로 내려찍기 고정</option><option value="thrust">앞으로 찌르기 고정</option></select><p id="cutHint" class="muted">인식이 헷갈리면 방향을 고정해 비교해 봐.</p>
@@ -85,7 +85,7 @@ import {classifyMeleeGesture,classifyAttackIntent,motionFeatures} from "./src/pl
 import {createWirelessController,cleanRoom} from "./src/peer-bridge.mjs?v=0.31";
 import {movementVector} from "./src/remote-control.mjs?v=0.35";
 const $=id=>document.getElementById(id);
-let active=false,count=0,mode="auto",sensitivity=3,calibrating=false,calibration=[],sampleTime=0,seq=0,received=0,sensorEvents=0,sensorStartedAt=0;
+let active=false,count=0,mode="melee",sensitivity=3,calibrating=false,calibration=[],sampleTime=0,seq=0,received=0,sensorEvents=0,sensorStartedAt=0;
 let recentMotion=[],pendingAttack=null,trainingStyle=null,trainingSamples=[],trained={};
 try{const saved=JSON.parse(localStorage.getItem("motion-rpg-s21-style-templates-v1")||"{}");if(saved&&typeof saved==="object")trained=saved;}catch{}
 try{sensitivity=Math.max(1,Math.min(5,Number(localStorage.getItem("motion-rpg-s21-sensitivity")||3)));}catch{}
@@ -104,10 +104,11 @@ const wireless=createWirelessController({
 
  },
  onMessage:data=>{
-  if(data?.type==="hello")$("pairStatus").textContent=active?"연결됨 · S21 동작을 감지해 봐":"연결됨 · 아래 [센서 켜기]를 눌러야 검격이 작동해.";
+  if(data?.type==="hello"){$("pairStatus").textContent=active?"연결됨 · S21 동작을 감지해 봐":"연결됨 · 아래 [센서 켜기]를 눌러야 검격이 작동해.";controlSend("weapon-switch",{mode:mode==="throw"?"ranged":mode});}
   if(data?.type==="diagnostic-ack")$("pairStatus").textContent="통신 확인 완료 · S21 → 폴드6 연결 정상. 공격 동작은 별도로 시험해.";
   if(data?.type==="target-state"){lockWanted=!!data.enabled;$("lockToggle").textContent=lockWanted?"락온 끄기":"락온 켜기";$("controlState").textContent=data.enabled?"락온 활성 · 시점 자동 추적 중":"자유 시점 · 오른쪽 패드로 회전";}
   if(data?.type==="input-ack"){$("controlState").textContent=data.message||"S21 조작 입력 확인";}
+  if(data?.type==="weapon-state"){$("modeInfo").textContent="전투 무기: "+data.label;}
   if(data?.type==="gesture-ack"){
    const desc=data.accepted?"폴드6 전투 입력 확인":data.reason||"전투에서 입력을 사용할 수 없어";
    $("lastSignal").textContent="최근 동작: "+desc+" · "+new Date().toLocaleTimeString("ko-KR");
@@ -174,6 +175,7 @@ function bindLookPad(){
  pad.addEventListener("pointerup",end);pad.addEventListener("pointercancel",end);
 }
 bindMovePad();bindLookPad();
+$("remoteSkill").onclick=()=>{const sent=controlSend("skill");$("controlState").textContent=sent?"스킬 명령 전송":"게임 연결 후 사용할 수 있어."};
 $("lockToggle").onclick=()=>{
  if(!wireless.connected){$("controlState").textContent="폴드6 연결 후 사용할 수 있어.";return;}
  lockWanted=!lockWanted;controlSend("target",{action:"toggle"});
@@ -194,8 +196,9 @@ function syncSettings(){
 function changeMode(next){
  mode=next;
  document.querySelectorAll("[data-mode]").forEach(b=>b.classList.toggle("active",b.dataset.mode===mode));
- $("hint").textContent=mode==="auto"?"자동: 앞으로 뻗으면 원거리, 휘두르면 근접. 인식이 틀리면 방향 학습 또는 고정 모드를 사용해.":mode==="throw"?"투척 고정: 던지고 팔을 되돌릴 때 재발동하지 않도록 대기시간이 있어.":"근접 고정: 가로·세로·찌르기 중 방향을 구분해.";
- $("modeInfo").textContent="전투 모드: "+({auto:"자동",throw:"투척 고정",melee:"근접 고정"}[mode]);
+ $("hint").textContent=mode==="auto"?"자동 전환 시험 · 동작에 따라 무기를 바꾸지만 오인식 가능성이 있어.":mode==="throw"?"활 준비 · 던지는 동작으로 화살을 발사해. 근접 공격은 차단돼.":"검 준비 · 휘두르기/찌르기 동작으로 공격해.";
+ $("modeInfo").textContent="전투 모드: "+({auto:"자동 전환 시험",throw:"원거리",melee:"근접"}[mode]);
+ controlSend("weapon-switch",{mode:mode==="throw"?"ranged":mode});
  pendingAttack=null;recentMotion=[];
  syncSettings();
 }
@@ -227,7 +230,7 @@ function flushPendingAttack(){
  const action=classifyAttackIntent(pending.samples,pending.mode,trained,cutStyle);
  if(action.type==="throw")detector.protectThrow(pending.startAt);
  count++;$("count").textContent=count;
- const packet={type:"gesture",gesture:action.type,strength:pending.gesture.strength,
+ const packet={type:"gesture",gesture:action.type,autoSwitch:mode==="auto",strength:pending.gesture.strength,
    time:pending.startAt,seq:++seq,session:wireless.room};
  if(action.type==="melee")packet.style=action.style;
  const sent=wireless.send(packet);
