@@ -250,7 +250,7 @@
 <div id="motionCooldown" class="motionCooldown" hidden aria-label="S21 공격 준비 상태">
  <div class="motionCooldownLabel"><b id="motionCooldownState">S21 상태 확인 중</b><strong id="motionCooldownTime">—</strong></div>
  <div id="motionCooldownTrack" class="motionCooldownTrack" role="progressbar" aria-label="S21 공격 재준비 진행도" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><i id="motionCooldownFill"></i></div>
-</div></div><div id="forestZoneHud" aria-live="off">사냥꾼의 숲길</div><div id="lockHud" aria-live="off" hidden>◎ 락온 · 가까운 적 조준 보조</div><div id="cross"><div class="ring"></div></div><div class="ui" id="instruction">화면을 드래그하면 시야가 움직입니다</div><div id="weaponStatus">무기 준비 중</div><div id="attackFeedback"></div><div id="reactionFx" role="status" aria-live="polite"></div><div id="skillBurst" aria-hidden="true"><i></i><i></i><i></i></div><div id="toast"></div><div id="hitFx" aria-hidden="true"></div><div id="damageNumber" aria-hidden="true"></div>
+</div></div><div id="forestZoneHud" aria-live="off">사냥꾼의 숲길</div><div id="lockHud" aria-live="off" hidden>◎ 자동 락온 · 적 추적 중</div><div id="cross"><div class="ring"></div></div><div class="ui" id="instruction">화면을 드래그하면 시야가 움직입니다</div><div id="weaponStatus">무기 준비 중</div><div id="attackFeedback"></div><div id="reactionFx" role="status" aria-live="polite"></div><div id="skillBurst" aria-hidden="true"><i></i><i></i><i></i></div><div id="toast"></div><div id="hitFx" aria-hidden="true"></div><div id="damageNumber" aria-hidden="true"></div>
 <div class="ui" id="controls"><div id="moveArea"><div id="joy"><div id="stick">✦</div></div><span>이동 · 키보드 WASD</span></div><div id="actions"><button class="action weaponSwitch" id="weaponToggle" aria-label="무기 전환">무기 전환</button><button class="action bandageAction" id="bandage" aria-label="붕대 사용"><span class="icon">✚</span><b>붕대 <span id="bandageCount">0</span></b></button><button class="action skillTrigger" id="skillAttack" aria-label="스킬 발동"><span class="icon">✦</span><b>스킬</b></button><button class="action" id="dodge" aria-label="회피"><span class="icon">↪</span><b>회피</b></button><button class="action" id="sword" aria-label="근접 휘두르기"><span class="icon">⚔️</span><b>근접 휘두르기</b></button><button class="action" id="fire" aria-label="마법 투척"><span class="icon">✨</span><b>마법 투척</b></button></div></div><div id="footerNote">근접 버튼: 좌우 드래그 = 가로 베기 · 아래 = 내려찍기 · 위 = 찌르기</div>
 <div id="intro"><div id="introCard"><div class="emblem">✦ 🧙 ✦</div><h2>경계의 숲</h2><p>숲을 탐색하고 몬스터의 움직임을 살펴봐.<br><b>S21로 무기를 휘두르고</b> 실제 몸으로 공격을 피해.<br>골렘의 투석과 몬스터의 돌진은 움직여서 벗어날 수 있어.</p><button id="begin">사냥 시작하기</button><small>드래그: 시야 이동 · 근접 버튼 방향 드래그: 가로/세로/찌르기<br>오른쪽 상단 [모션 설정]에서 S21 무선 무기와 전면 카메라 회피를 연결할 수 있어</small></div></div>
 <div id="huntExit" hidden role="dialog" aria-modal="true" aria-labelledby="huntExitTitle">
@@ -262,7 +262,7 @@
 <div id="err"></div><div id="retryWrap" hidden><strong>기력이 소진됐어</strong><p>S21 연결은 유지돼. 바로 재도전하면 새 연결 코드를 입력할 필요 없어.</p><button id="retryCombat">기력 회복 · 다시 싸우기</button></div>
 <div id="motionPanel" hidden role="dialog" aria-modal="true" aria-label="실전 모션 입력 설정">
  <div class="motionDialog">
-  <div class="motionTop"><div><small>MOTION RPG / v0.43.6</small><h2>실전 모션 전투 설정</h2></div><button id="motionClose" class="subtle">게임으로 돌아가기</button></div>
+  <div class="motionTop"><div><small>MOTION RPG / v0.44</small><h2>실전 모션 전투 설정</h2></div><button id="motionClose" class="subtle">게임으로 돌아가기</button></div>
   <p class="motionLead">폴드6에서는 3D 전투와 전면 카메라 회피를 사용하고, S21에서는 실제 휘두르기·투척 동작을 전송해. 둘 다 선택 기능이야.</p>
   <section class="motionSection">
    <h3>① S21 무기 컨트롤러 연결 · 숫자 6자리</h3>
@@ -272,6 +272,8 @@
    <a id="controllerLink" href="./controller.html" target="_blank" rel="noopener">S21 컨트롤러 화면</a>
    <div class="motionInfo" id="linkStatus" role="status" aria-live="polite">S21 연결 대기 · 무선 통신은 외부 PeerJS 중계 서버를 사용해.</div>
    <div class="motionInfo" id="remoteStatus">검격/투척 입력: 없음</div>
+   <div class="motionRow"><button id="autoLockSetting" type="button" class="subtle" aria-pressed="true">◎ 자동 락온 ON · 시점 추적</button></div>
+   <p>몬스터 발견 시 자동으로 시점이 따라가며, 손으로 시점을 움직이면 잠시 일시 중지돼. S21의 락온 버튼이나 이 설정에서 끌 수 있어.</p>
   </section>
   <section class="motionSection">
    <h3>② 폴드6 카메라 회피</h3>
@@ -295,7 +297,8 @@ import {attackArea,attackWindup,attackVisualState,warningFootprint} from "./src/
 import {createWirelessHost} from "./src/peer-bridge.mjs?v=0.43.4";
 import {createRemoteInput,lockOnYaw,rotateToward} from "./src/remote-control.mjs?v=0.41";
 import {FOREST_MONSTERS,forestZoneAt,chooseForestMonster,monsterBehaviour} from "./src/forest-encounters.mjs?v=0.35";
-import {createMonsterMind,monsterMotionStep,canAcquireTarget,retainTarget} from "./src/monster-ai.mjs?v=0.38";
+import {createMonsterMind,monsterMotionStep,retainTarget} from "./src/monster-ai.mjs?v=0.44";
+import {canAutoAcquire,followTargetYaw,assistedAimYaw,AUTO_LOCK_MANUAL_PAUSE} from "./src/target-assist.mjs?v=0.44";
 import {rangedProfile,isRangedStyle,canStartRanged,fireRangedProjectile,projectileStep} from "./src/enemy-ranged.mjs?v=0.38";
 import {relativeTarget,radarTarget,projectEnemyHead,enemyEdgePointer,monsterHeadHeight,compassDirection,RADAR_RANGE} from "./src/combat-navigation.mjs?v=0.36";
 import {validMotionPacket} from "./src/motion-core.mjs?v=0.43.6";
@@ -726,9 +729,14 @@ function swordHit(style=null){
  return true;
 }
 function launchPlayerProjectile(action){
- const f=forward(),on=radiusAiming();
  const d=Math.hypot(enemy.x-camera.x,enemy.z-camera.z),kind=projectileProfile(action.weapon);
- const px=camera.x+Math.cos(yaw)*.34,py=camera.y-.21,pz=camera.z+Math.sin(yaw)*.34;
+ // Only a tiny correction when the player is already aiming close to target.
+ // An off-screen monster, wrong elevation or out-of-range arrow cannot auto-hit.
+ const attackYaw=targetLocked&&autoLockEnabled&&Math.abs(pitch)<.24?
+  assistedAimYaw(camera,yaw,enemy,.13,13):yaw;
+ const f=[Math.sin(attackYaw)*Math.cos(pitch),Math.sin(pitch),-Math.cos(attackYaw)*Math.cos(pitch)];
+ const on=radiusAiming()||(targetLocked&&autoLockEnabled&&attackYaw!==yaw&&d<=13&&Math.abs(pitch)<.24);
+ const px=camera.x+Math.cos(attackYaw)*.34,py=camera.y-.21,pz=camera.z+Math.sin(attackYaw)*.34;
  projectiles.push({x:px,y:py,z:pz,vx:f[0]*kind.speed,vy:f[1]*kind.speed,vz:f[2]*kind.speed,
   kind:kind.kind,heading:Math.atan2(f[0],f[2]),speed:kind.speed,
   life:.9,age:0,traveled:0,on,targetDist:on?d:16,
@@ -742,7 +750,12 @@ function updatePlayerActions(){
  if(meleeAction){
   if(!meleeAction.damageDone&&clock>=meleeAction.contactAt){
    meleeAction.damageDone=true;
-   const hit=meleeHitInfo(meleeAction,camera,enemy,yaw);
+   let hit=meleeHitInfo(meleeAction,camera,enemy,yaw);
+   if(!hit.canHit&&targetLocked&&autoLockEnabled){
+    const maxReach=weaponProfile(meleeAction.weapon).reach*(meleeAction.style==="thrust"?1.08:1);
+    const corrected=assistedAimYaw(camera,yaw,enemy,.17,maxReach);
+    if(corrected!==yaw)hit=meleeHitInfo(meleeAction,camera,enemy,corrected);
+   }
    if(!enemy.dead&&hit.canHit){
     const strength=weaponProfile(meleeAction.weapon).damage;
     const multiplier=meleeAction.style==="overhead"?1.16:meleeAction.style==="thrust"?.95:1;
@@ -779,7 +792,7 @@ function currentHuntRecord(){return {kills,score,sessionId,updatedAt:Date.now(),
 function bankProgress(){try{localStorage.setItem(RESULT_KEY,JSON.stringify(currentHuntRecord()))}catch(e){}}
 function damage(n,weapon="sword"){if(enemy.dead)return;enemyMind.aggro=true;enemy.hp=Math.max(0,enemy.hp-n);el('enemyHP').style.width=(enemy.hp/enemy.max*100)+'%';let x=enemy.x,y=1.4,z=enemy.z;
 const tint=weapon==="axe"||weapon==="ember"?[1,.58,.26]:weapon==="staff"||weapon==="orb"?[.38,.82,1]:weapon==="greatsword"||weapon==="aura"?[.50,.76,1]:weapon==="bow"||weapon==="arrow"?[.74,.94,.58]:[.80,1,.69];
-for(let i=0;i<16;i++){let p=(rand()-.5)*6,t=rand()*6.28,s=.65+rand()*2.6;sparks.push({x,y,z,vx:Math.cos(t)*s,vy:rand()*3.7,vz:Math.sin(t)*s,r:.04+rand()*.07,life:.4+rand()*.5,t:0,col:[tint[0],Math.min(1,tint[1]+rand()*.16),Math.min(1,tint[2]+rand()*.10)]})}toast('✦ '+n+' 데미지');beep(165,.12,'triangle',.11);if(enemy.hp<=0){enemy.dead=true;enemy.windup=0;enemy.impactUntil=0;enemyShots=[];el('attackBanner').hidden=true;el('enemyTag').hidden=true;el('enemyArrow').hidden=true;enemy.respawn=1.6;score+=80+enemy.kind*20;kills++;huntLog.push({name:enemy.name||"몬스터",at:huntElapsedSec});if(huntLog.length>25)huntLog.shift();heroHp=Math.min(stats.maxHp,heroHp+5);showHero();bankProgress();el('score').textContent=String(score).padStart(3,'0');el('enemyHud').style.opacity='0';el('stage').textContent=String(kills).padStart(2,'0');el('status').textContent='마력체 격파! 마을로 돌아가면 보상을 수령한다';setTimeout(()=>toast('마력체 격파 · 마을 보상 저장!'),350);beep(830,.25,'sine',.1)}}
+for(let i=0;i<16;i++){let p=(rand()-.5)*6,t=rand()*6.28,s=.65+rand()*2.6;sparks.push({x,y,z,vx:Math.cos(t)*s,vy:rand()*3.7,vz:Math.sin(t)*s,r:.04+rand()*.07,life:.4+rand()*.5,t:0,col:[tint[0],Math.min(1,tint[1]+rand()*.16),Math.min(1,tint[2]+rand()*.10)]})}toast('✦ '+n+' 데미지');beep(165,.12,'triangle',.11);if(enemy.hp<=0){enemy.dead=true;targetLocked=false;syncTargetUi();enemy.windup=0;enemy.impactUntil=0;enemyShots=[];el('attackBanner').hidden=true;el('enemyTag').hidden=true;el('enemyArrow').hidden=true;enemy.respawn=1.6;score+=80+enemy.kind*20;kills++;huntLog.push({name:enemy.name||"몬스터",at:huntElapsedSec});if(huntLog.length>25)huntLog.shift();heroHp=Math.min(stats.maxHp,heroHp+5);showHero();bankProgress();el('score').textContent=String(score).padStart(3,'0');el('enemyHud').style.opacity='0';el('stage').textContent=String(kills).padStart(2,'0');el('status').textContent='마력체 격파! 마을로 돌아가면 보상을 수령한다';setTimeout(()=>toast('마력체 격파 · 마을 보상 저장!'),350);beep(830,.25,'sine',.1)}}
 function spawnEnemy(){
  const oldKind=enemy.kind,area=forestZoneAt(camera.x,camera.z);
  enemy.kind=chooseForestMonster(area.id,rand,oldKind);
@@ -794,6 +807,7 @@ function spawnEnemy(){
  enemy.attackTimer=2.5;enemy.windup=0;enemy.windupTotal=0;
  enemy.impactUntil=0;enemy.impactDuration=.54;enemy.attackStyle="slam";enemy.dead=false;
  enemy.name=creature.name;enemySpawnClock=clock;lastRadarClock=-99;
+ targetLocked=false;syncTargetUi();
  el("monName").textContent=creature.icon+" "+enemy.name;
  el("enemyHP").style.width="100%";el("enemyHud").style.opacity="1";
  el("status").textContent=area.name+" · "+enemy.name+" 출현. 움직임을 보고 공격하세요.";
@@ -832,7 +846,8 @@ function updateEnemy(dt){
   el("attackBannerMeter").style.width=Math.max(0,100*enemy.windup/enemy.windupTotal).toFixed(0)+"%";
   if(enemy.windup<=0){
    enemy.impactDuration=.54;enemy.impactUntil=clock+enemy.impactDuration;
-   el("attackBanner").hidden=true;
+    el("attackBanner").hidden=true;
+   enemyMind.retreatUntil=clock+(isRangedStyle(enemy.attackStyle)?1.10:1.40);
    if(isRangedStyle(enemy.attackStyle)){
     // A launched projectile flies toward the position aimed at RELEASE. It
     // does not hit instantly, track a moving player or require a UI button.
@@ -894,15 +909,17 @@ function updateEnemy(dt){
 }
 function update(dt){if(!el("motionPanel").hidden||document.hidden)return;clock+=dt;if(!active)return;huntElapsedSec+=dt;const zone=forestZoneAt(camera.x,camera.z);
 el("forestZoneHud").textContent=zone.name;
-if(targetLocked&&(!motionHost.connected||!retainTarget(camera,enemy))){
- targetLocked=false;
- if(motionHost.connected)motionHost.send({type:"target-state",enabled:false});
+if(targetLocked&&(!autoLockEnabled||!retainTarget(camera,enemy)||enemy.dead||worldMode)){
+ targetLocked=false;syncTargetUi();
 }
-if(targetLocked&&motionHost.connected){
+if(autoLockEnabled&&!targetLocked&&!worldMode&&clock>=manualAimUntil&&canAutoAcquire(camera,yaw,enemy)){
+ targetLocked=true;syncTargetUi();
+}
+if(targetLocked){
  const direction=lockOnYaw(camera,enemy);
- if(direction!==null)yaw=rotateToward(yaw,direction,dt*2.6);
+ if(direction!==null)yaw=followTargetYaw(yaw,direction,dt);
 }
-el("lockHud").hidden=!(targetLocked&&motionHost.connected&&!enemy.dead);
+el("lockHud").hidden=!(targetLocked&&!enemy.dead);
 const remote=motionHost.connected?remoteInput.current(Date.now()):{x:0,y:0};
 let f=forward(),forwardX=Math.sin(yaw),forwardZ=-Math.cos(yaw),rightX=Math.cos(yaw),rightZ=Math.sin(yaw),mx=stick.x+remote.x+(keys.KeyD||keys.ArrowRight?1:0)-(keys.KeyA||keys.ArrowLeft?1:0),my=stick.y+remote.y+(keys.KeyS||keys.ArrowDown?1:0)-(keys.KeyW||keys.ArrowUp?1:0);let len=Math.hypot(mx,my);if(len>1){mx/=len;my/=len}let speed=4.0;camera.x+=(forwardX*-my+rightX*mx)*speed*dt;camera.z+=(forwardZ*-my+rightZ*mx)*speed*dt;camera.x=Math.max(-22,Math.min(22,camera.x));camera.z=Math.max(-31,Math.min(7,camera.z));
 if(!enemy.dead){
@@ -1106,7 +1123,7 @@ function render(){
  requestAnimationFrame(loop);
 }
 function loop(t){let dt=Math.min(.05,Math.max(.001,(t-last)/1000||.016));last=t;update(dt);render()}
-function dragCamera(){let pId=null,lx=0,ly=0;const target=cvs;target.addEventListener('pointerdown',e=>{if(!active)return;pId=e.pointerId;lx=e.clientX;ly=e.clientY;target.setPointerCapture(pId)});target.addEventListener('pointermove',e=>{if(e.pointerId!==pId)return;let dx=e.clientX-lx,dy=e.clientY-ly;lx=e.clientX;ly=e.clientY;yaw+=dx*.0042;pitch=Math.max(-.72,Math.min(.57,pitch-dy*.0038))});const stop=e=>{if(e.pointerId===pId)pId=null};target.addEventListener('pointerup',stop);target.addEventListener('pointercancel',stop)}
+function dragCamera(){let pId=null,lx=0,ly=0;const target=cvs;target.addEventListener('pointerdown',e=>{if(!active)return;pId=e.pointerId;lx=e.clientX;ly=e.clientY;target.setPointerCapture(pId)});target.addEventListener('pointermove',e=>{if(e.pointerId!==pId)return;let dx=e.clientX-lx,dy=e.clientY-ly;lx=e.clientX;ly=e.clientY;if(Math.abs(dx)+Math.abs(dy)>0)pauseAutoAim();yaw+=dx*.0042;pitch=Math.max(-.72,Math.min(.57,pitch-dy*.0038))});const stop=e=>{if(e.pointerId===pId)pId=null};target.addEventListener('pointerup',stop);target.addEventListener('pointercancel',stop)}
 function joystick(){const area=el('joy'),stickEl=el('stick');let pid=null;function redraw(e){let r=area.getBoundingClientRect(),dx=(e.clientX-(r.left+r.width/2)),dy=e.clientY-(r.top+r.height/2),m=Math.hypot(dx,dy),lim=r.width*.34;if(m>lim){dx*=lim/m;dy*=lim/m}stick.x=dx/lim;stick.y=dy/lim;stickEl.style.transform=`translate(${dx}px,${dy}px)`}area.addEventListener('pointerdown',e=>{if(!active)return;pid=e.pointerId;area.setPointerCapture(pid);redraw(e)});area.addEventListener('pointermove',e=>{if(e.pointerId===pid)redraw(e)});function end(e){if(e.pointerId!==pid)return;pid=null;stick.x=0;stick.y=0;stickEl.style.transform='translate(0,0)'}area.addEventListener('pointerup',end);area.addEventListener('pointercancel',end)}
 
 /* v0.30 - Optional two-device motion controls.
@@ -1120,9 +1137,9 @@ const motionHost=createWirelessHost({
    sensorReport=null;sensorReportAt=0;lastSensorSeq=-1;
    motionHost.send({type:"weapon-state",mode:activeWeaponMode,label:equippedWeapon()});
    lastMotionSequence=-1;lastMotionAt=-Infinity;remoteInput.reset();
-   targetLocked=false;motionHost.send({type:"target-state",enabled:false});
+   syncTargetUi(true);
   }
-  if(!state.connected&&wasLinked){remoteInput.reset();sensorReport=null;sensorReportAt=0;lastSensorSeq=-1;}
+  if(!state.connected&&wasLinked){remoteInput.reset();sensorReport=null;sensorReportAt=0;lastSensorSeq=-1;syncTargetUi();}
   wasLinked=state.connected;
   refreshMotionIndicator();
  },
@@ -1160,17 +1177,12 @@ const motionHost=createWirelessHost({
     const ok=activateSkill();
     motionHost.send({type:"input-ack",message:ok?"스킬 발동":"스킬 대기 중 또는 전투 중"});
    }else if(remote.type==="look"&&active&&!worldMode&&el("motionPanel").hidden){
-    targetLocked=false;
+    pauseAutoAim();
     yaw+=remote.dx*.125;
     pitch=Math.max(-.72,Math.min(.57,pitch-remote.dy*.105));
-    motionHost.send({type:"target-state",enabled:false});
    }else if(remote.type==="target"){
-    const rejected=!targetLocked&&!canAcquireTarget(camera,yaw,enemy);
-    if(targetLocked){targetLocked=false;}
-    else if(!rejected){targetLocked=true;}
-    motionHost.send({type:"target-state",enabled:targetLocked});
-    if(rejected)motionHost.send({type:"input-ack",message:"락온 실패 · 적을 화면 앞쪽 13m 이내에 두고 다시 눌러"});
-    el("lockHud").hidden=!targetLocked;
+    setAutoLock(!autoLockEnabled);
+    motionHost.send({type:"input-ack",message:autoLockEnabled?"자동 락온 활성 · 적 발견 시 추적":"자동 락온 해제 · 자유 시점"});
    }
    return;
   }
@@ -1218,6 +1230,37 @@ const motionHost=createWirelessHost({
  }
 });
 const remoteInput=createRemoteInput();let targetLocked=false;
+const AUTO_LOCK_KEY="motion-rpg-auto-lock-v1";
+let autoLockEnabled=true,manualAimUntil=0,lastTargetState="";
+try{autoLockEnabled=localStorage.getItem(AUTO_LOCK_KEY)!=="off";}catch{}
+function syncTargetUi(force=false){
+ const locked=targetLocked&&!enemy.dead&&!worldMode;
+ const button=el("autoLockSetting");
+ if(button){
+  button.textContent=autoLockEnabled?"◎ 자동 락온 ON · 시점 추적":"◎ 자동 락온 OFF · 자유 시점";
+  button.setAttribute("aria-pressed",String(autoLockEnabled));
+ }
+ const badge=el("lockHud");
+ if(badge){badge.hidden=!locked;badge.textContent="◎ 자동 락온 · 적 추적 중";}
+ const state=String(autoLockEnabled)+"|"+String(locked);
+ if(motionHost.connected&&(force||state!==lastTargetState)){
+  motionHost.send({type:"target-state",enabled:locked,autoEnabled:autoLockEnabled});
+ }
+ lastTargetState=state;
+}
+function setAutoLock(value){
+ autoLockEnabled=Boolean(value);manualAimUntil=0;
+ if(!autoLockEnabled)targetLocked=false;
+ try{localStorage.setItem(AUTO_LOCK_KEY,autoLockEnabled?"on":"off");}catch{}
+ syncTargetUi(true);
+}
+function pauseAutoAim(){
+ if(!autoLockEnabled)return;
+ manualAimUntil=clock+AUTO_LOCK_MANUAL_PAUSE;
+ if(targetLocked){targetLocked=false;syncTargetUi();}
+}
+el("autoLockSetting").addEventListener("click",()=>setAutoLock(!autoLockEnabled));
+syncTargetUi();
 let lastMotionSequence=-1,lastMotionAt=-Infinity,poseEvents=0,wasLinked=false;
 let sensorReport=null,sensorReportAt=0,lastSensorSeq=-1;
 function renderMotionCooldown(){
