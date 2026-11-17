@@ -33,7 +33,7 @@ drawAvatar(ctx,NaN,200,1,DEFAULT_LOADOUT);
 drawAvatar(ctx,0,200,0,DEFAULT_LOADOUT);
 const html=fs.readFileSync(new URL("../preview.html",import.meta.url),"utf8");
 for(const slot of Object.keys(GEAR))assert.ok(html.includes('id="gear-'+slot+'"'));
-assert.ok(html.includes("drawAvatar(ctx,w*.77"),"Village should draw the shared avatar");
+assert.ok(html.includes("renderVillageWorld(ctx,villageState,w,h,{drawHero:drawAvatar,loadout})"),"Walkable village should draw the shared equipped avatar");
 assert.ok(html.includes("drawEquipment()"),"Equipment screen should render the shared avatar");
 assert.ok(html.includes("motion-rpg-preview-equipment-v1"),"Visual equipment must have independent storage");
 assert.ok(!html.includes('localStorage.setItem("motion-rpg-save-v1",JSON.stringify(loadout))'),"Visual preview must not overwrite progression");
