@@ -11,9 +11,9 @@ const configs=[
  {name:"slime",aggro:9.0,space:2.8,strafe:.38,walk:.96,hop:true},
  {name:"slime",aggro:9.5,space:3.0,strafe:.35,walk:1.08,hop:true},
  {name:"wolf",aggro:13,space:3.6,strafe:1.12,walk:1.1},
- {name:"golem",aggro:11,space:3.7,strafe:.14,walk:.70},
+ {name:"golem",aggro:17,space:8.0,strafe:.22,walk:1.14},
  {name:"boar",aggro:12,space:3.8,strafe:.58,walk:1.13},
- {name:"wisp",aggro:11.5,space:5.9,strafe:1.24,walk:1.18},
+ {name:"wisp",aggro:16,space:7.2,strafe:1.34,walk:1.18},
  {name:"treant",aggro:10.5,space:4.1,strafe:.32,walk:.68}
 ];
 export function monsterMovementProfile(index){return configs[index]||configs[0]}
@@ -51,7 +51,7 @@ export function monsterMotionStep(enemy,player,mind,dt,clock){
   if(profile.name==="wolf"&&dist<5&&mind.phase%4===2){forwardX*=.25;forwardZ*=.25}
   if(profile.name==="boar"&&dist>6){lateralX*=1.5;lateralZ*=1.5}
   if(profile.name==="golem"||profile.name==="treant"){
-   if(mind.phase%4===1){forwardX*=.20;forwardZ*=.20;lateralX*=.25;lateralZ*=.25;}
+   if(mind.phase%5===1){forwardX*=.65;forwardZ*=.65;lateralX*=.45;lateralZ*=.45;}
   }
  }else{
   // Unaware enemies patrol a limited area instead of tracking the player at
