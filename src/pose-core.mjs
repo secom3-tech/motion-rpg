@@ -15,6 +15,18 @@ export function poseMeasurements(landmarks){
  if(shoulderWidth<.055||height<.09||shoulderWidth>.75||height>.8)return null;
  return {shoulderX:shoulder.x,hipX:hip.x,shoulderY:shoulder.y,hipY:hip.y,shoulderWidth,height};
 }
+/** Approximate framing from camera-relative shoulder span, not metres. */
+export function poseFraming(landmarks){
+ if(!Array.isArray(landmarks)||landmarks.length<25)return {kind:"lost",text:"몸이 보이지 않아 · 카메라 앞에 서 줘"};
+ const a=landmarks[11],b=landmarks[12],leftHip=landmarks[23],rightHip=landmarks[24];
+ if(![a,b,leftHip,rightHip].every(v))return {kind:"lost",text:"몸이 잘 보이도록 정면에 서 줘"};
+ const width=Math.hypot(a.x-b.x,a.y-b.y);
+ if(width<.105)return {kind:"far",text:"조금 더 가까이 와 줘"};
+ if(width>.42)return {kind:"near",text:"한 걸음 뒤로 가 줘"};
+ const midX=(a.x+b.x+leftHip.x+rightHip.x)/4;
+ if(midX<.22||midX>.78)return {kind:"center",text:"카메라 정면 가운데로 이동해"};
+ return {kind:"good",text:"좋아! 전신 움직임을 인식 중"};
+}
 export function classifyMovement(measured,neutral){
  if(!measured||!neutral)return "lost";
  const sx=measured.shoulderX-neutral.shoulderX;
