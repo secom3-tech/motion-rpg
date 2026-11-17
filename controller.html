@@ -13,10 +13,23 @@
     .linked{color:#a8f6bf!important}
     #cutStyle{width:100%;padding:12px;background:#0b2b36;color:#e8f7ee;border-radius:11px;border:1px solid #90bbafa1;font-size:14px;margin:9px 0}
     #cutHint{font-size:12px}
+
+/* One-hand phone gamepad. Pads consume their own gestures without scrolling. */
+#remotePad{border-color:#b6d8a76e;background:linear-gradient(155deg,#183b38,#0e2834)}
+#padLayout{display:grid;grid-template-columns:1fr 1fr;gap:13px;margin:14px 0}
+.touchPad{width:100%;height:157px;position:relative;overflow:hidden;touch-action:none;user-select:none;border:1px solid #91b9a385;border-radius:17px;background:radial-gradient(circle at 50% 50%,#2c615665,#0b232c 72%)}
+.touchPad b{position:absolute;top:10px;left:12px;font-size:12px;color:#d4f8dd;pointer-events:none}
+.touchPad .cross{position:absolute;inset:27px;border:1px dashed #85b3aa66;border-radius:50%;pointer-events:none}
+#moveKnob{position:absolute;width:54px;height:54px;border-radius:50%;background:linear-gradient(135deg,#bef9a7,#5ebeb0);border:3px solid #e2ffda;left:calc(50% - 27px);top:calc(50% - 27px);box-shadow:0 4px 18px #0009;pointer-events:none}
+#lookPad{background:radial-gradient(circle at 50% 50%,#345670a8,#0b2430 74%)}
+#lookPad .cross{border-style:solid;border-color:#5fa5ce65}
+#lockToggle{display:inline-flex;align-items:center;justify-content:center;min-width:130px}
+#controlState{font-size:12px;margin-top:7px}
+@media(max-width:410px){.touchPad{height:138px}#padLayout{gap:8px}#remotePad{padding:12px}}
   </style>
 </head>
 <body><main>
-  <div class="eyebrow">MOTION RPG · S21 CONTROLLER v0.34</div>
+  <div class="eyebrow">MOTION RPG · S21 CONTROLLER v0.35</div>
   <h1>투척 · 근접 휘두르기</h1>
   <p class="muted">이 화면은 S21에서 실행해. 검격·투척 동작은 폴드6 3D 전투로 무선 전송하고, 폴드6은 화면과 카메라 회피를 담당해.</p>
   <section class="card" id="pairing"><b>폴드6 무선 연결</b>
@@ -24,6 +37,16 @@
    <label for="roomCode" class="muted">6자리 숫자 연결 코드</label><input id="roomCode" inputmode="numeric" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="예: 482613" maxlength="15" />
    <div><button id="connect">게임 연결</button><button id="disconnect" class="secondary" disabled>연결 끊기</button><button id="diagnostic" class="secondary" disabled>통신 시험</button></div>
    <div class="muted" id="pairStatus" aria-live="polite">연결 대기 중 · 휴대폰 두 대에서 페이지를 열어 주세요.</div>
+  </section>
+  <section class="card" id="remotePad">
+   <b>전투 조작 패드</b>
+   <p class="muted">왼쪽으로 이동하고 오른쪽에서 시야를 돌려. 락온을 켜면 적을 자동으로 바라봐서 시점 조작을 줄일 수 있어. 마을에서는 폴드6 터치를 사용해.</p>
+   <div id="padLayout">
+    <div id="movePad" class="touchPad" aria-label="가상 이동 조이스틱"><b>이동</b><span class="cross"></span><div id="moveKnob"></div></div>
+    <div id="lookPad" class="touchPad" aria-label="시점 드래그"><b>시점 회전</b><span class="cross"></span></div>
+   </div>
+   <button id="lockToggle" class="secondary">락온 켜기</button>
+   <div id="controlState" class="muted" role="status">이동/시점 입력 대기 · 연결 시 활성</div>
   </section>
   <section class="card"><div>현재 동작</div><div class="score" id="count">0</div><div class="meter"><i id="meter"></i></div><div class="muted" id="status">센서를 켜고 한 번 시험해 봐.</div><div id="sensorDetail" class="muted">센서 수신: 꺼짐 · 인식 민감도 확인 전</div><div id="lastSignal" class="muted">마지막 동작: 없음</div><button id="start">센서 켜기</button><button id="stop" class="secondary" disabled>센서 끄기</button></section>
   <section class="card"><b>동작 타입 · 버튼 없이 전환 가능</b><div><button class="mode active" data-mode="auto">자동 전투</button><button class="mode secondary" data-mode="throw">투척 고정</button><button class="mode secondary" data-mode="melee">근접 고정</button></div><p class="muted" id="hint">자동: 앞으로 뻗으면 투척, 가로·세로 휘두르면 근접. 휴대폰을 잡는 각도에 따라 달라질 수 있어.</p><p class="muted" id="modeInfo">전투 모드: 자동</p></section>
@@ -39,6 +62,7 @@
 import {createGestureDetector,motionSample,dominantAxis} from "./src/motion-core.mjs?v=0.34";
 import {classifyMeleeGesture,classifyAttackIntent,motionFeatures} from "./src/player-combat.mjs?v=0.34";
 import {createWirelessController,cleanRoom} from "./src/peer-bridge.mjs?v=0.31";
+import {movementVector} from "./src/remote-control.mjs?v=0.35";
 const $=id=>document.getElementById(id);
 let active=false,count=0,mode="auto",sensitivity=3,calibrating=false,calibration=[],sampleTime=0,seq=0,received=0,sensorEvents=0,sensorStartedAt=0;
 let recentMotion=[],pendingAttack=null,trainingStyle=null,trainingSamples=[],trained={};
@@ -54,16 +78,88 @@ const wireless=createWirelessController({
   $("connect").disabled=state.connected;
   $("disconnect").disabled=!state.connected;
   $("diagnostic").disabled=!state.connected;
+  if(state.connected){startControl();$("controlState").textContent="전투 조작 준비 완료 · 조이스틱/락온을 사용할 수 있어";}
+  else{stopControl();lockWanted=false;$("lockToggle").textContent="락온 켜기";$("controlState").textContent="무선 미연결 · 조작 대기";}
+
  },
  onMessage:data=>{
   if(data?.type==="hello")$("pairStatus").textContent=active?"연결됨 · S21 동작을 감지해 봐":"연결됨 · 아래 [센서 켜기]를 눌러야 검격이 작동해.";
   if(data?.type==="diagnostic-ack")$("pairStatus").textContent="통신 확인 완료 · S21 → 폴드6 연결 정상. 공격 동작은 별도로 시험해.";
+  if(data?.type==="target-state"){lockWanted=!!data.enabled;$("lockToggle").textContent=lockWanted?"락온 끄기":"락온 켜기";$("controlState").textContent=data.enabled?"락온 활성 · 시점 자동 추적 중":"자유 시점 · 오른쪽 패드로 회전";}
+  if(data?.type==="input-ack"){$("controlState").textContent=data.message||"S21 조작 입력 확인";}
   if(data?.type==="gesture-ack"){
    const desc=data.accepted?"폴드6 전투 입력 확인":data.reason||"전투에서 입력을 사용할 수 없어";
    $("lastSignal").textContent="최근 동작: "+desc+" · "+new Date().toLocaleTimeString("ko-KR");
   }
  }
 });
+
+/** Gamepad sends one ordered packet stream shared with gesture packets. */
+let remoteStick={x:0,y:0},movePointer=null,lookPointer=null,moveInterval=null,lockWanted=false;
+function controlSend(type,data={}){
+ if(!wireless.connected)return false;
+ return wireless.send({type,...data,seq:++seq,time:Date.now(),session:wireless.room});
+}
+function zeroMovement(){
+ remoteStick={x:0,y:0};
+ $("moveKnob").style.transform="translate(0px,0px)";
+ controlSend("move",{x:0,y:0});
+}
+function stopControl(){
+ if(moveInterval!==null){clearInterval(moveInterval);moveInterval=null;}
+ movePointer=null;lookPointer=null;zeroMovement();
+ controlSend("control-stop");
+}
+function startControl(){
+ if(moveInterval!==null)clearInterval(moveInterval);
+ moveInterval=setInterval(()=>{
+  if(!wireless.connected){stopControl();return;}
+  if(movePointer!==null)controlSend("move",remoteStick);
+ },80);
+}
+function bindMovePad(){
+ const pad=$("movePad"),knob=$("moveKnob");
+ const update=e=>{
+  const rect=pad.getBoundingClientRect(),dx=e.clientX-(rect.left+rect.width/2),dy=e.clientY-(rect.top+rect.height/2);
+  const limit=Math.max(28,Math.min(rect.width,rect.height)*.32),distance=Math.hypot(dx,dy)||1;
+  const px=Math.abs(distance)>limit?dx*limit/distance:dx;
+  const py=Math.abs(distance)>limit?dy*limit/distance:dy;
+  remoteStick=movementVector(px/limit,py/limit);
+  knob.style.transform="translate("+px.toFixed(1)+"px,"+py.toFixed(1)+"px)";
+  controlSend("move",remoteStick);
+ };
+ pad.addEventListener("pointerdown",e=>{
+  e.preventDefault();if(!wireless.connected)return;
+  movePointer=e.pointerId;try{pad.setPointerCapture(e.pointerId)}catch{}update(e);
+ });
+ pad.addEventListener("pointermove",e=>{if(movePointer!==e.pointerId)return;e.preventDefault();update(e)});
+ const end=e=>{if(movePointer!==e.pointerId)return;movePointer=null;zeroMovement()};
+ pad.addEventListener("pointerup",end);pad.addEventListener("pointercancel",end);
+}
+function bindLookPad(){
+ const pad=$("lookPad");let startX=0,startY=0;
+ pad.addEventListener("pointerdown",e=>{
+  e.preventDefault();if(!wireless.connected)return;
+  lookPointer=e.pointerId;startX=e.clientX;startY=e.clientY;try{pad.setPointerCapture(e.pointerId)}catch{}
+ });
+ pad.addEventListener("pointermove",e=>{
+  if(lookPointer!==e.pointerId)return;e.preventDefault();
+  const dx=Math.max(-1,Math.min(1,(e.clientX-startX)/95));
+  const dy=Math.max(-1,Math.min(1,(e.clientY-startY)/95));
+  startX=e.clientX;startY=e.clientY;
+  if(Math.abs(dx)+Math.abs(dy)>.006)controlSend("look",{dx,dy});
+ });
+ const end=e=>{if(lookPointer===e.pointerId)lookPointer=null};
+ pad.addEventListener("pointerup",end);pad.addEventListener("pointercancel",end);
+}
+bindMovePad();bindLookPad();
+$("lockToggle").onclick=()=>{
+ if(!wireless.connected){$("controlState").textContent="폴드6 연결 후 사용할 수 있어.";return;}
+ lockWanted=!lockWanted;controlSend("target",{action:"toggle"});
+ $("lockToggle").textContent=lockWanted?"락온 끄기":"락온 켜기";
+};
+document.addEventListener("visibilitychange",()=>{if(document.hidden)stopControl()});
+window.addEventListener("blur",stopControl);
 const codeFromUrl=new URLSearchParams(location.search).get("room");if(codeFromUrl)$("roomCode").value=codeFromUrl;
 function setStatus(message){$("status").textContent=message;}
 function syncSettings(){
@@ -193,5 +289,5 @@ $("clearAxis").onclick=()=>{
  try{localStorage.setItem("motion-rpg-s21-axes",JSON.stringify(axes));}catch{}
  syncSettings();setStatus("동작축 해제");
 };
-window.addEventListener("pagehide",()=>{stopSensor();wireless.disconnect();});
+window.addEventListener("pagehide",()=>{stopControl();stopSensor();wireless.disconnect();});
 </script></body></html>
