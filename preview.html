@@ -274,6 +274,40 @@
 .runStartActions{gap:8px}.runStartActions .runWalk{background:#31594b;border-color:#b5d1ae;color:#f8f0d7}
 .runStartActions .runWalk:not(:disabled):hover{background:#49735e}
 @media(max-width:750px){.runStartActions{bottom:105px}.runStartActions button{flex:1 1 44%;min-height:39px}.runMetrics{bottom:214px}}
+
+/* v0.43: class artwork above a proportionate, compact equipment silhouette */
+.mannequinPortrait{min-height:0;overflow:hidden}
+.jobPortrait{position:absolute;left:0;top:0;width:100%;height:44%;object-fit:cover;object-position:center 28%;mask-image:linear-gradient(to bottom,#000 0%,#000 62%,transparent 100%);-webkit-mask-image:linear-gradient(to bottom,#000 0%,#000 62%,transparent 100%);filter:saturate(.88)}
+.bodySilhouette{position:absolute;top:42%;left:11%;width:78%;height:49%;filter:drop-shadow(0 6px 11px #021d1a)}
+.classPortrait{top:12px;left:12px;background:#0b2826e9;border:1px solid #c8d6a77a}
+.classPortrait b{font-size:13px}
+.figureGear{width:57px;min-height:64px;border-radius:11px;padding:4px}
+.figureGear>span{width:43px;height:43px}
+.figureGear small{font-size:9px}
+.figHead{top:45%;left:50%}
+.figArmor{top:63%;left:50%}
+.figMelee{top:56%;left:10%}
+.figRanged{top:56%;right:10%}
+.figOffhand{top:77%;right:11%}
+.mannequinPortrait .heroPortraitInfo{padding:22px 12px 12px;max-height:86px}
+.mannequinPortrait .heroPortraitInfo span{max-height:28px;overflow:hidden}
+.materialArtwork{height:43px;width:43px;flex:none;display:block;filter:drop-shadow(0 2px 4px #0007)}
+.craftWindow .mat{gap:6px}.craftWindow .mat b{font-size:16px}
+#claimCombat[hidden]{display:none!important}
+.townReportButton{position:absolute;z-index:6;right:14px;bottom:14px;border:1px solid #b4c9a69c;border-radius:10px;background:#10352fdc;color:#f0ebd7;padding:10px 15px;font-size:12px;font-weight:750;cursor:pointer}
+.sessionReport[hidden]{display:none!important}
+.sessionReport{position:fixed;inset:0;z-index:300;display:grid;place-items:center;padding:15px;background:#031717df;backdrop-filter:blur(8px)}
+.reportSheet{width:min(620px,100%);max-height:90svh;overflow:auto;padding:23px;background:linear-gradient(147deg,#24463d,#0e292d);border:1px solid #dfdfb2a0;box-shadow:0 22px 72px #000b;border-radius:18px;color:#f6f2df}
+.reportSheet>small{color:#b0dbc2;font-size:11px;letter-spacing:.13em}
+.reportSheet h2{font-size:26px;margin:6px 0 2px}.reportSheet p{font-size:12px;color:#c5dfca;margin:7px 0 15px}
+.reportStats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.reportStats>div{border-radius:11px;background:#082629a9;border:1px solid #abcab06e;padding:13px 7px;text-align:center;font-size:20px;font-weight:900}
+.reportStats small{display:block;font-size:10px;color:#bed2c0;margin-top:4px;font-weight:500}
+.reportRewards{padding:11px 14px;margin:12px 0;border-radius:12px;border:1px solid #d4bc8166;background:#3b4a39c9;color:#f6e9b4;font-size:13px;line-height:1.65}
+.reportActivity{font-size:12px;line-height:1.7;color:#c9e4d7;border-left:3px solid #8ccfbb;padding:4px 11px;margin:10px 0}
+.reportLog{font-size:11px;color:#cbdccc;line-height:1.75;max-height:110px;overflow:auto;padding:5px 15px}
+.reportClose{width:100%;margin-top:16px;padding:13px;border-radius:12px;border:1px solid #b1ddba;background:#a5d7b7;color:#14372e;font-weight:850;cursor:pointer}
+@media(max-width:750px){.jobPortrait{height:38%}.bodySilhouette{top:35%;height:57%;width:62%;left:19%}.figureGear{width:46px;min-height:54px}.figureGear>span{width:35px;height:35px}.figHead{top:40%}.figArmor{top:64%}.figMelee,.figRanged{top:55%}.figOffhand{top:75%}.reportStats{gap:5px}.reportStats>div{font-size:17px}}
 </style></head>
 <body><div class="app">
 <header class="top"><div class="mark">MOTION RPG <em> / 경계의 숲</em></div><div class="version">모험 허브 · 0.41</div></header>
@@ -295,6 +329,7 @@
  <div class="villageQuest"><small>경계의 숲 · 사냥꾼 마을</small><b id="townQuest">숲으로 떠날 준비를 하자</b><span id="townWalkingHint">시설을 터치해 의뢰를 확인하거나 숲으로 출발</span></div>
  
  <button id="townTalkButton" class="townRumourButton" title="마을의 소문 듣기">💬 소문</button>
+ <button id="townReportButton" class="townReportButton" type="button" hidden>지난 사냥 기록</button>
  
  <div class="town-dialogue" id="townEncounter" hidden aria-live="polite" role="dialog" aria-modal="false" aria-labelledby="townNpc">
   <button id="closeTownTalk" class="townDialogueClose" aria-label="창 닫기">×</button>
@@ -372,15 +407,15 @@
  <div class="gearScreen">
   <div class="gearScreenHead"><button type="button" class="runBack" data-go="village">← 마을</button><div><small>CHARACTER / INVENTORY</small><h1>장비 · 성장</h1></div><button id="openCraft" class="gearCraftOpen">⚒ 대장간 · 제작</button></div>
   <div class="gearStage">
-   <div class="heroPortrait mannequinPortrait" aria-label="현재 장착 장비를 표시하는 모험가 실루엣">
+   <div class="heroPortrait mannequinPortrait" aria-label="초보 탐색자 직업 일러스트와 현재 장착 장비 실루엣">
+ <img class="jobPortrait" src="./assets/hero-concept.webp" loading="lazy" decoding="async" alt="초보 탐색자 직업 대표 상반신 일러스트 · 장비 외형과 별개">
  <div class="classPortrait"><span class="classMark">✦</span><div><small>현재 직업</small><b>초보 탐색자</b></div></div>
- <svg class="bodySilhouette" viewBox="0 0 380 610" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
- <defs><linearGradient id="figure" x1=".2" y1="0" x2=".9" y2="1"><stop stop-color="#557e73"/><stop offset="1" stop-color="#25483e"/></linearGradient><linearGradient id="frame" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#d5d1ae"/><stop offset="1" stop-color="#587c67"/></linearGradient></defs>
- <circle cx="189" cy="270" r="178" fill="none" stroke="#acbaa67a" stroke-width="2"/><circle cx="189" cy="270" r="155" fill="none" stroke="#d2c9a24a" stroke-dasharray="3 12" stroke-width="2"/><path d="M188 45V560M16 284H362" stroke="#89aa9b40" stroke-width="1.6"/>
- <path d="M161 133Q154 92 190 82Q224 92 217 134L212 154L167 154Z" fill="url(#figure)" stroke="#a7bb9e" stroke-width="4"/>
- <path d="M167 153Q143 165 116 188L95 295 62 398 98 413 148 304 144 385 142 538 179 546 188 392 200 392 219 544 258 536 250 371 230 299 278 404 315 392 286 296 260 188Q241 164 211 153Z" fill="url(#figure)" stroke="#a7bb9e" stroke-width="5"/>
- <path d="M143 190L188 221 235 190M188 221v157M148 382l85 0M155 475l22 0M218 475l22 0" fill="none" stroke="#c8d2af" stroke-width="3" opacity=".5"/>
- <path d="M118 195Q189 246 260 195" fill="none" stroke="#6c947f" stroke-width="2"/><path d="M104 301L142 308M254 309l39-7" stroke="#b4c8b0" stroke-width="2"/>
+ <svg class="bodySilhouette" viewBox="0 0 360 350" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
+ <defs><linearGradient id="equipmentBody" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#588479"/><stop offset="1" stop-color="#28483e"/></linearGradient></defs>
+ <circle cx="180" cy="180" r="151" fill="none" stroke="#b4c5ae63" stroke-width="2"/><circle cx="180" cy="180" r="137" fill="none" stroke="#e0d7ae36" stroke-dasharray="3 9" stroke-width="2"/>
+ <path d="M155 83Q143 55 162 35Q180 18 197 35Q218 55 206 83L199 95H160Z" fill="url(#equipmentBody)" stroke="#bfd0ac" stroke-width="3.5"/>
+ <path d="M162 95Q133 101 109 116L87 192 72 234 102 247 126 208 140 172 144 228 139 320 165 323 178 241 186 241 197 323 223 320 218 221 223 172 238 208 262 247 292 234 273 191 251 115Q221 98 201 95Z" fill="url(#equipmentBody)" stroke="#b9c9ab" stroke-width="4" stroke-linejoin="round"/>
+ <path d="M162 105L180 126 201 105M180 126v100M140 174l-9 51M222 174l10 51M147 232h67M150 282h21M192 282h20" stroke="#c1c9a5" stroke-width="2.4" fill="none" opacity=".65"/>
  </svg>
  <button type="button" class="figureGear figHead" data-figure-slot="head" aria-label="머리 장비"><span id="figureArt-head"></span><small>머리</small></button>
  <button type="button" class="figureGear figArmor" data-figure-slot="armor" aria-label="갑옷"><span id="figureArt-armor"></span><small>갑옷</small></button>
@@ -414,18 +449,26 @@
    <div class="craftHeader"><div><small>BLACKSMITH / CRAFTING</small><h2>대장간 · 장비 제작</h2><p>재료로 만들고, 보유한 장비만 장착할 수 있어.</p></div><button id="closeCraft" type="button" aria-label="제작 창 닫기">✕</button></div>
    <div class="material-grid" id="craftMaterials"></div>
    <div id="craftStatus" role="status" aria-live="polite">제작 재료를 확인하는 중...</div>
-   <div class="controls"><button id="claimCombat" class="primary">지난 사냥 보상 확인</button></div>
+   <div class="controls"><button id="claimCombat" class="primary" hidden>지난 사냥 보상 확인</button></div>
    <div class="craftFilters" id="craftFilters"><button type="button" data-craft-filter="all" class="active">전체</button><button type="button" data-craft-filter="weapon">무기</button><button type="button" data-craft-filter="armor">방어구</button><button type="button" data-craft-filter="offhand">보조</button></div><p class="craftHidden" id="craftHidden"></p><div class="craft-list" id="craftList"></div>
   </div>
  </section>
 </section>
+<div class="sessionReport" id="sessionReport" hidden role="dialog" aria-modal="true" aria-labelledby="sessionTitle">
+ <section class="reportSheet"><small id="sessionLabel">MOTION RPG / ADVENTURE REPORT</small>
+  <h2 id="sessionTitle">모험 기록</h2><p id="sessionDescription">오늘의 활동 결과</p>
+  <div class="reportStats" id="sessionStats"></div><div class="reportRewards" id="sessionRewards"></div>
+  <div class="reportActivity" id="sessionActivity"></div><ol class="reportLog" id="sessionLog"></ol>
+  <button type="button" class="reportClose" id="closeSessionReport">마을에서 계속하기</button>
+ </section></div>
 <footer class="footer">MOTION RPG · 숲마을을 거점으로 실내 전투와 야외 탐험을 연결하는 통합 콘셉트 시안 · 기존 v0.24 본게임 보존</footer>
 </div>
 <script type="module">
 import {createAdventure,startAdventure,advanceAdventure,endAdventure,summarizeAdventure,settleAdventure,expeditionReward} from "./src/expedition.mjs?v=0.42.1";
 import {GEAR} from "./src/avatar.mjs?v=0.42";
 import {itemIllustration} from "./src/item-art.mjs?v=0.42";
-import {gearBenefits,craftingDeficits,MATERIAL_SYMBOLS} from "./src/gear-details.mjs?v=0.42";
+import {gearBenefits,craftingDeficits} from "./src/gear-details.mjs?v=0.42";
+import {materialIllustration} from "./src/material-art.mjs?v=0.43";
 
 import {QUESTS,REGIONS,newGame} from "./src/engine.mjs?v=0.37";
 import {experienceProgress} from "./src/progression.mjs?v=0.37";
@@ -537,7 +580,7 @@ function renderCrafting(){
  const state=sharedCharacter(),gear=normalizeRpgGear(state),stats=combatStats(state);
  $("craftMaterials").replaceChildren(...Object.entries(MATERIALS).map(([id,mat])=>{
   const div=document.createElement("div");div.className="mat";
-  const art=document.createElement("span");art.className="materialSymbol";art.textContent=MATERIAL_SYMBOLS[id]||"✦";
+  const art=document.createElement("span");art.className="materialIcon";art.innerHTML=materialIllustration(id);
   const b=document.createElement("b");b.textContent=gear.materials[id];div.append(art,b,document.createTextNode(mat.name));return div;
  }));
  const info=[
