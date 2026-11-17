@@ -26,19 +26,23 @@
    <div class="muted" id="pairStatus" aria-live="polite">연결 대기 중 · 휴대폰 두 대에서 페이지를 열어 주세요.</div>
   </section>
   <section class="card"><div>현재 동작</div><div class="score" id="count">0</div><div class="meter"><i id="meter"></i></div><div class="muted" id="status">센서를 켜고 한 번 시험해 봐.</div><div id="sensorDetail" class="muted">센서 수신: 꺼짐 · 인식 민감도 확인 전</div><div id="lastSignal" class="muted">마지막 동작: 없음</div><button id="start">센서 켜기</button><button id="stop" class="secondary" disabled>센서 끄기</button></section>
-  <section class="card"><b>동작 타입</b><div><button class="mode active" data-mode="throw">투척</button><button class="mode secondary" data-mode="melee">근접 휘두르기</button></div><p class="muted" id="hint">휴대폰을 놓지 않은 채, 팔을 짧고 빠르게 앞으로 뻗어 봐.</p></section>
-  <section class="card"><b>검격 방향</b><p class="muted">근접 모드일 때 가로·세로·찌르기 궤적을 따로 전송해. 자동은 휴대폰 센서축으로 추정하므로 쥔 방향에 따라 오판할 수 있어.</p><label for="cutStyle" class="muted">인식 방식</label><select id="cutStyle" aria-label="검격 스타일"><option value="auto">동작 방향 자동 추정 (시험용)</option><option value="sweep">가로 베기 고정</option><option value="overhead">세로 내려찍기 고정</option><option value="thrust">앞으로 찌르기 고정</option></select><p id="cutHint" class="muted">인식이 헷갈리면 방향을 고정해 비교해 봐.</p></section>
+  <section class="card"><b>동작 타입 · 버튼 없이 전환 가능</b><div><button class="mode active" data-mode="auto">자동 전투</button><button class="mode secondary" data-mode="throw">투척 고정</button><button class="mode secondary" data-mode="melee">근접 고정</button></div><p class="muted" id="hint">자동: 앞으로 뻗으면 투척, 가로·세로 휘두르면 근접. 휴대폰을 잡는 각도에 따라 달라질 수 있어.</p><p class="muted" id="modeInfo">전투 모드: 자동</p></section>
+  <section class="card"><b>검격 방향</b><p class="muted">근접 모드일 때 가로·세로·찌르기 궤적을 따로 전송해. 자동은 휴대폰 센서축으로 추정하므로 쥔 방향에 따라 오판할 수 있어.</p><label for="cutStyle" class="muted">인식 방식</label><select id="cutStyle" aria-label="검격 스타일"><option value="auto">동작 방향 자동 추정 (시험용)</option><option value="sweep">가로 베기 고정</option><option value="overhead">세로 내려찍기 고정</option><option value="thrust">앞으로 찌르기 고정</option></select><p id="cutHint" class="muted">인식이 헷갈리면 방향을 고정해 비교해 봐.</p>
+  <div><button class="secondary trainStyle" data-train="sweep">가로 동작 학습</button><button class="secondary trainStyle" data-train="overhead">세로 동작 학습</button><button class="secondary trainStyle" data-train="thrust">앞으로 뻗기 학습</button><button class="secondary" id="clearTraining">학습 초기화</button></div>
+  <p id="trainingStatus" class="muted">선택 사항: 센서를 켠 뒤 학습을 누르고 2초 안에 해당 동작을 한 번 해. 학습 중에는 공격을 전송하지 않아.</p></section>
   <section class="card"><b>동작 민감도 · <span id="sensitivityLabel">보통</span></b><input id="sensitivity" type="range" min="1" max="5" step="1" value="3" /><div class="muted">낮음은 강한 회전만 인식하고, 높음은 작은 손목 회전도 인식한다. 지금은 <b>낮음</b>부터 권장.</div></section>
   <section class="card"><b>동작축 설정 · <span id="axisLabel">모든 방향</span></b><p class="muted">버튼을 누른 뒤 평소처럼 한 번 동작하면, 가장 크게 회전한 축만 다음부터 판정한다.</p><button id="calibrate" class="secondary">동작축 설정하기</button><button id="clearAxis" class="secondary">축 해제</button></section>
   <section class="card"><b>현재 단계</b><p class="muted">동작축을 설정하면 단순히 휴대폰을 다른 방향으로 돌리는 동작은 줄이고, 투척·휘두르기에 쓴 회전축을 우선 판정한다.</p></section>
-  <ul><li>한 번 감지한 뒤 센서 강도가 충분히 내려와야 다음 동작으로 다시 준비된다.</li><li>감지된 검격·투척 이벤트만 폴드6에 전송해. 원본 센서 수치나 카메라 영상은 보내지 않아.</li><li>주변을 비우고, 휴대폰을 실제로 던지지 마.</li></ul>
+  <ul><li>투척은 약 1.9초의 중복 방지 시간과 충분히 가만히 있는 시간이 필요해. 팔을 회수할 때 다시 던지는 일을 줄이기 위한 규칙이야.</li><li>감지된 검격·투척 이벤트만 폴드6에 전송해. 원본 센서 수치나 카메라 영상은 보내지 않아.</li><li>주변을 비우고, 휴대폰을 실제로 던지지 마.</li></ul>
 </main>
 <script type="module">
-import {createGestureDetector,motionSample,dominantAxis} from "./src/motion-core.mjs?v=0.33";
-import {classifyMeleeGesture} from "./src/player-combat.mjs?v=0.33";
+import {createGestureDetector,motionSample,dominantAxis} from "./src/motion-core.mjs?v=0.34";
+import {classifyMeleeGesture,classifyAttackIntent,motionFeatures} from "./src/player-combat.mjs?v=0.34";
 import {createWirelessController,cleanRoom} from "./src/peer-bridge.mjs?v=0.31";
 const $=id=>document.getElementById(id);
-let active=false,count=0,mode="throw",sensitivity=3,calibrating=false,calibration=[],sampleTime=0,seq=0,received=0,sensorEvents=0,sensorStartedAt=0;
+let active=false,count=0,mode="auto",sensitivity=3,calibrating=false,calibration=[],sampleTime=0,seq=0,received=0,sensorEvents=0,sensorStartedAt=0;
+let recentMotion=[],pendingAttack=null,trainingStyle=null,trainingSamples=[],trained={};
+try{const saved=JSON.parse(localStorage.getItem("motion-rpg-s21-style-templates-v1")||"{}");if(saved&&typeof saved==="object")trained=saved;}catch{}
 try{sensitivity=Math.max(1,Math.min(5,Number(localStorage.getItem("motion-rpg-s21-sensitivity")||3)));}catch{}
 let axes={};try{const saved=JSON.parse(localStorage.getItem("motion-rpg-s21-axes")||"{}");if(saved&&typeof saved==="object")axes=saved;}catch{}
 let cutStyle="auto";try{const saved=localStorage.getItem("motion-rpg-s21-cut-style");if(["auto","sweep","overhead","thrust"].includes(saved))cutStyle=saved;}catch{}
@@ -72,29 +76,46 @@ function syncSettings(){
 function changeMode(next){
  mode=next;
  document.querySelectorAll("[data-mode]").forEach(b=>b.classList.toggle("active",b.dataset.mode===mode));
- $("hint").textContent=mode==="throw"?"기기를 놓지 말고 팔을 짧게 앞으로 뻗어 봐.":"기기를 단단히 쥐고 좌우로 짧게 휘둘러 봐.";
+ $("hint").textContent=mode==="auto"?"자동: 앞으로 뻗으면 원거리, 휘두르면 근접. 인식이 틀리면 방향 학습 또는 고정 모드를 사용해.":mode==="throw"?"투척 고정: 던지고 팔을 되돌릴 때 재발동하지 않도록 대기시간이 있어.":"근접 고정: 가로·세로·찌르기 중 방향을 구분해.";
+ $("modeInfo").textContent="전투 모드: "+({auto:"자동",throw:"투척 고정",melee:"근접 고정"}[mode]);
+ pendingAttack=null;recentMotion=[];
  syncSettings();
 }
 function onMotion(e){
  if(!active)return;
  const now=Date.now(),result=detector.feed(e,now);
  if(result.valid)sensorEvents++;
+ recentMotion.push({at:now,event:e});recentMotion=recentMotion.filter(entry=>now-entry.at<=190).slice(-18);
  if(calibrating)calibration.push(result.rotations);
+ if(trainingStyle)trainingSamples.push(e);
+ if(pendingAttack&&now-pendingAttack.startAt<=190)pendingAttack.samples.push(e);
  if(now-sampleTime>150){
   $("meter").style.width=Math.round(result.score)+"%";
   if(!result.valid)setStatus("센서 데이터 없음 · 기기 권한/지원 확인");
   else setStatus("센서 수신 중 · "+(wireless.connected?"게임 연결됨":"무선 미연결"));
-  $("sensorDetail").textContent="수신 "+sensorEvents+"회 · 강도 "+Math.round(result.score)+"/100 · 감지 기준 "+Math.round(result.threshold)+" · "+(result.armed?"공격 준비 완료":"손을 0.4초 멈추면 다음 공격 준비");
+  $("sensorDetail").textContent="수신 "+sensorEvents+"회 · 강도 "+Math.round(result.score)+"/100 · 기준 "+Math.round(result.threshold)+" · "+(result.cooldownRemainingMs>0?"쿨타임 "+(result.cooldownRemainingMs/1000).toFixed(1)+"초":result.armed?"공격 준비 완료":"팔을 가만히 두면 공격 준비");
   sampleTime=now;
  }
- if(calibrating||!result.gesture)return;
+ if(calibrating||trainingStyle||!result.gesture||pendingAttack)return;
+ pendingAttack={startAt:now,mode,gesture:result.gesture,samples:recentMotion.map(entry=>entry.event)};
+ // Read the motion peak through the stroke, instead of classifying only the
+ // very first sensor frame that exceeded the threshold.
+ setTimeout(flushPendingAttack,150);
+
+}
+function flushPendingAttack(){
+ const pending=pendingAttack;pendingAttack=null;
+ if(!pending||!active||calibrating||trainingStyle)return;
+ const action=classifyAttackIntent(pending.samples,pending.mode,trained,cutStyle);
+ if(action.type==="throw")detector.protectThrow(pending.startAt);
  count++;$("count").textContent=count;
- const style=result.gesture.type==="melee"?classifyMeleeGesture(e,cutStyle):null;
- const packet={type:"gesture",gesture:result.gesture.type,strength:result.gesture.strength,time:now,seq:++seq,session:wireless.room};
- if(style)packet.style=style;
+ const packet={type:"gesture",gesture:action.type,strength:pending.gesture.strength,
+   time:pending.startAt,seq:++seq,session:wireless.room};
+ if(action.type==="melee")packet.style=action.style;
  const sent=wireless.send(packet);
- setStatus((mode==="throw"?"투척":"검격")+" 감지 "+count+"회 · "+(sent?"폴드6 전송":"무선 미연결 · 로컬 감지만"));
- $("lastSignal").textContent="최근 동작: "+(mode==="throw"?"투척":({sweep:"가로 베기",overhead:"세로 내려찍기",thrust:"찌르기"}[style]||"검격"))+" "+count+"회"+(sent?" · 폴드6 응답 대기":" · 전송 안 됨");
+ const label=action.type==="throw"?"투척":({sweep:"가로 베기",overhead:"세로 내려찍기",thrust:"찌르기"}[action.style]||"검격");
+ setStatus(label+" 감지 "+count+"회 · "+(sent?"폴드6 전송":"무선 미연결 · 로컬 감지만"));
+ $("lastSignal").textContent="최근 동작: "+label+" "+count+"회"+(sent?" · 폴드6 응답 대기":" · 전송 안 됨");
  try{navigator.vibrate?.(35)}catch{}
 }
 async function startSensor(){
@@ -106,12 +127,12 @@ async function startSensor(){
   window.addEventListener("devicemotion",onMotion,{passive:true});
   detector.reset();active=true;sensorEvents=0;sensorStartedAt=Date.now();
   $("start").disabled=true;$("stop").disabled=false;
-  setStatus("센서 시작 · 짧게 휘두르고 0.4초 쉬면서 시험해.");
+  setStatus("센서 시작 · 투척 후 1.9초 쉬고 팔을 가만히 두면 다음 공격이 준비돼.");
   $("sensorDetail").textContent="센서 이벤트 수신 대기...";
   setTimeout(()=>{if(active&&sensorEvents===0){$("sensorDetail").textContent="센서 이벤트 0회 · 이 브라우저에서 동작 센서가 차단됐을 수 있어. Chrome/삼성 인터넷에서 열어 줘.";}},2500);
  }catch(e){setStatus("센서 켜기 실패: "+e.message);}
 }
-function stopSensor(){window.removeEventListener("devicemotion",onMotion);active=false;$("start").disabled=false;$("stop").disabled=true;setStatus("센서 종료");$("sensorDetail").textContent="센서 수신: 꺼짐";}
+function stopSensor(){pendingAttack=null;trainingStyle=null;recentMotion=[];window.removeEventListener("devicemotion",onMotion);active=false;$("start").disabled=false;$("stop").disabled=true;setStatus("센서 종료");$("sensorDetail").textContent="센서 수신: 꺼짐";}
 async function connect(){
  const code=cleanRoom($("roomCode").value);
  if(!code){$("pairStatus").textContent="6자리 숫자 연결 코드를 확인해 줘.";return;}
@@ -124,6 +145,28 @@ $("cutStyle").onchange=()=>{
  cutStyle=$("cutStyle").value;
  try{localStorage.setItem("motion-rpg-s21-cut-style",cutStyle);}catch{}
  $("cutHint").textContent=cutStyle==="auto"?"가로·세로·찌르기를 센서축으로 추정해. 자세 보정 전에는 방향이 틀릴 수 있어.":"현재 방향: "+({sweep:"가로 베기",overhead:"내려찍기",thrust:"찌르기"}[cutStyle])+" · S21 동작이 감지되면 해당 자세로 공격해.";
+};
+document.querySelectorAll("[data-train]").forEach(button=>button.onclick=()=>{
+ if(!active){$("trainingStatus").textContent="먼저 센서를 켜야 동작을 학습할 수 있어.";return;}
+ if(trainingStyle||calibrating)return;
+ const style=button.dataset.train;
+ if(!["sweep","overhead","thrust"].includes(style))return;
+ trainingStyle=style;trainingSamples=[];pendingAttack=null;
+ $("trainingStatus").textContent="2초 안에 "+({sweep:"가로로",overhead:"위에서 아래로",thrust:"앞으로"}[style])+" 한 번 움직여 줘. 이 동작은 공격으로 전송하지 않아.";
+ setTimeout(()=>{
+  const sample=motionFeatures(trainingSamples);
+  const enough=sample.some(value=>value>.16);
+  if(enough){
+   trained[style]=sample;
+   try{localStorage.setItem("motion-rpg-s21-style-templates-v1",JSON.stringify(trained));}catch{}
+  }
+  $("trainingStatus").textContent=enough?({sweep:"가로",overhead:"세로",thrust:"앞으로"}[style])+" 동작 학습 완료. "+Object.keys(trained).length+"/3개 등록.":"움직임이 너무 작아. 민감도를 확인하고 다시 학습해.";
+  trainingStyle=null;trainingSamples=[];detector.reset();
+ },2000);
+});
+$("clearTraining").onclick=()=>{
+ trained={};try{localStorage.removeItem("motion-rpg-s21-style-templates-v1");}catch{}
+ $("trainingStatus").textContent="저장된 방향 학습 기록을 초기화했어.";
 };
 $("sensitivity").addEventListener("input",syncSettings);
 document.querySelectorAll("[data-mode]").forEach(b=>b.onclick=()=>changeMode(b.dataset.mode));
