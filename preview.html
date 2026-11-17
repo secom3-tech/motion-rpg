@@ -105,23 +105,85 @@
 #page-run .tracker .card{padding:12px}
 @media(max-width:620px){.menu button{padding:7px 10px;font-size:11px}.villageStats .card{padding:10px 3px}.stage-bottom .cta{padding:10px 11px}}
 
+
+/* First playable village viewport: stage dominates, HUD floats in-world. */
+#villageStage{isolation:isolate;border-radius:19px;min-height:500px;border:1px solid #e4d5a15c}
+#villageStage canvas{height:min(78svh,730px);min-height:500px;touch-action:none;cursor:crosshair}
+#villageStage::after{background:linear-gradient(0deg,#071e2385,transparent 18%),linear-gradient(90deg,#102a2e32,transparent 24%);z-index:0}
+.villageTopHud{position:absolute;z-index:4;top:12px;left:12px;right:12px;display:flex;justify-content:space-between;gap:10px;pointer-events:none}
+.villageProfile{display:flex;align-items:center;gap:9px;border:1px solid #d5d0a685;background:#132f2be4;border-radius:13px;padding:8px 13px;color:#edf8da;box-shadow:0 5px 20px #001e1980}
+.villageProfileIcon{height:36px;width:36px;border-radius:50%;border:1px solid #dccba0;background:#395444;display:grid;place-items:center;font-size:19px}
+.villageProfile b{display:block;font-size:12px}
+.villageProfile b span{font-size:10px;color:#f2d994;margin-left:6px}
+.villageProfile small{display:block;color:#d2dcbf;font-size:10px;margin-top:4px}
+.villageBag{pointer-events:auto;align-self:start;padding:10px 13px;background:#142e2be0;border:1px solid #e0d8a77f;border-radius:11px;color:#e7f7da;font-size:12px;font-weight:850}
+.villageQuest{position:absolute;top:76px;left:12px;z-index:3;display:flex;align-items:flex-start;flex-direction:column;gap:4px;max-width:min(260px,63%);pointer-events:none;text-shadow:0 2px 7px #07150c}
+.villageQuest small{font-size:11px;color:#f0dc9f;font-weight:800}
+.villageQuest b{font-size:13px;color:#fff6d9}
+#townWalkingHint{font-size:10px;color:#f0ebcc;line-height:1.55;max-width:240px}
+#townMovePad{position:absolute;z-index:5;bottom:24px;left:17px;width:120px;height:120px;border:1px solid #b8deb28e;border-radius:50%;background:radial-gradient(circle,#b4e5c033,#143b3aca);touch-action:none;user-select:none;pointer-events:auto}
+.townJoyRing{position:absolute;inset:21px;border:1px dashed #d2ebd488;border-radius:50%;pointer-events:none}
+#townMoveKnob{position:absolute;width:48px;height:48px;left:calc(50% - 24px);top:calc(50% - 24px);border-radius:50%;background:linear-gradient(140deg,#d8eed0,#6fb39a);border:2px solid #f7f4cc;box-shadow:0 3px 12px #0007;pointer-events:none}
+#townMovePad>span{position:absolute;bottom:-20px;left:50%;transform:translateX(-50%);font-size:10px;font-weight:900;color:#f8f6dc;text-shadow:0 1px 5px #000}
+.townRumourButton{position:absolute;z-index:5;right:16px;top:67px;background:#193a34cf;border:1px solid #e4d39f8c;border-radius:13px;padding:8px 12px;color:#fff3ce;font-weight:850;font-size:11px}
+#villageStage .stage-bottom{left:auto;right:16px;bottom:19px;width:auto;max-width:55%;display:flex;flex-direction:column;align-items:stretch;gap:8px}
+#villageStage .stage-bottom button{min-width:140px;box-shadow:0 7px 18px #001e188f}
+#villageStage .town-dialogue{position:absolute;z-index:10;left:50%;bottom:20%;width:min(500px,90%);transform:translateX(-50%);background:#142820f4;border:1px solid #ebdaab;border-radius:15px;padding:18px 20px;box-shadow:0 15px 60px #0009;min-height:0;font-size:13px;color:#e7f0de}
+#villageStage .town-dialogue[hidden]{display:none!important}
+#villageStage .town-dialogue b{color:#f6dc96;font-size:15px}
+#villageStage .town-dialogue .controls{margin:10px 0 0}
+.townDialogueClose{position:absolute;top:9px;right:10px;border:1px solid #a0bca678;background:#254637;color:#e9f9e2;width:28px;height:28px;border-radius:8px;font-size:18px}
+.villageJournal{margin:12px 0;border:1px solid #9eb69860;border-radius:12px;padding:0 12px;background:#0e2927}
+.villageJournal>summary{cursor:pointer;list-style-position:inside;padding:13px 7px;color:#e4eed1;font-size:13px;font-weight:850}
+.villageJournal[open]>summary{border-bottom:1px solid #9eb69851}
+.villageJournal .townRumour{margin-top:15px}
+@media(max-width:650px){
+ #villageStage{min-height:460px}
+ #villageStage canvas{height:min(76svh,650px);min-height:460px}
+ .villageTopHud{left:8px;right:8px;top:8px}
+ .villageProfile{padding:6px 8px;gap:6px}
+ .villageProfileIcon{width:29px;height:29px;font-size:16px}
+ .villageProfile b{font-size:10px}
+ .villageProfile small{font-size:9px}
+ .villageBag{padding:7px 9px;font-size:10px}
+ .villageQuest{top:65px;left:9px}
+ .villageQuest small{font-size:9px}
+ .villageQuest b{font-size:11px}
+ #townWalkingHint{font-size:9px}
+ #townMovePad{width:101px;height:101px;left:12px;bottom:23px}
+ #townMoveKnob{width:42px;height:42px;left:calc(50% - 21px);top:calc(50% - 21px)}
+ .townRumourButton{top:60px;right:7px}
+ #villageStage .stage-bottom{right:8px;bottom:13px;max-width:48%;gap:6px}
+ #villageStage .stage-bottom button{font-size:11px;min-width:0;padding:10px 11px}
+ #villageStage .town-dialogue{bottom:21%;padding:14px 15px}
+}
 </style></head>
 <body><div class="app">
 <header class="top"><div class="mark">MOTION RPG <em> / 경계의 숲</em></div><div class="version">통합 플레이 빌드 · 0.38</div></header>
 <nav class="menu" aria-label="게임 메뉴"><button data-view="village" class="active">🏘 마을</button><button data-view="character">🎒 가방 · 장비</button></nav>
 <section class="page active" id="page-village">
- <div class="stage"><canvas id="village3d" aria-label="시장이 열리고 모닥불이 피어오르는 숲마을 풍경, 장비를 착용한 모험가"></canvas>
- <div class="village-hero-name">마을의 모험가<small>현재 장비 외형 미리보기</small></div>
- <div class="stage-copy"><div class="eyebrow">THE BORDERWOOD · HUNTER VILLAGE</div><h1>경계의 숲<br>사냥꾼 마을</h1><p>마을에서 장비를 갖추고 숲으로 나가자.<br>돌아올 때마다 새로운 이야기가 기다린다.</p></div>
- <div class="village-spots" aria-label="마을 주민에게 말 걸기"><button data-town="guild">📜 길드</button><button data-town="smith">⚒️ 대장간</button><button data-town="ranger">🌲 숲 안내인</button></div>
- <div class="stage-bottom"><button class="cta" data-go="indoor">⚔ 숲으로 사냥 떠나기</button><button class="cta alt" data-go="run">🏃 야외 탐험</button></div></div>
- <p class="world-note">마을의 시설과 주민을 눌러 말을 걸고 사냥을 준비할 수 있어. 마을 풍경은 현재 터치형 시안이며, 자유 이동은 숲 사냥 화면에서 가능해.</p>
- <div class="section-title"><h2>모험가 상태</h2><span class="badge">실내 · 야외 성장 공유</span></div>
+ <div class="stage" id="villageStage">
+ <canvas id="village3d" tabindex="0" aria-label="움직일 수 있는 경계의 숲마을. 화면의 건물 이름을 누르거나 조이스틱을 사용해 이동할 수 있어"></canvas>
+ <div class="villageTopHud">
+  <div class="villageProfile"><div class="villageProfileIcon">⚔</div><div><b>숲의 사냥꾼 <span id="townHudLevel">Lv. 1</span></b><small id="townHudGold">보유 골드 0 G</small></div></div>
+  <button class="villageBag" id="townBagButton" title="장비와 재료 확인">🎒 가방</button>
+ </div>
+ <div class="villageQuest"><small>경계의 숲 · 사냥꾼 마을</small><b id="townQuest">숲으로 떠날 준비를 하자</b><span id="townWalkingHint">건물 이름 터치 → 자동 이동 · 왼쪽 패드 → 직접 걷기</span></div>
+ <div id="townMovePad" aria-label="마을 이동 조이스틱" role="group"><div class="townJoyRing"></div><div id="townMoveKnob"></div><span>이동</span></div>
+ <button id="townTalkButton" class="townRumourButton" title="마을의 소문 듣기">💬 소문</button>
+ <div class="stage-bottom"><button class="cta" data-go="indoor">⚔ 숲 사냥</button><button class="cta alt" data-go="run">🏃 야외 탐험</button></div>
+ <div class="town-dialogue" id="townEncounter" hidden aria-live="polite"><button id="closeTownTalk" class="townDialogueClose" aria-label="대화 닫기">×</button><b id="townNpc">마을 안내인</b><div id="townMessage">길드·대장간·숲 안내인에게 다가가 이야기를 들어봐.</div><div class="controls"><button class="cta alt" id="townAction" data-go="indoor">숲 사냥 출발</button></div></div>
+</div>
+<p class="world-note">마을 이동은 터치와 가상 조이스틱을 사용해. 시설까지 가면 대화가 시작돼. 이 화면은 현재 원근감을 표현한 캔버스 기반 플레이 마을이야.</p>
+ <details class="villageJournal" id="villageJournal"><summary>📜 소문 · 성장 기록 보기</summary>
+<div class="section-title"><h2>모험가 상태</h2><span class="badge">실내 · 야외 성장 공유</span></div>
  <div class="grid villageStats"><div class="card"><div class="stat" id="homeLevel">1<small>레벨</small></div></div><div class="card"><div class="stat" id="homeGold">0<small>골드</small></div></div><div class="card"><div class="stat" id="homeXp">0<small>누적 경험치</small></div></div></div>
  <div class="homeProgress"><div class="homeProgressTop"><b>다음 레벨까지</b><span id="homeNextXp">경험치 확인 중</span></div><div class="homeProgressTrack"><i id="homeXpProgress"></i></div></div>
 <div class="townRumour" aria-live="polite"><span class="rumourIcon">✧</span><div class="rumourBody"><small>마을의 소문 · 귀를 기울여 보자</small><b id="rumourWho">마을 사람</b><p id="rumourLine">오늘은 무슨 소식이 들릴까?</p><button id="rumourNext">다른 소문 듣기</button></div></div>
 <div class="townObjective"><span>📜 지금의 여정</span><b id="homeObjective">숲의 조사를 준비하는 중</b><small id="homeObjectiveDesc">길드의 소식을 확인해 보자.</small></div>
 <div class="town-dialogue" aria-live="polite"><b id="townNpc">마을 안내인</b><div id="townMessage">길드·대장간·숲 안내인을 눌러 소식을 들을 수 있어.</div><div class="controls"><button class="cta alt" id="townAction" data-go="indoor">숲으로 사냥 떠나기</button></div></div>
+
+</details>
 </section>
 <section class="page" id="page-run">
  <div class="runTopNav"><button class="cta alt" data-go="village">← 마을로 돌아가기</button></div>
