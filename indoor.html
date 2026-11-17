@@ -200,10 +200,24 @@
  #bandage{width:42px!important;height:55px!important}
  #bandage .icon{font-size:18px!important}#actions .action .icon{width:28px;height:28px}#actions .action b{font-size:9px}
 }
+
+#huntExit[hidden]{display:none!important}
+#huntExit{position:fixed;z-index:130;inset:0;background:#021617dd;backdrop-filter:blur(7px);display:grid;place-items:center;padding:12px}
+.huntExitSheet{max-height:90dvh;overflow:auto;width:min(600px,100%);background:linear-gradient(130deg,#24463d,#102b31);border:1px solid #d7d5ab9c;border-radius:18px;padding:22px;color:#f2efd8;box-shadow:0 25px 70px #000b}
+.huntExitSheet>small{font-size:11px;color:#a6d8b9;letter-spacing:.12em}.huntExitSheet h2{font-size:24px;margin:8px 0}.huntExitSheet p{font-size:12px;line-height:1.7;color:#c7d8cb}
+.huntExitStats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.huntExitStats>div{background:#0d292d;padding:13px 6px;border:1px solid #a8c6aa75;border-radius:11px;text-align:center}
+.huntExitStats b{display:block;font-size:21px}.huntExitStats small{font-size:10px;color:#b5cdbc}
+.huntExitRewards{padding:12px;background:#3a4b39;border-radius:10px;color:#fff0b4!important}
+.huntExitActivity{border-left:3px solid #99d4c2;padding-left:12px}
+#huntExitLog{max-height:100px;overflow:auto;font-size:11px;line-height:1.7;color:#c9ddcd}
+.huntExitActions{display:flex;gap:10px;margin-top:15px}
+.huntExitActions button{flex:1;padding:12px 8px;border-radius:10px;background:#19473d;border:1px solid #b6d1b3;color:#e5f1e1;font-weight:850;cursor:pointer}
+#confirmHuntReturn{background:#a7ddbd;color:#14382b}
+@media(max-width:600px){.huntExitSheet{padding:13px}.huntExitSheet h2{font-size:19px}.huntExitStats b{font-size:17px}.huntExitActions button{font-size:12px}}
 </style></head><body>
 <div id="sky"></div><canvas id="game"></canvas><div id="vignette"></div><div id="bottomShade"></div><div id="screenFx"></div><canvas id="weaponCanvas" aria-hidden="true"></canvas>
 <div class="ui" id="brand"><div id="sigil">✦</div><div><h1>Motion RPG</h1><p>BORDERWOOD · HUNT</p></div></div>
-<div class="ui" id="hudR"><button id="motionOpen" title="S21 무선 연결과 폴드6 카메라 인식 설정">모션 설정</button><button id="campReturn">마을 복귀</button><div id="roundtag">⚔ 사냥 <span id="stage">01</span></div><div id="scorecard" class="glass"><small>사냥 점수</small><strong>✦ <span id="score">000</span></strong></div></div>
+<div class="ui" id="hudR"><button id="motionOpen" title="S21 무선 연결과 폴드6 카메라 인식 설정">모션 설정</button><button id="campReturn">마을 복귀</button><div id="roundtag" title="이번 사냥에서 처치한 몬스터 수">⚔ 처치 <span id="stage">00</span></div><div id="scorecard" class="glass"><small>사냥 점수</small><strong>✦ <span id="score">000</span></strong></div></div>
 <div class="ui" id="location"><span>FOREST HUNT</span>경계의 숲 · 사냥터<br><small id="status" style="opacity:.85">마력체가 앞을 가로막는다</small></div>
 <div class="ui" id="enemyHud"><div id="enemyName"><span class="label" id="monName">🌿 이끼 슬라임</span><span class="dist" id="distance">12 m</span></div><div id="barwrap"><div id="enemyHP"></div></div><div id="attackCue" role="status" aria-live="polite">적의 움직임을 살펴보세요</div></div>
 <div id="radarBox" aria-label="숲 전투 미니맵"><div class="radarTitle">◈ 숲 탐색</div><canvas id="radarCanvas" width="144" height="144" aria-label="정면 위쪽 기준, 적 위치 붉은색 표시"></canvas><small>▲ 나　● 몬스터</small></div>
@@ -214,6 +228,12 @@
 <div class="ui glass" id="playerHud"><b id="gearHud">숲 사냥꾼</b><div id="heroHpText">기력 100 / 100</div><div id="heroHpWrap"><div id="heroHp"></div></div><small id="dodgeInfo">적의 경고에 맞춰 회피</small></div><div id="forestZoneHud" aria-live="off">사냥꾼의 숲길</div><div id="lockHud" aria-live="off" hidden>◎ 락온 · 가까운 적 조준 보조</div><div id="cross"><div class="ring"></div></div><div class="ui" id="instruction">화면을 드래그하면 시야가 움직입니다</div><div id="weaponStatus">무기 준비 중</div><div id="attackFeedback"></div><div id="reactionFx" role="status" aria-live="polite"></div><div id="skillBurst" aria-hidden="true"><i></i><i></i><i></i></div><div id="toast"></div><div id="hitFx" aria-hidden="true"></div><div id="damageNumber" aria-hidden="true"></div>
 <div class="ui" id="controls"><div id="moveArea"><div id="joy"><div id="stick">✦</div></div><span>이동 · 키보드 WASD</span></div><div id="actions"><button class="action weaponSwitch" id="weaponToggle" aria-label="무기 전환">무기 전환</button><button class="action bandageAction" id="bandage" aria-label="붕대 사용"><span class="icon">✚</span><b>붕대 <span id="bandageCount">0</span></b></button><button class="action skillTrigger" id="skillAttack" aria-label="스킬 발동"><span class="icon">✦</span><b>스킬</b></button><button class="action" id="dodge" aria-label="회피"><span class="icon">↪</span><b>회피</b></button><button class="action" id="sword" aria-label="근접 휘두르기"><span class="icon">⚔️</span><b>근접 휘두르기</b></button><button class="action" id="fire" aria-label="마법 투척"><span class="icon">✨</span><b>마법 투척</b></button></div></div><div id="footerNote">근접 버튼: 좌우 드래그 = 가로 베기 · 아래 = 내려찍기 · 위 = 찌르기</div>
 <div id="intro"><div id="introCard"><div class="emblem">✦ 🧙 ✦</div><h2>경계의 숲</h2><p>숲을 탐색하고 몬스터의 움직임을 살펴봐.<br><b>S21로 무기를 휘두르고</b> 실제 몸으로 공격을 피해.<br>골렘의 투석과 몬스터의 돌진은 움직여서 벗어날 수 있어.</p><button id="begin">사냥 시작하기</button><small>드래그: 시야 이동 · 근접 버튼 방향 드래그: 가로/세로/찌르기<br>오른쪽 상단 [모션 설정]에서 S21 무선 무기와 전면 카메라 회피를 연결할 수 있어</small></div></div>
+<div id="huntExit" hidden role="dialog" aria-modal="true" aria-labelledby="huntExitTitle">
+ <div class="huntExitSheet"><small>FOREST HUNT / RETURN TO VILLAGE</small><h2 id="huntExitTitle">사냥을 마치고 마을로 돌아갑니다</h2>
+ <p id="huntExitInfo">이번 사냥의 결과를 확인해.</p><div id="huntExitStats" class="huntExitStats"></div>
+ <p id="huntExitRewards" class="huntExitRewards"></p><p id="huntExitActivity" class="huntExitActivity"></p>
+ <ol id="huntExitLog"></ol><div class="huntExitActions"><button id="resumeHunt" type="button">계속 사냥</button><button id="confirmHuntReturn" type="button">마을로 돌아가기</button></div>
+ </div></div>
 <div id="err"></div><div id="retryWrap" hidden><strong>기력이 소진됐어</strong><p>S21 연결은 유지돼. 바로 재도전하면 새 연결 코드를 입력할 필요 없어.</p><button id="retryCombat">기력 회복 · 다시 싸우기</button></div>
 <div id="motionPanel" hidden role="dialog" aria-modal="true" aria-label="실전 모션 입력 설정">
  <div class="motionDialog">
@@ -239,7 +259,8 @@
  </div>
 </div>
 <script type="module">
-import {combatStats,normalizeRpgGear} from "./src/gear-game.mjs?v=0.42";
+import {combatStats,normalizeRpgGear,claimIndoorBattle} from "./src/gear-game.mjs?v=0.43";
+import {summarizeHuntResult} from "./src/session-report.mjs?v=0.43";
 import {GEAR} from "./src/avatar.mjs?v=0.41";
 import {weaponProfile,normalizeMeleeStyle,createMeleeAction,actionProgress,meleeHitInfo,projectileProfile} from "./src/player-combat.mjs?v=0.34";
 import {drawCombatEffects} from "./src/combat-effects.mjs?v=0.42";
@@ -266,6 +287,7 @@ const currentWeapon=()=>activeWeaponMode==="melee"?equipped.meleeWeapon:equipped
 const equippedWeapon=()=>GEAR.weapon.find(item=>item.id===currentWeapon())?.name||"기본 장비";
 const sessionId="arena-"+Date.now()+"-"+Math.random().toString(36).slice(2,11);
 let heroHp=stats.maxHp,dodgeUntil=0,dodgeCooldown=0,lastDodgeKind="button",dodgeVisualUntil=0,bandageReadyAt=0;
+let huntElapsedSec=0,huntDodgeInputs=0,huntDodgeSuccess=0,huntMotionActions=0;const huntLog=[];
 let enemySpawnClock=-99,lastRadarClock=-99;
 let meleeAction=null,rangedAction=null;
 const weaponCanvas=el("weaponCanvas"),weaponCtx=weaponCanvas.getContext("2d",{alpha:true});
@@ -337,6 +359,7 @@ function dodge(direction="button"){
   camera.z=Math.max(-31,Math.min(7,camera.z+side*Math.sin(yaw)*.72));
  }
  el("dodgeInfo").textContent=lastDodgeKind==="duck"?"몸 낮추기!":lastDodgeKind==="button"?"버튼 회피!":"좌우 회피!";
+ huntDodgeInputs++;
  showReaction("detect","회피 동작 인식");toast("회피 입력");beep(420,.10,"sine",.07);return true;
 }
 function evadeMatchesAttack(){
@@ -726,10 +749,11 @@ function activateSkill(){
  beep(860,.34,"triangle",.14);
  return true;
 }
-function bankProgress(){try{localStorage.setItem(RESULT_KEY,JSON.stringify({kills,score,sessionId,updatedAt:Date.now()}))}catch(e){}}
+function currentHuntRecord(){return {kills,score,sessionId,updatedAt:Date.now(),elapsedSec:Math.round(huntElapsedSec),motionActions:huntMotionActions,dodges:huntDodgeInputs,dodgeSuccess:huntDodgeSuccess,log:huntLog.slice(-16)};}
+function bankProgress(){try{localStorage.setItem(RESULT_KEY,JSON.stringify(currentHuntRecord()))}catch(e){}}
 function damage(n,weapon="sword"){if(enemy.dead)return;enemyMind.aggro=true;enemy.hp=Math.max(0,enemy.hp-n);el('enemyHP').style.width=(enemy.hp/enemy.max*100)+'%';let x=enemy.x,y=1.4,z=enemy.z;
 const tint=weapon==="axe"||weapon==="ember"?[1,.58,.26]:weapon==="staff"||weapon==="orb"?[.38,.82,1]:weapon==="greatsword"||weapon==="aura"?[.50,.76,1]:weapon==="bow"||weapon==="arrow"?[.74,.94,.58]:[.80,1,.69];
-for(let i=0;i<16;i++){let p=(rand()-.5)*6,t=rand()*6.28,s=.65+rand()*2.6;sparks.push({x,y,z,vx:Math.cos(t)*s,vy:rand()*3.7,vz:Math.sin(t)*s,r:.04+rand()*.07,life:.4+rand()*.5,t:0,col:[tint[0],Math.min(1,tint[1]+rand()*.16),Math.min(1,tint[2]+rand()*.10)]})}toast('✦ '+n+' 데미지');beep(165,.12,'triangle',.11);if(enemy.hp<=0){enemy.dead=true;enemy.windup=0;enemy.impactUntil=0;enemyShots=[];el('attackBanner').hidden=true;el('enemyTag').hidden=true;el('enemyArrow').hidden=true;enemy.respawn=1.6;score+=80+enemy.kind*20;kills++;heroHp=Math.min(stats.maxHp,heroHp+5);showHero();bankProgress();el('score').textContent=String(score).padStart(3,'0');el('enemyHud').style.opacity='0';el('stage').textContent=String(kills+1).padStart(2,'0');el('status').textContent='마력체 격파! 마을로 돌아가면 보상을 수령한다';setTimeout(()=>toast('마력체 격파 · 마을 보상 저장!'),350);beep(830,.25,'sine',.1)}}
+for(let i=0;i<16;i++){let p=(rand()-.5)*6,t=rand()*6.28,s=.65+rand()*2.6;sparks.push({x,y,z,vx:Math.cos(t)*s,vy:rand()*3.7,vz:Math.sin(t)*s,r:.04+rand()*.07,life:.4+rand()*.5,t:0,col:[tint[0],Math.min(1,tint[1]+rand()*.16),Math.min(1,tint[2]+rand()*.10)]})}toast('✦ '+n+' 데미지');beep(165,.12,'triangle',.11);if(enemy.hp<=0){enemy.dead=true;enemy.windup=0;enemy.impactUntil=0;enemyShots=[];el('attackBanner').hidden=true;el('enemyTag').hidden=true;el('enemyArrow').hidden=true;enemy.respawn=1.6;score+=80+enemy.kind*20;kills++;huntLog.push({name:enemy.name||"몬스터",at:huntElapsedSec});if(huntLog.length>25)huntLog.shift();heroHp=Math.min(stats.maxHp,heroHp+5);showHero();bankProgress();el('score').textContent=String(score).padStart(3,'0');el('enemyHud').style.opacity='0';el('stage').textContent=String(kills).padStart(2,'0');el('status').textContent='마력체 격파! 마을로 돌아가면 보상을 수령한다';setTimeout(()=>toast('마력체 격파 · 마을 보상 저장!'),350);beep(830,.25,'sine',.1)}}
 function spawnEnemy(){
  const oldKind=enemy.kind,area=forestZoneAt(camera.x,camera.z);
  enemy.kind=chooseForestMonster(area.id,rand,oldKind);
@@ -800,7 +824,7 @@ function updateEnemy(dt){
     }else{
      const dodged=outcome.canHit&&evadeMatchesAttack();
      const msg=dodged?"회피 성공!":outcome.reason==="outside-arc"?"적의 뒤·측면에서 공격을 피했다!":"사거리 밖으로 벗어나 공격을 피했다!";
-     toast(msg);el("status").textContent=msg;if(dodged)showReaction("success","회피 성공");beep(dodged?760:455,.13,"sine",.06);
+     toast(msg);el("status").textContent=msg;if(dodged){huntDodgeSuccess++;showReaction("success","회피 성공");}beep(dodged?760:455,.13,"sine",.06);
     }
     }
    enemy.attackTimer=(isRangedStyle(enemy.attackStyle)?3.2:2.1)+Math.max(0,1-kills*.025);
@@ -842,7 +866,7 @@ function updateEnemy(dt){
  el("distance").textContent=Math.round(distance2d(enemy,camera))+" m";
  el("cross").classList.toggle("aim",radiusAiming());
 }
-function update(dt){if(!el("motionPanel").hidden||document.hidden)return;clock+=dt;if(!active)return;const zone=forestZoneAt(camera.x,camera.z);
+function update(dt){if(!el("motionPanel").hidden||document.hidden)return;clock+=dt;if(!active)return;huntElapsedSec+=dt;const zone=forestZoneAt(camera.x,camera.z);
 el("forestZoneHud").textContent=zone.name;
 if(targetLocked&&(!motionHost.connected||!retainTarget(camera,enemy))){
  targetLocked=false;
@@ -881,7 +905,7 @@ for(let i=enemyShots.length-1;i>=0;i--){
     life:.25+rand()*.4,t:0,col:shot.kind==="rock"?[.74,.64,.47]:[.4,.78,1]});
   }
   if(clock<=dodgeUntil&&(lastDodgeKind==="button"||lastDodgeKind==="left"||lastDodgeKind==="right")){
-   toast("원거리 공격 회피 성공");showReaction("success","발사체 회피 성공");beep(745,.15,"sine",.07);
+   toast("원거리 공격 회피 성공");huntDodgeSuccess++;showReaction("success","발사체 회피 성공");beep(745,.15,"sine",.07);
   }else applyEnemyHit(shot.damageFactor);
   continue;
  }
@@ -1129,7 +1153,7 @@ const motionHost=createWirelessHost({
   if(autoSwitchEnabled&&packet.autoSwitch===true)switchWeapon(packet.gesture==="throw"?"ranged":"melee",false);
   const mismatch=packet.gesture==="throw"&&activeWeaponMode!=="ranged"||packet.gesture==="melee"&&activeWeaponMode!=="melee";
   const accepted=!mismatch&&(packet.gesture==="throw"?magic():swordHit(packet.style));
-  if(accepted)showReaction("detect","모션 인식 · "+action);
+  if(accepted){huntMotionActions++;showReaction("detect","모션 인식 · "+action);}
   respond(!!accepted,accepted?"":mismatch?"무기 전환 후 시도해":"공격 쿨다운 중");
  }
 });
@@ -1239,7 +1263,33 @@ meleeButton.addEventListener("pointerup",e=>{
  const cut=Math.abs(dx)>26&&Math.abs(dx)>Math.abs(dy)?"sweep":dy>27?"overhead":dy< -27?"thrust":null;
  swordHit(cut);
 });
-meleeButton.addEventListener("pointercancel",()=>{meleePointer=null;});el('campReturn').addEventListener('click',()=>{bankProgress();if(new URLSearchParams(location.search).get('return')==='preview'){if(window.parent!==window){window.parent.postMessage({type:'motion-rpg-indoor-return',sessionId},location.origin)}else{location.href='./preview.html?v=0.42&from=indoor'}}else{location.href='./index.html?from=indoor'}});window.addEventListener('keydown',e=>{keys[e.code]=true;if(['Space','ArrowLeft','ArrowRight','ArrowDown','ArrowUp'].includes(e.code))e.preventDefault();if(e.code==='KeyH'&&!e.repeat)useBandage();if(e.code==='KeyT'&&!e.repeat)switchWeapon(activeWeaponMode==='melee'?'ranged':'melee');if(e.code==='KeyG'&&!e.repeat)activateSkill();if(e.code==='Space'&&!e.repeat)magic();if(e.code==='KeyF'&&!e.repeat)swordHit("sweep");
+meleeButton.addEventListener("pointercancel",()=>{meleePointer=null;});
+let huntWasActive=false;
+function showHuntSummary(){
+ huntWasActive=active;active=false;bankProgress();
+ let payout=null;
+ if(kills>0)try{payout=claimIndoorBattle(JSON.parse(localStorage.getItem("motion-rpg-save-v1")||"{}"),currentHuntRecord());}catch{}
+ const info=summarizeHuntResult(currentHuntRecord(),payout);
+ el("huntExitTitle").textContent=info.title;el("huntExitInfo").textContent=info.description;
+ el("huntExitStats").replaceChildren(...info.metrics.map(item=>{
+  const e=document.createElement("div"),b=document.createElement("b"),label=document.createElement("small");
+  b.textContent=item.value;label.textContent=item.label;e.append(b,label);return e;
+ }));
+ el("huntExitRewards").textContent=info.rewards;el("huntExitActivity").textContent=info.activity;
+ el("huntExitLog").replaceChildren(...info.entries.map(line=>{const li=document.createElement("li");li.textContent=line;return li;}));
+ el("huntExit").hidden=false;
+}
+function returnToVillage(){
+ bankProgress();
+ if(new URLSearchParams(location.search).get("return")==="preview"){
+  if(window.parent!==window)window.parent.postMessage({type:"motion-rpg-indoor-return",sessionId},location.origin);
+  else location.href="./preview.html?v=0.43&from=indoor";
+ }else location.href="./index.html?from=indoor";
+}
+el("campReturn").addEventListener("click",showHuntSummary);
+el("resumeHunt").addEventListener("click",()=>{el("huntExit").hidden=true;active=huntWasActive&&heroHp>0;});
+el("confirmHuntReturn").addEventListener("click",returnToVillage);
+window.addEventListener('keydown',e=>{keys[e.code]=true;if(['Space','ArrowLeft','ArrowRight','ArrowDown','ArrowUp'].includes(e.code))e.preventDefault();if(e.code==='KeyH'&&!e.repeat)useBandage();if(e.code==='KeyT'&&!e.repeat)switchWeapon(activeWeaponMode==='melee'?'ranged':'melee');if(e.code==='KeyG'&&!e.repeat)activateSkill();if(e.code==='Space'&&!e.repeat)magic();if(e.code==='KeyF'&&!e.repeat)swordHit("sweep");
 if(e.code==='KeyE'&&!e.repeat)swordHit("overhead");
 if(e.code==='KeyR'&&!e.repeat)swordHit("thrust");if((e.code==='ShiftLeft'||e.code==='KeyQ')&&!e.repeat)dodge()});window.addEventListener('keyup',e=>{keys[e.code]=false});document.addEventListener('visibilitychange',()=>{last=performance.now()});window.addEventListener('resize',resize);dragCamera();joystick();requestAnimationFrame(loop);
 })();
