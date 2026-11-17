@@ -261,6 +261,7 @@
 <script type="module">
 import {combatStats,normalizeRpgGear,claimIndoorBattle} from "./src/gear-game.mjs?v=0.43";
 import {summarizeHuntResult} from "./src/session-report.mjs?v=0.43";
+import {newGame} from "./src/engine.mjs?v=0.43";
 import {GEAR} from "./src/avatar.mjs?v=0.41";
 import {weaponProfile,normalizeMeleeStyle,createMeleeAction,actionProgress,meleeHitInfo,projectileProfile} from "./src/player-combat.mjs?v=0.34";
 import {drawCombatEffects} from "./src/combat-effects.mjs?v=0.42";
@@ -1268,7 +1269,10 @@ let huntWasActive=false;
 function showHuntSummary(){
  huntWasActive=active;active=false;bankProgress();
  let payout=null;
- if(kills>0)try{payout=claimIndoorBattle(JSON.parse(localStorage.getItem("motion-rpg-save-v1")||"{}"),currentHuntRecord());}catch{}
+ if(kills>0)try{
+  const saved=JSON.parse(localStorage.getItem("motion-rpg-save-v1")||"null");
+  payout=claimIndoorBattle(saved?.level?saved:newGame(),currentHuntRecord());
+ }catch{}
  const info=summarizeHuntResult(currentHuntRecord(),payout);
  el("huntExitTitle").textContent=info.title;el("huntExitInfo").textContent=info.description;
  el("huntExitStats").replaceChildren(...info.metrics.map(item=>{
