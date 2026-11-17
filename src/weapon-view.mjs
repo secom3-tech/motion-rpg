@@ -101,6 +101,7 @@ export function attackTrailPoints(width,height,style,steps=32){
  return pts;
 }
 function renderTrail(ctx,width,height,weapon,style,progress){
+ if(weapon==="bow")return; // Bow bash is a short shove, never a sword-like blade arc.
  const profile=weaponProfile(weapon);
  // Only show an energetic arc around the actual contact interval.
  const t=(progress-.13)/.75;
@@ -153,7 +154,11 @@ export function drawFirstPersonWeapon(ctx,width,height,weapon,melee=null,ranged=
  drawPolygon(ctx,[[-8,25],[27,39],[61,101],[21,132],[-19,72]],"#54644b","#233d37");
  drawPolygon(ctx,[[-8,25],[24,35],[43,68],[16,83],[-19,54]],"#a9886b","#614b43");
  ctx.restore();
- if(melee&&p<1)renderTrail(ctx,width,height,weapon,melee.style,p);
+ if(melee&&p<1){
+  if(weapon==="bow"&&p>.28&&p<.79){
+   roundGlow(ctx,width*.55,height*.48,width*.09,"rgba(201,231,169,.22)");
+  }else renderTrail(ctx,width,height,weapon,melee.style,p);
+ }
  if(ranged&&rp<1&&weapon==="staff"){
   roundGlow(ctx,width*.55,height*.48,Math.max(20,width*.11),"rgba(106,218,252,.25)");
  }
