@@ -298,7 +298,7 @@ import {FOREST_MONSTERS,forestZoneAt,chooseForestMonster,monsterBehaviour} from 
 import {createMonsterMind,monsterMotionStep,canAcquireTarget,retainTarget} from "./src/monster-ai.mjs?v=0.38";
 import {rangedProfile,isRangedStyle,canStartRanged,fireRangedProjectile,projectileStep} from "./src/enemy-ranged.mjs?v=0.38";
 import {relativeTarget,radarTarget,projectEnemyHead,enemyEdgePointer,monsterHeadHeight,compassDirection,RADAR_RANGE} from "./src/combat-navigation.mjs?v=0.36";
-import {validMotionPacket} from "./src/motion-core.mjs?v=0.34";
+import {validMotionPacket} from "./src/motion-core.mjs?v=0.43.6";
 import {createPoseCamera} from "./src/pose-camera.mjs?v=0.31";
 import {ATTACKS,angleToTarget,turnToTarget,strikeInfo,spawnAroundPlayer,distance2d,dodgeMatches} from "./src/combat-spatial.mjs?v=0.35";
 (()=>{'use strict';
@@ -1299,7 +1299,7 @@ el("hostStart").onclick=async()=>{
   const room=await motionHost.start();
   lastMotionSequence=-1;lastMotionAt=-Infinity;
   const url=new URL("./controller.html",location.href);
-  url.searchParams.set("v","0.43.5");url.searchParams.set("room",room);
+  url.searchParams.set("v","0.43.6");url.searchParams.set("room",room);
   el("controllerLink").href=url.href;
   el("motionRoom").textContent=room.replace(/^mrpg-/,"");
   el("hostStop").disabled=false;
