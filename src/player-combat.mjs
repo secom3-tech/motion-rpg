@@ -65,12 +65,13 @@ export function classifyMeleeGesture(events,choice="auto",templates=null){
  return "sweep";
 }
 export function classifyAttackIntent(events,mode="auto",templates=null,cutChoice="auto"){
- const style=classifyMeleeGesture(events,cutChoice,templates);
  if(mode==="throw")return {type:"throw",style:null};
+ const style=classifyMeleeGesture(events,cutChoice,templates);
  if(mode==="melee")return {type:"melee",style};
- // Auto: a forward thrust means distance attack, a sideways/downward
- // sweeping motion means melee. This is experimental without calibration.
- return style==="thrust"?{type:"throw",style:null}:{type:"melee",style};
+ // Auto intent must use the real sensor motion even when the user fixed a
+ // MELEE-only cut style. Otherwise choosing "sweep" disables all throws.
+ const rawStyle=classifyMeleeGesture(events,"auto",templates);
+ return rawStyle==="thrust"?{type:"throw",style:null}:{type:"melee",style};
 }
 export function createMeleeAction(weapon,style,startAt){
  const profile=weaponProfile(weapon),kind=weapon==="bow"?"thrust":normalizeMeleeStyle(style,weapon);
