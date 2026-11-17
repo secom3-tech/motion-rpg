@@ -39,9 +39,9 @@ export function createGestureDetector({
   if(!SENSOR_MODES.includes(current.mode))current.mode="throw";
   if(!SENSOR_AXES.includes(current.axis))current.axis="";
   armed=false;lowFrom=null;previous=0;nextReady=-Infinity;lastCooldownDuration=0;
-  rearmQuiet=current.mode==="throw"?throwQuietMs:current.mode==="auto"?600:quietMs;
+  rearmQuiet=current.mode==="throw"?throwQuietMs:current.mode==="auto"?quietMs:quietMs;
  }
- function reset(){last=-Infinity;nextReady=-Infinity;lowFrom=null;armed=true;previous=0;count=0;lastCooldownDuration=0;rearmQuiet=current.mode==="throw"?throwQuietMs:current.mode==="auto"?600:quietMs;}
+ function reset(){last=-Infinity;nextReady=-Infinity;lowFrom=null;armed=true;previous=0;count=0;lastCooldownDuration=0;rearmQuiet=current.mode==="throw"?throwQuietMs:current.mode==="auto"?quietMs:quietMs;}
  function protectThrow(startTime=last){
   if(!Number.isFinite(startTime))return;
   nextReady=Math.max(nextReady,startTime+throwCooldownMs);
@@ -62,9 +62,9 @@ export function createGestureDetector({
   if(armed&&score>=threshold&&score>=previous*.92&&now>=nextReady){
    gesture={type:current.mode,strength:Math.round(score),time:now};
    armed=false;last=now;count++;
-   lastCooldownDuration=current.mode==="throw"?throwCooldownMs:current.mode==="auto"?950:cooldownMs;
+   lastCooldownDuration=current.mode==="throw"?throwCooldownMs:current.mode==="auto"?cooldownMs:cooldownMs;
    nextReady=now+lastCooldownDuration;
-   rearmQuiet=current.mode==="throw"?throwQuietMs:current.mode==="auto"?600:quietMs;
+   rearmQuiet=current.mode==="throw"?throwQuietMs:current.mode==="auto"?quietMs:quietMs;
   }
   previous=score;
   return {...data,gesture,armed,count,threshold,cooldownRemainingMs:Math.max(0,nextReady-now)};
