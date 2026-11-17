@@ -49,7 +49,7 @@ const arena=fs.readFileSync(new URL("../indoor.html",import.meta.url),"utf8");
 const controller=fs.readFileSync(new URL("../controller.html",import.meta.url),"utf8");
 const hub=fs.readFileSync(new URL("../preview.html",import.meta.url),"utf8");
 for(const needle of ["function switchWeapon(","function activateSkill(","showReaction(\"success\"","showReaction(\"detect\"","id=\"reactionFx\"","id=\"skillAttack\"","activeWeaponMode!==\"ranged\"","activeWeaponMode!==\"melee\""])assert.ok(arena.includes(needle),"Missing combat cue "+needle);
-assert.ok(arena.includes('drawFirstPersonWeapon(weaponCtx,W,H,currentWeapon()'),"Combat should render active equipped weapon");
+assert.ok(arena.includes('drawCombatEffects(weaponCtx,W,H,currentWeapon()'),"Combat should show separate attack cues rather than drawn weapon");
 assert.ok(controller.includes('data-mode="melee"')&&controller.includes('data-mode="throw"')&&controller.includes('data-mode="auto"'));
 assert.ok(controller.includes('mode="melee"')&&controller.includes('controlSend("weapon-switch"'));
 assert.ok(hub.includes('id="gear-meleeWeapon"')&&hub.includes('id="gear-rangedWeapon"'));
