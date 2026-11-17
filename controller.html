@@ -56,7 +56,7 @@ button{font-size:13px;padding:10px 11px;margin:4px 4px 0 0}
   </style>
 </head>
 <body><main>
-  <div class="eyebrow">MOTION RPG · S21 CONTROLLER v0.44.1</div>
+  <div class="eyebrow">MOTION RPG · S21 CONTROLLER v0.45</div>
   <h1>S21 전투 조작</h1>
   <p class="muted">이 화면은 S21에서 실행해. 검격·투척 동작은 폴드6 3D 전투로 무선 전송하고, 폴드6은 화면과 카메라 회피를 담당해.</p>
   <section class="card" id="pairing"><b>폴드6 무선 연결</b>
@@ -79,7 +79,7 @@ button{font-size:13px;padding:10px 11px;margin:4px 4px 0 0}
    <div id="controlState" class="muted" role="status">이동/시점 입력 대기 · 연결 시 활성</div>
   </section>
   
-  <section class="card"><b>장착 무기 전환</b><div class="weaponChoice"><button class="mode active" data-mode="melee">⚔ 근접 · 검</button><button class="mode secondary" data-mode="throw">➶ 원거리 · 활</button><button class="mode secondary" data-mode="auto">자동 전환 시험</button></div><p class="muted" id="hint">기본은 버튼으로 무기 전환. 자동 전환은 선택 기능이며 센서 인식이 불안정할 수 있어.</p><p class="muted" id="modeInfo">현재 무기: 근접</p></section>
+  <section class="card"><b>장착 무기 전환</b><div class="weaponChoice"><button class="mode active" data-mode="melee">⚔ 근접 · 검</button><button class="mode secondary" data-mode="throw">➶ 원거리 · 활</button><button class="mode secondary" data-mode="auto">◎ 거리 자동 전환</button></div><p class="muted" id="hint">거리 자동 전환이 기본이야. 적과 가까우면 검, 멀어지면 활을 장착해. 팔동작은 현재 무기로 공격하는 입력이야.</p><p class="muted" id="modeInfo">현재 무기: 근접</p></section>
   <section class="card"><b>동작 민감도 · <span id="sensitivityLabel">보통</span></b><input id="sensitivity" type="range" min="1" max="5" step="1" value="3" /><div class="muted">낮음은 강한 회전만 인식하고, 높음은 작은 손목 회전도 인식한다. 지금은 <b>낮음</b>부터 권장.</div></section>
   <details id="advancedSettings"><summary>검격 방향 · 센서축 보정 · 고급 설정</summary>
   <section class="card"><b>검격 방향</b><p class="muted">근접 모드일 때 가로·세로·찌르기 궤적을 따로 전송해. 자동은 휴대폰 센서축으로 추정하므로 쥔 방향에 따라 오판할 수 있어.</p><label for="cutStyle" class="muted">인식 방식</label><select id="cutStyle" aria-label="검격 스타일"><option value="auto">동작 방향 자동 추정 (시험용)</option><option value="sweep">가로 베기 고정</option><option value="overhead">세로 내려찍기 고정</option><option value="thrust">앞으로 찌르기 고정</option></select><p id="cutHint" class="muted">인식이 헷갈리면 방향을 고정해 비교해 봐.</p>
@@ -97,7 +97,7 @@ import {classifyMeleeGesture,classifyAttackIntent,motionFeatures} from "./src/pl
 import {createWirelessController,cleanRoom} from "./src/peer-bridge.mjs?v=0.43.4";
 import {movementVector} from "./src/remote-control.mjs?v=0.41";
 const $=id=>document.getElementById(id);
-let active=false,count=0,mode="melee",sensitivity=3,calibrating=false,calibration=[],sampleTime=0,seq=0,received=0,sensorEvents=0,sensorStartedAt=0;
+let active=false,count=0,mode="melee",remoteWeaponMode="melee",sensitivity=3,calibrating=false,calibration=[],sampleTime=0,seq=0,received=0,sensorEvents=0,sensorStartedAt=0;
 let recentMotion=[],pendingAttack=null,trainingStyle=null,trainingSamples=[],trained={},skillHeld=false,skillPointerId=null;
 try{const saved=JSON.parse(localStorage.getItem("motion-rpg-s21-style-templates-v1")||"{}");if(saved&&typeof saved==="object")trained=saved;}catch{}
 try{sensitivity=Math.max(1,Math.min(5,Number(localStorage.getItem("motion-rpg-s21-sensitivity")||3)));}catch{}
@@ -152,12 +152,15 @@ const wireless=createWirelessController({
   }
   if(data?.type==="input-ack"){$("controlState").textContent=data.message||"S21 조작 입력 확인";}
   if(data?.type==="weapon-state"){
+   if(["melee","ranged"].includes(data.weaponMode))remoteWeaponMode=data.weaponMode;
+   else if(["melee","ranged"].includes(data.mode))remoteWeaponMode=data.mode;
    if(["melee","ranged","auto"].includes(data.mode)){
-    mode=data.mode==="ranged"?"throw":data.mode;
+    const next=data.mode==="ranged"?"throw":data.mode;
+    // Do not reset an armed S21 sensor on each automatic distance change.
+    if(next!==mode){mode=next;detector.configure({sensitivity,mode,axis:axes[mode]||""});publishSensorState(true);}
     document.querySelectorAll("[data-mode]").forEach(b=>b.classList.toggle("active",b.dataset.mode===mode));
-    detector.configure({sensitivity,mode,axis:axes[mode]||""});publishSensorState(true);
    }
-   $("modeInfo").textContent="전투 무기: "+data.label;
+   $("modeInfo").textContent=(mode==="auto"?"거리 자동 · ":"전투 무기: ")+data.label;
   }
   if(data?.type==="gesture-ack"){
    const desc=data.accepted?(data.skill?"폴드6 스킬 발동 확인":"폴드6 전투 입력 확인"):data.reason||"전투에서 입력을 사용할 수 없어";
@@ -300,8 +303,8 @@ function syncSettings(){
 function changeMode(next){
  mode=next;
  document.querySelectorAll("[data-mode]").forEach(b=>b.classList.toggle("active",b.dataset.mode===mode));
- $("hint").textContent=mode==="auto"?"자동 전환 시험 · 동작에 따라 무기를 바꾸지만 오인식 가능성이 있어.":mode==="throw"?"활 준비 · 던지는 동작으로 화살을 발사해. 근접 공격은 차단돼.":"검 준비 · 휘두르기/찌르기 동작으로 공격해.";
- $("modeInfo").textContent="전투 모드: "+({auto:"자동 전환 시험",throw:"원거리",melee:"근접"}[mode]);
+ $("hint").textContent=mode==="auto"?"적과 가까우면 검, 멀어지면 활. 센서가 인식한 팔동작으로 현재 무기를 공격해.":mode==="throw"?"활 고정 · 투척 동작으로 화살을 발사해. 근접 공격은 차단돼.":"검 고정 · 휘두르기/찌르기 동작으로 공격해.";
+ $("modeInfo").textContent="전투 모드: "+({auto:"거리 자동 전환",throw:"원거리 고정",melee:"근접 고정"}[mode]);
  controlSend("weapon-switch",{mode:mode==="throw"?"ranged":mode});
  pendingAttack=null;recentMotion=[];
  syncSettings();publishSensorState(true);
@@ -323,7 +326,7 @@ function onMotion(e){
   publishSensorState(false,now);
  }
  if(calibrating||trainingStyle||!result.gesture||pendingAttack)return;
- pendingAttack={startAt:now,mode,gesture:result.gesture,samples:recentMotion.map(entry=>entry.event),skillHeld};
+ pendingAttack={startAt:now,mode,weaponMode:remoteWeaponMode,gesture:result.gesture,samples:recentMotion.map(entry=>entry.event),skillHeld};
  // Read the motion peak through the stroke, instead of classifying only the
  // very first sensor frame that exceeded the threshold.
  setTimeout(flushPendingAttack,150);
@@ -332,11 +335,14 @@ function onMotion(e){
 function flushPendingAttack(){
  const pending=pendingAttack;pendingAttack=null;
  if(!pending||!active||calibrating||trainingStyle)return;
- const action=classifyAttackIntent(pending.samples,pending.mode,trained,cutStyle);
+ const action=pending.mode==="auto"?
+   (pending.weaponMode==="ranged"?{type:"throw",style:null}:
+    {type:"melee",style:classifyMeleeGesture(pending.samples,cutStyle,trained)}):
+   classifyAttackIntent(pending.samples,pending.mode,trained,cutStyle);
  if(action.type==="throw")detector.protectThrow(pending.startAt);
  publishSensorState(true);
  count++;$("count").textContent=count;
- const packet={type:"gesture",gesture:action.type,autoSwitch:mode==="auto",skillHeld:pending.skillHeld===true,strength:pending.gesture.strength,
+ const packet={type:"gesture",gesture:action.type,autoSwitch:pending.mode==="auto",skillHeld:pending.skillHeld===true,strength:pending.gesture.strength,
    time:pending.startAt,seq:++seq,session:wireless.room};
  if(action.type==="melee")packet.style=action.style;
  const sent=wireless.send(packet);
