@@ -27,7 +27,7 @@ export function summarizeHuntResult(result={},payout=null){
   rewards:payout?.awarded?
    "자동 지급 · 경험치 +"+payout.xp+" · 골드 +"+payout.gold+
    " · 붕대 +"+(payout.bandages||0)+(materialText.length?" · "+materialText.join(" / "):""):
-   "처치 기록이 없어 보상 지급 없음",
+   (kills>0?"이번 사냥 보상은 이미 정산되었거나 재수령할 수 없어.":"처치 기록이 없어 보상 지급 없음"),
   activity:"훈련 기록 · S21 모션 공격 "+Math.floor(nonNeg(result.motionActions))+"회, 회피 입력 "+Math.floor(nonNeg(result.dodges))+
    "회, 실제 회피 성공 "+Math.floor(nonNeg(result.dodgeSuccess))+
    "회. 시간과 모션 횟수는 게임 기록이며 칼로리 측정값이 아니야.",
