@@ -308,9 +308,23 @@
 .reportLog{font-size:11px;color:#cbdccc;line-height:1.75;max-height:110px;overflow:auto;padding:5px 15px}
 .reportClose{width:100%;margin-top:16px;padding:13px;border-radius:12px;border:1px solid #b1ddba;background:#a5d7b7;color:#14372e;font-weight:850;cursor:pointer}
 @media(max-width:750px){.jobPortrait{height:38%}.bodySilhouette{top:35%;height:57%;width:62%;left:19%}.figureGear{width:46px;min-height:54px}.figureGear>span{width:35px;height:35px}.figHead{top:40%}.figArmor{top:64%}.figMelee,.figRanged{top:55%}.figOffhand{top:75%}.reportStats{gap:5px}.reportStats>div{font-size:17px}}
+
+/* v0.43.1: keep character's HEAD inside the top portrait crop */
+.jobPortrait{object-position:50% 0%!important;object-fit:cover;max-width:100%;transform:none}
+.mannequinPortrait .jobPortrait{height:44%;min-height:0}
+.bodySilhouette{top:42%;height:49%;width:78%;left:11%}
+.figHead{top:48%}.figArmor{top:63%}.figMelee,.figRanged{top:56%}.figOffhand{top:77%}
+.paintedEquipment{border-radius:12px!important;overflow:hidden;filter:drop-shadow(0 1px 3px #0007)}
+.slotArt .paintedEquipment{box-shadow:inset 0 0 0 1px #f2d3a23a}
+@media(max-width:750px){
+ .jobPortrait{object-position:50% 0%!important}
+ .mannequinPortrait .jobPortrait{height:42%}
+ .bodySilhouette{top:39%;height:54%;width:60%;left:20%}
+ .figHead{top:46%}.figArmor{top:65%}.figMelee,.figRanged{top:55%}.figOffhand{top:75%}
+}
 </style></head>
 <body><div class="app">
-<header class="top"><div class="mark">MOTION RPG <em> / 경계의 숲</em></div><div class="version">모험 허브 · 0.43</div></header>
+<header class="top"><div class="mark">MOTION RPG <em> / 경계의 숲</em></div><div class="version">모험 허브 · 0.43.1</div></header>
 <nav class="menu" aria-label="게임 메뉴"><button data-view="village" class="active">🏘 마을</button><button data-view="character">🎒 가방 · 장비</button></nav>
 <section class="page active" id="page-village">
  <div class="stage" id="villageStage">
@@ -411,11 +425,24 @@
  <img class="jobPortrait" src="./assets/hero-concept.webp" loading="lazy" decoding="async" alt="초보 탐색자 직업 대표 상반신 일러스트 · 장비 외형과 별개">
  <div class="classPortrait"><span class="classMark">✦</span><div><small>현재 직업</small><b>초보 탐색자</b></div></div>
  <svg class="bodySilhouette" viewBox="0 0 360 350" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
- <defs><linearGradient id="equipmentBody" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#588479"/><stop offset="1" stop-color="#28483e"/></linearGradient></defs>
- <circle cx="180" cy="180" r="151" fill="none" stroke="#b4c5ae63" stroke-width="2"/><circle cx="180" cy="180" r="137" fill="none" stroke="#e0d7ae36" stroke-dasharray="3 9" stroke-width="2"/>
- <path d="M155 83Q143 55 162 35Q180 18 197 35Q218 55 206 83L199 95H160Z" fill="url(#equipmentBody)" stroke="#bfd0ac" stroke-width="3.5"/>
- <path d="M162 95Q133 101 109 116L87 192 72 234 102 247 126 208 140 172 144 228 139 320 165 323 178 241 186 241 197 323 223 320 218 221 223 172 238 208 262 247 292 234 273 191 251 115Q221 98 201 95Z" fill="url(#equipmentBody)" stroke="#b9c9ab" stroke-width="4" stroke-linejoin="round"/>
- <path d="M162 105L180 126 201 105M180 126v100M140 174l-9 51M222 174l10 51M147 232h67M150 282h21M192 282h20" stroke="#c1c9a5" stroke-width="2.4" fill="none" opacity=".65"/>
+ <defs><linearGradient id="equipmentBody" x1=".2" y1="0" x2=".9" y2="1"><stop stop-color="#6b9385"/><stop offset="1" stop-color="#264d42"/></linearGradient><linearGradient id="equipmentOutline" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#cbd9bc"/><stop offset="1" stop-color="#829e88"/></linearGradient></defs>
+ <circle cx="180" cy="177" r="152" fill="none" stroke="#b4c5ae56" stroke-width="2"/>
+ <circle cx="180" cy="177" r="138" fill="none" stroke="#e0d7ae31" stroke-dasharray="3 9" stroke-width="2"/>
+ <!-- Anatomical neck and head; shoulders-to-hands ends above the hips, unlike the old elongated mannequin. -->
+ <path d="M157 85Q147 77 148 59Q149 31 179 28Q211 31 212 59Q213 77 203 85L203 101Q190 110 180 113Q165 109 157 100Z" fill="url(#equipmentBody)" stroke="url(#equipmentOutline)" stroke-width="3.5" stroke-linejoin="round"/>
+ <!-- Torso and shoulder line -->
+ <path d="M158 104Q140 105 129 114Q136 132 143 160L142 223Q156 231 180 231Q203 231 218 223L217 160Q224 132 231 114Q213 104 201 103Q191 118 180 124Q167 116 158 104Z" fill="url(#equipmentBody)" stroke="url(#equipmentOutline)" stroke-width="4" stroke-linejoin="round"/>
+ <!-- Arms end at upper hip: shoulder-to-hand is shorter than shoulder-to-knee -->
+ <path d="M129 114Q116 118 111 137L95 174Q92 185 91 197L102 207Q111 210 118 202L131 168L143 145Z" fill="url(#equipmentBody)" stroke="url(#equipmentOutline)" stroke-width="4" stroke-linejoin="round"/>
+ <path d="M231 114Q244 118 249 137L265 174Q268 185 269 197L258 207Q249 210 242 202L229 168L217 145Z" fill="url(#equipmentBody)" stroke="url(#equipmentOutline)" stroke-width="4" stroke-linejoin="round"/>
+ <path d="M91 197Q89 205 96 214Q105 219 113 214L118 202L102 197Z" fill="#41695d" stroke="#b8cbae" stroke-width="3"/>
+ <path d="M269 197Q271 205 264 214Q255 219 247 214L242 202L258 197Z" fill="#41695d" stroke="#b8cbae" stroke-width="3"/>
+ <!-- Legs: visible thighs, knees, lower legs and feet -->
+ <path d="M146 229L178 232L176 277L169 325L144 325L142 277Z" fill="url(#equipmentBody)" stroke="url(#equipmentOutline)" stroke-width="4"/>
+ <path d="M183 232L214 229L218 277L215 325L190 325L184 277Z" fill="url(#equipmentBody)" stroke="url(#equipmentOutline)" stroke-width="4"/>
+ <path d="M144 316L169 316L169 331Q155 336 134 330L136 323Z" fill="#315c4e" stroke="#aebfa5" stroke-width="3"/>
+ <path d="M190 316L215 316L224 330Q201 336 190 331Z" fill="#315c4e" stroke="#aebfa5" stroke-width="3"/>
+ <path d="M162 107L180 124L199 107M180 124L180 219M145 204L216 204M148 270L172 270M190 270L214 270" stroke="#c8d5af" stroke-opacity=".48" stroke-width="2.2" fill="none"/>
  </svg>
  <button type="button" class="figureGear figHead" data-figure-slot="head" aria-label="머리 장비"><span id="figureArt-head"></span><small>머리</small></button>
  <button type="button" class="figureGear figArmor" data-figure-slot="armor" aria-label="갑옷"><span id="figureArt-armor"></span><small>갑옷</small></button>
@@ -466,7 +493,7 @@
 <script type="module">
 import {createAdventure,startAdventure,advanceAdventure,endAdventure,summarizeAdventure,settleAdventure,expeditionReward} from "./src/expedition.mjs?v=0.42.1";
 import {GEAR} from "./src/avatar.mjs?v=0.42";
-import {itemIllustration} from "./src/item-art.mjs?v=0.42";
+import {itemIllustration} from "./src/item-art.mjs?v=0.43.1";
 import {gearBenefits,craftingDeficits} from "./src/gear-details.mjs?v=0.42";
 import {materialIllustration} from "./src/material-art.mjs?v=0.43";
 import {summarizeHuntResult,summarizeExpeditionResult} from "./src/session-report.mjs?v=0.43.1";
