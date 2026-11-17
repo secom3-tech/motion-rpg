@@ -1,0 +1,39 @@
+import assert from "node:assert/strict";
+import fs from "node:fs";
+import {newGame} from "../src/engine.mjs";
+import {claimIndoorBattle} from "../src/gear-game.mjs";
+import {formatClock,formatPace,summarizeHuntResult,summarizeExpeditionResult} from "../src/session-report.mjs";
+import {materialIllustration} from "../src/material-art.mjs";
+assert.equal(formatClock(201),"03:21");
+assert.equal(formatPace(1000,360),"6′00″/km");
+assert.ok(materialIllustration("wood").includes("<svg"));
+assert.ok(materialIllustration("wood").includes("<ellipse"),"Wood resource depicts a sawn log end, not empty font square");
+assert.ok(materialIllustration("ore").includes("path"));
+const kill={kills:4,score:450,elapsedSec:195,motionActions:18,dodges:8,dodgeSuccess:3,
+ sessionId:"session-12345678",updatedAt:Date.now(),log:[{at:70,name:"이끼 슬라임"},{at:192,name:"숲 골렘"}]};
+const claim=claimIndoorBattle(newGame(),kill);
+assert.equal(claim.awarded,true);
+const report=summarizeHuntResult(kill,claim);
+assert.equal(report.metrics[0].value,"4");
+assert.equal(report.metrics[1].value,"03:15");
+assert.equal(report.metrics[2].value,"450");
+assert.ok(report.rewards.includes("경험치 +")&&report.rewards.includes("자동 지급"));
+assert.ok(report.activity.includes("18회")&&report.activity.includes("칼로리 측정값이 아니야"));
+assert.ok(report.entries[0].includes("이끼 슬라임"));
+assert.ok(summarizeHuntResult({kills:0}).rewards.includes("보상 지급 없음"));
+const run={mode:"gps",elapsedSec:1800,distanceM:4800,success:4,fail:2,loot:{torch:1,bandage:2,map:0},events:[{name:"고대 석문",elapsedSec:300,passed:true}]};
+const outside=summarizeExpeditionResult(run,{awarded:true,xp:64,gold:36,materials:{wood:3}});
+assert.equal(outside.metrics[0].value,"30:00");
+assert.ok(outside.activity.includes("평균 페이스")&&!outside.activity.includes("실측 칼로리 300"));
+assert.ok(outside.rewards.includes("목재 +3")&&outside.rewards.includes("붕대 +2"));
+const treadmill=summarizeExpeditionResult({...run,mode:"treadmill"},{awarded:false});
+assert.ok(treadmill.rewards.includes("정식 보상 제외"));
+const hub=fs.readFileSync(new URL("../preview.html",import.meta.url),"utf8");
+const arena=fs.readFileSync(new URL("../indoor.html",import.meta.url),"utf8");
+for(const keyword of ['class="jobPortrait"','class="bodySilhouette"','viewBox="0 0 360 350"','materialIllustration(id)','id="sessionReport"','id="townReportButton"','renderSessionReport(','const pendingHunt=claimPendingBattle()'])
+ assert.ok(hub.includes(keyword),"Missing session or equipment UI "+keyword);
+for(const keyword of ['id="huntExit"','id="confirmHuntReturn"','function showHuntSummary()','function currentHuntRecord()','huntLog.push','huntDodgeSuccess++','motionActions:huntMotionActions','huntElapsedSec+=dt'])
+ assert.ok(arena.includes(keyword),"Missing hunt tracking "+keyword);
+assert.ok(arena.includes('⚔ 처치 <span id="stage">00</span>'),"Encounter ordinal must no longer masquerade as kill total");
+assert.ok(hub.includes('id="claimCombat" class="primary" hidden'),"Do not show a redundant manual payout button");
+console.log("V0.43 PASS: balanced equipment proportions, resource drawings, honest hunt count, auto claim and workout summaries");
