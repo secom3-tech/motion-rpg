@@ -7,21 +7,21 @@ const clamp=(n,a,b)=>Math.max(a,Math.min(b,n));
 const hypot=Math.hypot;
 const kind=(enemy)=>Number.isInteger(enemy.kind)?enemy.kind:0;
 const configs=[
- {name:"slime",aggro:9.0,space:2.6,strafe:.20,walk:1,hop:true},
- {name:"slime",aggro:9.0,space:2.8,strafe:.38,walk:.96,hop:true},
- {name:"slime",aggro:9.5,space:3.0,strafe:.35,walk:1.08,hop:true},
- {name:"wolf",aggro:13,space:3.6,strafe:1.12,walk:1.1},
- {name:"golem",aggro:18.5,space:8.0,strafe:.22,walk:1.14},
- {name:"boar",aggro:12,space:3.8,strafe:.58,walk:1.13},
- {name:"wisp",aggro:16,space:7.2,strafe:1.34,walk:1.18},
- {name:"treant",aggro:10.5,space:4.1,strafe:.32,walk:.68}
+ {name:"slime",aggro:9.0,space:3.25,strafe:.12,walk:.96,hop:true},
+ {name:"slime",aggro:9.0,space:3.40,strafe:.20,walk:.94,hop:true},
+ {name:"slime",aggro:9.5,space:3.55,strafe:.22,walk:1.02,hop:true},
+ {name:"wolf",aggro:13,space:4.05,strafe:.56,walk:1.03},
+ {name:"golem",aggro:18.5,space:8.0,strafe:.18,walk:1.08},
+ {name:"boar",aggro:12,space:4.15,strafe:.33,walk:1.08},
+ {name:"wisp",aggro:16,space:7.2,strafe:.68,walk:1.11},
+ {name:"treant",aggro:10.5,space:4.45,strafe:.20,walk:.66}
 ];
 export function monsterMovementProfile(index){return configs[index]||configs[0]}
 export function createMonsterMind(index,x=0,z=0,seed=.5){
  const p=monsterMovementProfile(index);
  return {aggro:false,originX:x,originZ:z,seed:clamp(Number(seed)||0,0,1),
   vx:0,vz:0,moveSpeed:0,phase:0,nextPhase:0,side:seed>.5?1:-1,
-  restUntil:0,lostTime:0,style:p.name};
+  restUntil:0,retreatUntil:0,lostTime:0,style:p.name};
 }
 export function monsterMotionStep(enemy,player,mind,dt,clock){
  if(!enemy||!player||!mind||![enemy.x,enemy.z,player.x,player.z,dt,clock].every(Number.isFinite))
@@ -48,8 +48,13 @@ export function monsterMotionStep(enemy,player,mind,dt,clock){
   // Facing the player does not require walking directly at the player.
   lateralX=-dz/dist*side*sideScale;
   lateralZ=dx/dist*side*sideScale;
+  // After attacking, create breathing room for a physical swing; do not orbit behind the player.
+  if(clock<(mind.retreatUntil||0)&&dist<profile.space+1.8){
+   forwardX=-dx/dist*.72;forwardZ=-dz/dist*.72;
+   lateralX*=.35;lateralZ*=.35;
+  }
   if(profile.name==="wolf"&&dist<5&&mind.phase%4===2){forwardX*=.25;forwardZ*=.25}
-  if(profile.name==="boar"&&dist>6){lateralX*=1.5;lateralZ*=1.5}
+  if(profile.name==="boar"&&dist>6){lateralX*=1.15;lateralZ*=1.15}
   if(profile.name==="golem"||profile.name==="treant"){
    if(mind.phase%5===1){forwardX*=.65;forwardZ*=.65;lateralX*=.45;lateralZ*=.45;}
   }
