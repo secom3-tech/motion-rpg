@@ -118,7 +118,7 @@ export function expeditionReward(session){
  };
  // Moderate or faster real movement earns the higher outdoor-running reward;
  // an extremely slow route does not get the running multiplier automatically.
- const movingEnough=distance/elapsed>=.075;
+ const movingEnough=distance/elapsed>=1.25;
  return {
   xp:Math.min(360,Math.round(xp*(movingEnough?1.65:1.0))+Math.min(26,Math.floor(distance/300)*2)),
   gold:Math.min(175,Math.round(gold*(movingEnough?1.5:1.0))+Math.min(18,Math.floor(distance/450)*2)),
