@@ -1403,10 +1403,29 @@ function renderMotionCooldown(){
 // Low-cost HUD refresh between 5Hz S21 reports; no extra 3D rendering.
 setInterval(renderMotionCooldown,100);
 
-let poseFeedbackUntil=0;
+let poseFeedbackUntil=0,poseGuideKind="",poseGuideVoiceAt=0,poseWasReady=false;
+function speakCameraGuide(message){
+ if(!("speechSynthesis" in window))return;
+ try{const utterance=new SpeechSynthesisUtterance(message);utterance.lang="ko-KR";utterance.rate=1.08;
+  window.speechSynthesis.cancel();window.speechSynthesis.speak(utterance);}catch{}
+}
 const poseCamera=createPoseCamera({
  video:el("posePreview"),
  onStatus:state=>{if(performance.now()>poseFeedbackUntil)el("poseStatus").textContent=state.message;refreshMotionIndicator();},
+ onFraming:frame=>{
+  const guide=el("poseGuide"),good=frame.kind==="good";
+  const label=good?(frame.calibrated?"✓ 카메라 준비 완료":"기준 자세 확인 "+Math.round(frame.progress*100)+"%"):frame.message;
+  if(guide.textContent!==label)guide.textContent=label;
+  guide.dataset.kind=frame.kind;
+  const now=performance.now();
+  if(good&&frame.calibrated&&!poseWasReady){
+   poseWasReady=true;speakCameraGuide("카메라 준비 완료. 좌우 이동과 숙이기 동작을 인식합니다.");
+  }else if(frame.kind!==poseGuideKind&&["near","far","center"].includes(frame.kind)&&now-poseGuideVoiceAt>3000){
+   poseGuideVoiceAt=now;speakCameraGuide(frame.message);
+  }
+  if(!good)poseWasReady=false;
+  poseGuideKind=frame.kind;
+ },
  onDodge:event=>{
   poseEvents++;
   const description=event.direction==="duck"?"앉기":event.direction==="left"?"왼쪽 이동":"오른쪽 이동";
