@@ -721,6 +721,94 @@ function renderPlayerProjectile(p){
  part(lowSphere,p.x,p.y,p.z,aura?.42:.30,aura?.3:.20,aura?.65:.37,colour,p.heading||0,1,.32);
  part(sphere,p.x,p.y,p.z,aura?.24:.15,aura?.24:.15,aura?.31:.17,colour,p.heading||0,1);
 }
+
+/** Top-down radar rotates with the player's view (up is always forward).
+ * Draw at a lower rate than WebGL to keep mobile frame time modest.
+ */
+const radarCtx=el("radarCanvas").getContext("2d");
+function drawCombatRadar(){
+ if(!radarCtx)return;
+ const ctx=radarCtx,width=144,centre=72,radius=64,grid=8;
+ ctx.clearRect(0,0,width,width);
+ ctx.save();ctx.beginPath();ctx.arc(centre,centre,radius,0,Math.PI*2);ctx.clip();
+ ctx.fillStyle="#193c33";ctx.fillRect(0,0,width,width);
+ const cos=Math.cos(yaw),sin=Math.sin(yaw);
+ for(let py=8;py<136;py+=grid){
+  for(let px=8;px<136;px+=grid){
+   const right=(px-centre)/radius*RADAR_RANGE,forward=(centre-py)/radius*RADAR_RANGE;
+   const wx=camera.x+right*cos+forward*sin,wz=camera.z+right*sin-forward*cos;
+   const zone=forestZoneAt(wx,wz).id;
+   const path=Math.abs(wx-.26*Math.sin(wz*.095))<2.12&&wz<9;
+   ctx.fillStyle=path?"#8d8262":zone==="marsh"?"#25676d":zone==="ruins"?"#596c60":zone==="grove"?"#536a3a":"#356247";
+   ctx.fillRect(px,py,grid,grid);
+  }
+ }
+ // Larger landmarks are intentionally visible even beyond sight in the 3D world.
+ const landmarks=[
+  {x:-15,z:-18,col:"#d6dfae"},
+  {x:15,z:-17,col:"#7edbf5"},
+  {x:-7,z:3,col:"#e7c37b"},
+  {x:0,z:-19,col:"#a9e7bb"}
+ ];
+ for(const landmark of landmarks){
+  const p=radarTarget(camera,yaw,landmark);
+  if(!p||p.offRange)continue;
+  const x=centre+p.x*radius,y=centre+p.y*radius;
+  ctx.save();ctx.translate(x,y);ctx.rotate(Math.PI/4);
+  ctx.fillStyle=landmark.col;ctx.fillRect(-3.5,-3.5,7,7);ctx.restore();
+ }
+ ctx.strokeStyle="#bde7cc88";ctx.lineWidth=.8;
+ ctx.beginPath();ctx.moveTo(centre,centre-radius);ctx.lineTo(centre,centre+radius);ctx.moveTo(centre-radius,centre);ctx.lineTo(centre+radius,centre);ctx.stroke();
+ if(!enemy.dead&&!worldMode){
+  const p=radarTarget(camera,yaw,enemy);
+  if(p){
+   const ex=centre+p.x*(radius-6),ey=centre+p.y*(radius-6);
+   ctx.fillStyle="rgba(255,108,93,.24)";ctx.beginPath();ctx.arc(ex,ey,11,0,Math.PI*2);ctx.fill();
+   ctx.fillStyle="#ff7565";ctx.beginPath();ctx.arc(ex,ey,5.2,0,Math.PI*2);ctx.fill();
+   ctx.strokeStyle="#ffe2af";ctx.lineWidth=1.5;ctx.stroke();
+  }
+ }
+ // Central hero icon always faces upward because the radar rotates with yaw.
+ ctx.save();ctx.translate(centre,centre);
+ ctx.fillStyle="#ebffca";ctx.strokeStyle="#183833";ctx.lineWidth=2;
+ ctx.beginPath();ctx.moveTo(0,-9);ctx.lineTo(7,8);ctx.lineTo(0,4);ctx.lineTo(-7,8);ctx.closePath();
+ ctx.fill();ctx.stroke();ctx.restore();
+ ctx.restore();
+ ctx.strokeStyle="#9cd6ae";ctx.lineWidth=2;
+ ctx.beginPath();ctx.arc(centre,centre,radius,0,Math.PI*2);ctx.stroke();
+}
+function updateEnemyNavigation(){
+ const radar=el("radarBox"),tag=el("enemyTag"),arrow=el("enemyArrow"),notice=el("spawnNotice");
+ if(!active||worldMode){
+  radar.hidden=true;tag.hidden=true;arrow.hidden=true;notice.hidden=true;return;
+ }
+ radar.hidden=false;
+ if(clock-lastRadarClock>=.12||lastRadarClock<0){
+  drawCombatRadar();lastRadarClock=clock;
+ }
+ if(enemy.dead){
+  tag.hidden=true;arrow.hidden=true;notice.hidden=true;return;
+ }
+ notice.hidden=clock-enemySpawnClock>3.4;
+ const projected=projectEnemyHead(camera,yaw,pitch,enemy,W,H,monsterHeadHeight(enemy.kind));
+ const creature=FOREST_MONSTERS[enemy.kind];
+ if(projected?.inView){
+  tag.hidden=false;arrow.hidden=true;
+  el("enemyTagName").textContent="▼ "+(creature?.icon||"⚔")+" "+enemy.name;
+  el("enemyTagHp").style.width=(100*Math.max(0,enemy.hp)/Math.max(1,enemy.max)).toFixed(1)+"%";
+  tag.style.left=projected.x.toFixed(1)+"px";
+  tag.style.top=(projected.y-5).toFixed(1)+"px";
+ }else{
+  tag.hidden=true;
+  const edge=enemyEdgePointer(camera,yaw,enemy,W,H);
+  if(edge){
+   arrow.hidden=false;
+   arrow.style.left=edge.x.toFixed(1)+"px";arrow.style.top=edge.y.toFixed(1)+"px";
+   el("enemyArrowIcon").style.transform="rotate("+edge.degrees.toFixed(1)+"deg)";
+   el("enemyArrowText").textContent=(creature?.icon||"⚔")+" "+Math.round(edge.distance)+"m";
+  }else arrow.hidden=true;
+ }
+}
 function render(){
  resize();
  gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);
@@ -743,6 +831,7 @@ function render(){
   weaponCtx.setTransform(ratio,0,0,ratio,0,0);
   drawFirstPersonWeapon(weaponCtx,W,H,equipped.weapon,meleeAction,rangedAction,clock);
  }
+ updateEnemyNavigation();
  requestAnimationFrame(loop);
 }
 function loop(t){let dt=Math.min(.05,Math.max(.001,(t-last)/1000||.016));last=t;update(dt);render()}
