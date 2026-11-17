@@ -21,23 +21,59 @@ export function normalizeMeleeStyle(style,weapon="sword"){
  * rough hints. An explicit style choice on the S21 overrides this heuristic.
  * This does NOT claim to accurately infer a world-space cut from any grip.
  */
-export function classifyMeleeGesture(event,choice="auto"){
+/**
+ * Use a short action window instead of the first event crossing threshold.
+ * Values are device-local axes and require optional in-hand calibration for
+ * reliable distinction between a horizontal and a vertical swing.
+ */
+export function motionFeatures(events){
+ const list=Array.isArray(events)?events:events?[events]:[];
+ const peak=[0,0,0,0,0,0],scale=[13,13,13,260,260,260];
+ for(const event of list){
+  const a=event?.acceleration||{},r=event?.rotationRate||{};
+  for(const [idx,key] of ["x","y","z"].entries())peak[idx]=Math.max(peak[idx],Math.abs(Number.isFinite(a[key])?a[key]:0));
+  for(const [idx,key] of ["alpha","beta","gamma"].entries())peak[idx+3]=Math.max(peak[idx+3],Math.abs(Number.isFinite(r[key])?r[key]:0));
+ }
+ return peak.map((value,i)=>Math.min(4,value/scale[i]));
+}
+export function motionSimilarity(a,b){
+ if(!Array.isArray(a)||!Array.isArray(b)||a.length!==6||b.length!==6)return 0;
+ let dot=0,magA=0,magB=0;
+ for(let i=0;i<6;i++){
+  if(!Number.isFinite(a[i])||!Number.isFinite(b[i]))return 0;
+  dot+=a[i]*b[i];magA+=a[i]*a[i];magB+=b[i]*b[i];
+ }
+ return magA>0&&magB>0?dot/Math.sqrt(magA*magB):0;
+}
+export function classifyMeleeGesture(events,choice="auto",templates=null){
  if(MELEE_STYLES.includes(choice))return choice;
- const acceleration=event?.acceleration||{},rotation=event?.rotationRate||{};
- const x=Math.abs(Number.isFinite(acceleration.x)?acceleration.x:0);
- const y=Math.abs(Number.isFinite(acceleration.y)?acceleration.y:0);
- const z=Math.abs(Number.isFinite(acceleration.z)?acceleration.z:0);
- const beta=Math.abs(Number.isFinite(rotation.beta)?rotation.beta:0);
- const gamma=Math.abs(Number.isFinite(rotation.gamma)?rotation.gamma:0);
- if(z>Math.max(x,y)*1.55&&z>3.5)return "thrust";
- if(x>y*1.35&&x>2)return "sweep";
- if(y>x*1.35&&y>2)return "overhead";
- if(gamma>beta*1.7&&gamma>32)return "sweep";
- if(beta>gamma*1.7&&beta>32)return "overhead";
+ const f=motionFeatures(events);
+ const stored=templates&&typeof templates==="object"?templates:{};
+ const candidates=MELEE_STYLES.map(style=>({style,template:stored[style]})).filter(x=>
+  Array.isArray(x.template)&&x.template.length===6&&x.template.every(Number.isFinite));
+ if(candidates.length>=2){
+  const sorted=candidates.map(({style,template})=>({style,score:motionSimilarity(f,template)})).sort((a,b)=>b.score-a.score);
+  if(sorted[0].score>=.66&&(sorted.length<2||sorted[0].score-sorted[1].score>=.025))return sorted[0].style;
+ }
+ const [x,y,z,alpha,beta,gamma]=f;
+ if(z>Math.max(x,y)*1.38&&z>.25)return "thrust";
+ if(y>x*1.20&&y>.20)return "overhead";
+ if(x>y*1.20&&x>.20)return "sweep";
+ if(beta>gamma*1.22&&beta>.18)return "overhead";
+ if(gamma>beta*1.22&&gamma>.18)return "sweep";
+ // When axes are ambiguous, never pretend direction was measured precisely.
  return "sweep";
 }
+export function classifyAttackIntent(events,mode="auto",templates=null,cutChoice="auto"){
+ const style=classifyMeleeGesture(events,cutChoice,templates);
+ if(mode==="throw")return {type:"throw",style:null};
+ if(mode==="melee")return {type:"melee",style};
+ // Auto: a forward thrust means distance attack, a sideways/downward
+ // sweeping motion means melee. This is experimental without calibration.
+ return style==="thrust"?{type:"throw",style:null}:{type:"melee",style};
+}
 export function createMeleeAction(weapon,style,startAt){
- const profile=weaponProfile(weapon),kind=normalizeMeleeStyle(style,weapon);
+ const profile=weaponProfile(weapon),kind=weapon==="bow"?"thrust":normalizeMeleeStyle(style,weapon);
  if(!Number.isFinite(startAt))throw Error("Missing attack start time");
  const duration=profile.seconds*(kind==="overhead"?1.14:kind==="thrust"?.93:1);
  return {weapon:WEAPON_PROFILES[weapon]?weapon:"sword",style:kind,startAt,duration,
