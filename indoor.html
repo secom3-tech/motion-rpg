@@ -876,8 +876,10 @@ const motionHost=createWirelessHost({
    }else if(remote.type==="target"){
     if(targetLocked){targetLocked=false;}
     else if(canAcquireTarget(camera,yaw,enemy)){targetLocked=true;}
-    else {motionHost.send({type:"input-ack",message:"락온 실패 · 적을 화면 앞쪽 13m 이내에 두고 다시 눌러"});}
-    motionHost.send({type:"target-state",enabled:targetLocked});
+    else {motionHost.send({type:"target-state",enabled:false});
+     motionHost.send({type:"input-ack",message:"락온 실패 · 적을 화면 앞쪽 13m 이내에 두고 다시 눌러"});
+    }
+    if(targetLocked)motionHost.send({type:"target-state",enabled:true});
     el("lockHud").hidden=!targetLocked;
    }
    return;
