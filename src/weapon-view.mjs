@@ -92,8 +92,8 @@ export function attackTrailPoints(width,height,style,steps=32){
    x=width*(.77-.30*t);
    y=height*(.73-.26*t);
   }else{
-   // Clearly left-to-right across the user's field of view.
-   x=width*(.20+.65*t);
+   // The visible blade moves right-to-left; its bright trail follows that path.
+   x=width*(.86-.65*t);
    y=height*(.53-.15*Math.sin(t*Math.PI)+.04*t);
   }
   pts.push({x,y});
