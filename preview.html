@@ -366,7 +366,7 @@
   </div>
 </section>
 <section class="page" id="page-indoor"><div class="mark">INDOOR ACTION RPG</div><h1 style="font-size:30px;margin:9px 0">숲의 전투</h1><p class="intro"><b>1인칭 3D 전투</b>에 <b>S21의 실제 검격·투척 동작</b>과 <b>폴드6 전면 카메라 회피</b>를 연결했어. 전투 전체화면의 <b>모션 설정</b>에서 S21과 폴드6 카메라를 켜. 연결 코드는 숫자 6자리야. 설정 중에는 전투가 멈추고, 전투 패배 후에도 연결을 유지한 채 다시 시작할 수 있어.</p>
-<div class="indoor-stage"><iframe id="indoorFrame" title="기존 3D 실내 전투 프로토타입" loading="lazy" allow="camera; accelerometer; gyroscope"></iframe></div><div class="controls"><a class="cta" href="./indoor.html?v=0.41&return=preview" target="_blank" rel="noopener">3D 전투 전체화면 열기</a><button id="restartIndoor" class="cta alt">전투 화면 다시 불러오기</button><a class="cta alt" href="./controller.html?v=0.41" target="_blank" rel="noopener">S21 무기 컨트롤러</a></div>
+<div class="indoor-stage"><iframe id="indoorFrame" title="기존 3D 실내 전투 프로토타입" loading="lazy" allow="camera; accelerometer; gyroscope"></iframe></div><div class="controls"><a class="cta" href="./indoor.html?v=0.42&return=preview" target="_blank" rel="noopener">3D 전투 전체화면 열기</a><button id="restartIndoor" class="cta alt">전투 화면 다시 불러오기</button><a class="cta alt" href="./controller.html?v=0.42" target="_blank" rel="noopener">S21 무기 컨트롤러</a></div>
 <div class="msg">S21로 이동·시점·공격을 조작하고 폴드6에서는 전투를 보며 몸으로 회피해. 숲길·유적·버섯 습지·공터를 탐험하면서 8종 몬스터를 만나게 돼. 적이 등장하면 방향·거리 알림과 미니맵으로 위치를 확인할 수 있어. 시야에 보이는 적은 머리 위 이름·체력 표시가 뜨고, 시야 밖의 적은 화살표가 안내해. 돌진·가로 공격·내려찍기를 몸으로 피하자. S21 컨트롤러의 휘두르기는 검격·투척으로 전송돼. 카메라·통신이 불안정하면 기존 화면 버튼으로 계속 전투할 수 있어. 외부 연결 서버와 모델 다운로드가 필요해 실기기 검증 전이야.</div></section>
 <section class="page" id="page-character">
  <div class="gearScreen">
@@ -423,8 +423,8 @@
 </div>
 <script type="module">
 import {createAdventure,startAdventure,advanceAdventure,endAdventure,summarizeAdventure,settleAdventure,expeditionReward} from "./src/expedition.mjs?v=0.42";
-import {GEAR} from "./src/avatar.mjs?v=0.41";
-import {itemIllustration} from "./src/item-art.mjs?v=0.41";
+import {GEAR} from "./src/avatar.mjs?v=0.42";
+import {itemIllustration} from "./src/item-art.mjs?v=0.42";
 import {gearBenefits,craftingDeficits,MATERIAL_SYMBOLS} from "./src/gear-details.mjs?v=0.42";
 
 import {QUESTS,REGIONS,newGame} from "./src/engine.mjs?v=0.37";
@@ -435,7 +435,7 @@ import {MATERIALS,RECIPES,normalizeRpgGear,gearRequirement,craftGear,equipGear,c
 const $=id=>document.getElementById(id);
 const pages=["village","run","indoor","character"];
 function go(page){if(!pages.includes(page))return;
-if(page==="indoor"){location.assign("./indoor.html?v=0.41&return=preview");return;}const previous=pages.find(x=>$("page-"+x).classList.contains("active"));if(previous==="indoor"&&page!=="indoor"&&$("indoorFrame").contentWindow){$("indoorFrame").contentWindow.postMessage({type:"motion-rpg-pause-input"},location.origin);}pages.forEach(x=>$("page-"+x).classList.toggle("active",x===page));document.querySelectorAll("[data-view]").forEach(b=>b.classList.toggle("active",b.dataset.view===page));if(page==="indoor"){const frame=$("indoorFrame"),signature=JSON.stringify(normalizeRpgGear(sharedCharacter()).equipped);if(!frame.src||frame.dataset.gearSignature!==signature){frame.src="./indoor.html?return=preview&load="+Date.now();frame.dataset.gearSignature=signature;}}if(page==="village"){$("townEncounter").hidden=true;$("craftBench").hidden=true;}if(page==="character"){drawEquipment();}if(page==="character"||page==="village")syncCharacter();window.scrollTo({top:0,behavior:"smooth"});}
+if(page==="indoor"){location.assign("./indoor.html?v=0.42&return=preview");return;}const previous=pages.find(x=>$("page-"+x).classList.contains("active"));if(previous==="indoor"&&page!=="indoor"&&$("indoorFrame").contentWindow){$("indoorFrame").contentWindow.postMessage({type:"motion-rpg-pause-input"},location.origin);}pages.forEach(x=>$("page-"+x).classList.toggle("active",x===page));document.querySelectorAll("[data-view]").forEach(b=>b.classList.toggle("active",b.dataset.view===page));if(page==="indoor"){const frame=$("indoorFrame"),signature=JSON.stringify(normalizeRpgGear(sharedCharacter()).equipped);if(!frame.src||frame.dataset.gearSignature!==signature){frame.src="./indoor.html?return=preview&load="+Date.now();frame.dataset.gearSignature=signature;}}if(page==="village"){$("townEncounter").hidden=true;$("craftBench").hidden=true;}if(page==="character"){drawEquipment();}if(page==="character"||page==="village")syncCharacter();window.scrollTo({top:0,behavior:"smooth"});}
 document.querySelectorAll("[data-view]").forEach(b=>b.onclick=()=>go(b.dataset.view));
 document.querySelectorAll("[data-go]").forEach(b=>b.onclick=()=>go(b.dataset.go));
 $("restartIndoor").onclick=()=>$("indoorFrame").src="./indoor.html?return=preview&reload="+Date.now();
@@ -596,7 +596,7 @@ function claimPendingBattle(){
  localStorage.removeItem(INDOOR_KEY);
  if(claim.awarded){
   saveCharacter(claim.state);
-  showCraftMessage("전투 정산: 몬스터 "+claim.kills+"마리, 경험치 +"+claim.xp+", 골드 +"+claim.gold+". 제작 재료가 도착했어.");
+  showCraftMessage("사냥 보상 수령: "+claim.kills+"마리 · XP +"+claim.xp+" · 골드 +"+claim.gold+" · 붕대 +"+(claim.bandages||0)+" · 제작 재료 획득.");
   $("craftStatus").dataset.touched="yes";
   updateEquippedVisual(claim.state);syncCharacter();
   return true;
