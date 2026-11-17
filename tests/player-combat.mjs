@@ -105,7 +105,7 @@ assert.ok(arena.includes("meleeHitInfo(meleeAction,camera,enemy,yaw)"),"Actual d
 assert.ok(arena.includes("drawCombatEffects(weaponCtx,W,H,currentWeapon()"),"Combat effects must render without held weapon");
 assert.ok(!arena.includes("drawFirstPersonWeapon(weaponCtx,W,H,currentWeapon()"),"Do not render crude first-person weapon models");
 assert.ok(arena.includes('id="weaponCanvas"')&&arena.includes("renderPlayerProjectile(p)"));
-assert.ok(arena.includes('swordHit(packet.style)'),"Live S21 attack style must be used");
+assert.ok(arena.includes('swordHit(packet.gesture==="melee"?packet.style:null)'),"Live S21 melee styles stay active; auto range may treat a throw gesture as a melee sweep");
 assert.ok(arena.includes('swordHit("sweep")')&&arena.includes('swordHit("overhead")')&&arena.includes('swordHit("thrust")'));
 assert.ok(!arena.includes("el('slashFx').classList"),"Old static slash effect must be replaced");
 assert.ok(controller.includes('data-mode="auto"')&&controller.includes('id="cutStyle"'),"Automatic and manual combat modes");
