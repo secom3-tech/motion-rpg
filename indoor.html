@@ -218,8 +218,8 @@ function flashHit(amount){
  el("damageNumber").textContent="-"+amount;
  try{navigator.vibrate?.(55)}catch{}
 }
-function applyEnemyHit(){
- const type=ATTACKS[enemy.kind],taken=Math.max(1,Math.round(type.damage*(1-stats.defence)));
+function applyEnemyHit(factor=1){
+ const type=ATTACKS[enemy.kind],taken=Math.max(1,Math.round(type.damage*factor*(1-stats.defence)));
  heroHp=Math.max(0,heroHp-taken);showHero();flashHit(taken);
  el("status").textContent="적의 공격에 맞았다! 위치를 바꾸거나 회피하세요.";
  toast("피격 -"+taken);beep(105,.23,"sawtooth",.11);
@@ -581,7 +581,7 @@ function updatePlayerActions(){
 function bankProgress(){try{localStorage.setItem(RESULT_KEY,JSON.stringify({kills,score,sessionId,updatedAt:Date.now()}))}catch(e){}}
 function damage(n,weapon="sword"){if(enemy.dead)return;enemyMind.aggro=true;enemy.hp=Math.max(0,enemy.hp-n);el('enemyHP').style.width=(enemy.hp/enemy.max*100)+'%';let x=enemy.x,y=1.4,z=enemy.z;
 const tint=weapon==="axe"||weapon==="ember"?[1,.58,.26]:weapon==="staff"||weapon==="orb"?[.38,.82,1]:weapon==="greatsword"||weapon==="aura"?[.50,.76,1]:weapon==="bow"||weapon==="arrow"?[.74,.94,.58]:[.80,1,.69];
-for(let i=0;i<16;i++){let p=(rand()-.5)*6,t=rand()*6.28,s=.65+rand()*2.6;sparks.push({x,y,z,vx:Math.cos(t)*s,vy:rand()*3.7,vz:Math.sin(t)*s,r:.04+rand()*.07,life:.4+rand()*.5,t:0,col:[tint[0],Math.min(1,tint[1]+rand()*.16),Math.min(1,tint[2]+rand()*.10)]})}toast('✦ '+n+' 데미지');beep(165,.12,'triangle',.11);if(enemy.hp<=0){enemy.dead=true;enemy.windup=0;enemy.impactUntil=0;el('attackBanner').hidden=true;el('enemyTag').hidden=true;el('enemyArrow').hidden=true;enemy.respawn=1.6;score+=80+enemy.kind*20;kills++;heroHp=Math.min(stats.maxHp,heroHp+5);showHero();bankProgress();el('score').textContent=String(score).padStart(3,'0');el('enemyHud').style.opacity='0';el('stage').textContent=String(kills+1).padStart(2,'0');el('status').textContent='마력체 격파! 마을로 돌아가면 보상을 수령한다';setTimeout(()=>toast('마력체 격파 · 마을 보상 저장!'),350);beep(830,.25,'sine',.1)}}
+for(let i=0;i<16;i++){let p=(rand()-.5)*6,t=rand()*6.28,s=.65+rand()*2.6;sparks.push({x,y,z,vx:Math.cos(t)*s,vy:rand()*3.7,vz:Math.sin(t)*s,r:.04+rand()*.07,life:.4+rand()*.5,t:0,col:[tint[0],Math.min(1,tint[1]+rand()*.16),Math.min(1,tint[2]+rand()*.10)]})}toast('✦ '+n+' 데미지');beep(165,.12,'triangle',.11);if(enemy.hp<=0){enemy.dead=true;enemy.windup=0;enemy.impactUntil=0;enemyShots=[];el('attackBanner').hidden=true;el('enemyTag').hidden=true;el('enemyArrow').hidden=true;enemy.respawn=1.6;score+=80+enemy.kind*20;kills++;heroHp=Math.min(stats.maxHp,heroHp+5);showHero();bankProgress();el('score').textContent=String(score).padStart(3,'0');el('enemyHud').style.opacity='0';el('stage').textContent=String(kills+1).padStart(2,'0');el('status').textContent='마력체 격파! 마을로 돌아가면 보상을 수령한다';setTimeout(()=>toast('마력체 격파 · 마을 보상 저장!'),350);beep(830,.25,'sine',.1)}}
 function spawnEnemy(){
  const oldKind=enemy.kind,area=forestZoneAt(camera.x,camera.z);
  enemy.kind=chooseForestMonster(area.id,rand,oldKind);
@@ -718,6 +718,24 @@ if(!enemy.dead){
 }
 camera.y=1.7+(len>.02?Math.sin(clock*10)*.045:Math.sin(clock*1.5)*.015)-((lastDodgeKind==="duck"&&clock<dodgeVisualUntil)?0.36:0);weaponKick=Math.max(0,weaponKick-dt*3.2);el("dodge").disabled=clock<dodgeCooldown;el("dodgeInfo").textContent=clock<dodgeCooldown?"회피 재사용 "+(dodgeCooldown-clock).toFixed(1)+"초":"경고 시 회피/Q · Shift";
 updatePlayerActions();updateEnemy(dt);
+// Enemy projectiles travel in world coordinates; the player has time to
+// change position or actually sidestep instead of taking instant damage.
+for(let i=enemyShots.length-1;i>=0;i--){
+ const shot=enemyShots[i],result=projectileStep(shot,dt,camera);
+ if(result.hit){
+  enemyShots.splice(i,1);
+  for(let j=0;j<12;j++){
+   sparks.push({x:shot.x,y:shot.y,z:shot.z,vx:(rand()-.5)*2.6,
+    vy:(rand()-.5)*2,vz:(rand()-.5)*2.6,r:.05+rand()*.1,
+    life:.25+rand()*.4,t:0,col:shot.kind==="rock"?[.74,.64,.47]:[.4,.78,1]});
+  }
+  if(clock<=dodgeUntil&&(lastDodgeKind==="button"||lastDodgeKind==="left"||lastDodgeKind==="right")){
+   toast("원거리 공격 회피 성공");beep(445,.12,"sine",.06);
+  }else applyEnemyHit(shot.damageFactor);
+  continue;
+ }
+ if(result.expired){enemyShots.splice(i,1);continue;}
+}
 for(let i=projectiles.length-1;i>=0;i--){let p=projectiles[i];p.age+=dt;p.x+=p.vx*dt;p.y+=p.vy*dt;p.z+=p.vz*dt;p.life-=dt;p.traveled+=p.speed*dt;
 if(p.life<=0||p.traveled>=p.targetDist){
  const close=!enemy.dead&&Math.hypot(p.x-enemy.x,p.z-enemy.z)<(enemy.kind===4?2.55:2.05);
