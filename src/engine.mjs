@@ -1,3 +1,4 @@
+import {applyExperienceCurve,xpRequiredForNextLevel,LEVEL_CURVE_VERSION} from "./progression.mjs";
 // Motion RPG: deterministic prototype rules. No GPS or AI dependencies.
 // A minute always has two phases: encounter -> result. Game choices never
 // prescribe real-world movement; pace here is only a mock input.
@@ -86,7 +87,7 @@ const isValidPace = pace => Number.isFinite(Number(pace));
 export function newGame() {
   return {
     elapsedMin: 0, distanceM: 0, energy: 100, xp: 0, gold: 0,
-    level: 1, successes: 0, attempts: 0, phase: "exploring",
+    level: 1, levelProgress: {version:LEVEL_CURVE_VERSION,nextXp:xpRequiredForNextLevel(1)}, successes: 0, attempts: 0, phase: "exploring",
     inventory: { torch: 0, map: 0, bandage: 0 },
     currentEvent: null, lastEvent: null, history: [],
     training: { phase: "ready", attempts: 0, successes: 0, currentDrill: null, lastDrill: null, session: { active: false, goal: 3, startAttempts: 0, lastSummary: null } },
@@ -260,7 +261,7 @@ export function stopTreadmill(state) {
   const next = { ...state, treadmill: { ...state.treadmill, active: false, session: { ...session, active: false, lastSummary } } };
   next.xp += gainedXp;
   next.gold += gainedGold;
-  next.level = 1 + Math.floor(next.xp / 100);
+  Object.assign(next,applyExperienceCurve(state,next));
   return next;
 }
 
@@ -316,7 +317,7 @@ export function resolveEncounter(state, action) {
   if (usedItem && !(usedItem === "torch" && state.camp.lantern > 0)) next.inventory[usedItem] -= 1;
   const gainedItem = passed ? event.loot ?? null : null;
   if (gainedItem) next.inventory[gainedItem] += 1;
-  next.level = 1 + Math.floor(next.xp / 100);
+  Object.assign(next,applyExperienceCurve(state,next));
   next.attempts += 1;
   next.regionAttempts = { ...state.regionAttempts, [event.region]: state.regionAttempts[event.region] + (event.boss ? 0 : 1) };
   next.unlockedRegions = [...new Set([...state.unlockedRegions, ...availableRegions(next)])];
@@ -402,7 +403,7 @@ export function completeArcadeGame(state, gameId, scoreInput) {
   const gainedXp = score >= 8 ? 8 : score >= 4 ? 4 : 1;
   const gainedGold = score >= 8 ? 2 : score >= 4 ? 1 : 0;
   const arcade = { ...state.arcade, bestScores: { ...state.arcade.bestScores, [gameId]: Math.max(state.arcade.bestScores?.[gameId] ?? 0, score) }, lastResult: { gameId, score, gainedXp, gainedGold } };
-  return { ...state, arcade, xp: state.xp + gainedXp, gold: state.gold + gainedGold, level: 1 + Math.floor((state.xp + gainedXp) / 100) };
+  return applyExperienceCurve(state,{ ...state, arcade, xp: state.xp + gainedXp, gold: state.gold + gainedGold });
 }
 
 export function resolveTraining(state, action) {
@@ -427,7 +428,7 @@ export function resolveTraining(state, action) {
   next.energy = clamp(next.energy + (action === "recover" ? 5 : action === "form" ? -1 : action === "focus" ? -2 : 0), 0, 100);
   next.xp += gainedXp;
   next.gold += gainedGold;
-  next.level = 1 + Math.floor(next.xp / 100);
+  Object.assign(next,applyExperienceCurve(state,next));
   next.training.attempts += 1;
   next.training.successes += passed ? 1 : 0;
   next.training.phase = "ready";
@@ -439,7 +440,7 @@ export function resolveTraining(state, action) {
     if (completedDrills >= session.goal) {
       const sessionXp = 2 + session.goal * 2;
       const sessionGold = Math.floor((session.goal + 1) / 2);
-      next.xp += sessionXp; next.gold += sessionGold; next.level = 1 + Math.floor(next.xp / 100);
+      next.xp += sessionXp; next.gold += sessionGold; Object.assign(next,applyExperienceCurve(state,next));
       next.training.session = { ...session, active: false, lastSummary: { goal: session.goal, drills: completedDrills, gainedXp: sessionXp, gainedGold: sessionGold } };
     } else next.training.session = session;
   }
