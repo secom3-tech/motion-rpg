@@ -19,7 +19,7 @@ export function movementVector(x,y){
 }
 export function validRemotePacket(packet,room){
  if(!packet||typeof packet!=="object"||packet.session!==room)return false;
- if(!["move","look","target","control-stop"].includes(packet.type))return false;
+ if(!["move","look","target","control-stop","weapon-switch","skill"].includes(packet.type))return false;
  if(!Number.isSafeInteger(packet.seq)||packet.seq<0||packet.seq>1e9)return false;
  if(!Number.isFinite(packet.time)||packet.time<=0)return false;
  if(packet.type==="move")return Number.isFinite(packet.x)&&Number.isFinite(packet.y)
@@ -27,10 +27,11 @@ export function validRemotePacket(packet,room){
  if(packet.type==="look")return Number.isFinite(packet.dx)&&Number.isFinite(packet.dy)
    &&Math.abs(packet.dx)<=1&&Math.abs(packet.dy)<=1;
  if(packet.type==="target")return packet.action==="toggle"||packet.action==="next";
+ if(packet.type==="weapon-switch")return ["melee","ranged","auto"].includes(packet.mode);
  return true;
 }
 export function createRemoteInput(){
- let moving={x:0,y:0},lastMove=-Infinity,lastSeq=-1,lastTarget=-Infinity;
+ let moving={x:0,y:0},lastMove=-Infinity,lastSeq=-1,lastTarget=-Infinity,lastSkill=-Infinity,lastSwitch=-Infinity;
  function ingest(packet,session,now=Date.now()){
   if(!validRemotePacket(packet,session)||packet.seq<=lastSeq)return {accepted:false,reason:"invalid-or-replay"};
   // A stale/replayed network packet should not move the player later.
@@ -39,6 +40,14 @@ export function createRemoteInput(){
   if(packet.type==="control-stop"){moving={x:0,y:0};lastMove=-Infinity;return {accepted:true,type:"stop"};}
   if(packet.type==="move"){moving=movementVector(packet.x,packet.y);lastMove=now;return {accepted:true,type:"move"};}
   if(packet.type==="look")return {accepted:true,type:"look",dx:packet.dx,dy:packet.dy};
+  if(packet.type==="weapon-switch"){
+   if(now-lastSwitch<120)return {accepted:false,reason:"switch-cooldown"};
+   lastSwitch=now;return {accepted:true,type:"weapon-switch",mode:packet.mode};
+  }
+  if(packet.type==="skill"){
+   if(now-lastSkill<500)return {accepted:false,reason:"skill-cooldown"};
+   lastSkill=now;return {accepted:true,type:"skill"};
+  }
   if(packet.type==="target"){
    if(now-lastTarget<300)return {accepted:false,reason:"target-cooldown"};
    lastTarget=now;return {accepted:true,type:"target",action:packet.action};
@@ -48,7 +57,7 @@ export function createRemoteInput(){
  function current(now=Date.now()){
   return now-lastMove<=INPUT_TIMEOUT_MS?{...moving}:{x:0,y:0};
  }
- function reset(){moving={x:0,y:0};lastMove=-Infinity;lastSeq=-1;lastTarget=-Infinity;}
+ function reset(){moving={x:0,y:0};lastMove=-Infinity;lastSeq=-1;lastTarget=-Infinity;lastSkill=-Infinity;lastSwitch=-Infinity;}
  return {ingest,current,reset};
 }
 /** In single-target arena, lock-on keeps the visible living enemy in front.
