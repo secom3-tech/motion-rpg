@@ -159,9 +159,12 @@ export function claimIndoorBattle(state,result){
  const next=withRpgGear(applyExperienceCurve(capped,earned));
  const materials=rewardMaterials(kills);
  for(const [key,n] of Object.entries(materials))next.rpgGear.materials[key]+=n;
+ // A few sustained hunt victories also provide a basic healing supply.
+ const bandages=Math.min(2,Math.floor(kills/6));
+ if(bandages>0)next.inventory={...(next.inventory||{}),bandage:Math.min(999,(next.inventory?.bandage||0)+bandages)};
  next.rpgGear.totalKills+=kills;
  next.rpgGear.combatClaims=[...p.combatClaims,id].slice(-100);
- return {state:next,awarded:true,kills,materials,xp:next.arcade.lastResult.gainedXp+extraXp,gold:next.arcade.lastResult.gainedGold+extraGold};
+ return {state:next,awarded:true,kills,materials,xp:next.arcade.lastResult.gainedXp+extraXp,gold:next.arcade.lastResult.gainedGold+extraGold,bandages};
 }
 /** GPS expedition must already have passed settleAdventure's claim checks. */
 export function addExpeditionMaterials(state,session,claimId){
