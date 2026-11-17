@@ -106,75 +106,100 @@
 @media(max-width:620px){.menu button{padding:7px 10px;font-size:11px}.villageStats .card{padding:10px 3px}.stage-bottom .cta{padding:10px 11px}}
 
 
-/* First playable village viewport: stage dominates, HUD floats in-world. */
-#villageStage{isolation:isolate;border-radius:19px;min-height:500px;border:1px solid #e4d5a15c}
-#villageStage canvas{height:min(78svh,730px);min-height:500px;touch-action:none;cursor:crosshair}
-#villageStage::after{background:linear-gradient(0deg,#071e2385,transparent 18%),linear-gradient(90deg,#102a2e32,transparent 24%);z-index:0}
-.villageTopHud{position:absolute;z-index:4;top:12px;left:12px;right:12px;display:flex;justify-content:space-between;gap:10px;pointer-events:none}
-.villageProfile{display:flex;align-items:center;gap:9px;border:1px solid #d5d0a685;background:#132f2be4;border-radius:13px;padding:8px 13px;color:#edf8da;box-shadow:0 5px 20px #001e1980}
-.villageProfileIcon{height:36px;width:36px;border-radius:50%;border:1px solid #dccba0;background:#395444;display:grid;place-items:center;font-size:19px}
-.villageProfile b{display:block;font-size:12px}
-.villageProfile b span{font-size:10px;color:#f2d994;margin-left:6px}
+
+/* v0.40 static visual hub: all locations are direct touch targets; no render loop. */
+#villageStage{isolation:isolate;min-height:580px;height:clamp(500px,61vw,665px);border-radius:18px;border:1px solid #d8c39288;background:#2a493d}
+#villageStage::after{background:linear-gradient(to bottom,#08212091 0,transparent 27%,transparent 62%,#071b19aa 100%);z-index:1;pointer-events:none}
+.village-art{position:absolute;inset:0;background:#345b4d url("./assets/village-hub.svg") center/cover no-repeat;transform:translateZ(0)}
+.village-hotspots{position:absolute;inset:0;z-index:3;pointer-events:none}
+.village-hotspot{position:absolute;transform:translate(-50%,-50%);display:flex;align-items:center;gap:9px;pointer-events:auto;
+ border:1px solid #f0dfaaad;background:linear-gradient(150deg,#142e30f0,#091f24eb);color:#fff3d3;
+ padding:9px 13px 9px 10px;border-radius:14px;text-align:left;box-shadow:0 6px 20px #07180c9f, inset 0 1px 0 #fff5d133;
+ backdrop-filter:blur(5px);min-width:136px;transition:transform .15s,border-color .15s}
+.village-hotspot:hover,.village-hotspot:focus-visible{border-color:#f9e9a8;background:linear-gradient(150deg,#31584c,#102a30);outline:2px solid #f2db7b55;transform:translate(-50%,-54%)}
+.village-hotspot b{display:block;font-size:14px;letter-spacing:-.025em}
+.village-hotspot small{display:block;font-size:10px;color:#ded7b5;margin-top:2px;white-space:nowrap}
+.spot-icon{display:grid;place-items:center;width:31px;height:31px;flex:0 0 31px;border:1px solid #d9c78a80;border-radius:10px;color:#f4dc9b;font-size:19px;background:#7e744744}
+.spot-guild{left:22%;top:47%}.spot-smith{left:81%;top:51%}.spot-trader{left:18%;top:80%}
+.spot-forest{left:52%;top:45%;border-color:#cce2a7;background:linear-gradient(145deg,#244d34f0,#143427ed)}
+.spot-ranger{left:58%;top:77%}
+.villageTopHud{position:absolute;z-index:4;top:13px;left:14px;right:14px;display:flex;justify-content:space-between;gap:10px;pointer-events:none}
+.villageProfile{display:flex;align-items:center;gap:9px;border:1px solid #d5d0a685;background:#102b29e3;border-radius:13px;padding:9px 13px;color:#edf8da;box-shadow:0 5px 20px #001e1980}
+.villageProfileIcon{height:35px;width:35px;border-radius:50%;border:1px solid #dccba0;background:#395444;display:grid;place-items:center;font-size:18px}
+.villageProfile b{display:block;font-size:12px}.villageProfile b span{font-size:10px;color:#f2d994;margin-left:6px}
 .villageProfile small{display:block;color:#d2dcbf;font-size:10px;margin-top:4px}
 .villageBag{pointer-events:auto;align-self:start;padding:10px 13px;background:#142e2be0;border:1px solid #e0d8a77f;border-radius:11px;color:#e7f7da;font-size:12px;font-weight:850}
-.villageQuest{position:absolute;top:76px;left:12px;z-index:3;display:flex;align-items:flex-start;flex-direction:column;gap:4px;max-width:min(260px,63%);pointer-events:none;text-shadow:0 2px 7px #07150c}
-.villageQuest small{font-size:11px;color:#f0dc9f;font-weight:800}
-.villageQuest b{font-size:13px;color:#fff6d9}
-#townWalkingHint{font-size:10px;color:#f0ebcc;line-height:1.55;max-width:240px}
-#townMovePad{position:absolute;z-index:5;bottom:24px;left:17px;width:120px;height:120px;border:1px solid #b8deb28e;border-radius:50%;background:radial-gradient(circle,#b4e5c033,#143b3aca);touch-action:none;user-select:none;pointer-events:auto}
-.townJoyRing{position:absolute;inset:21px;border:1px dashed #d2ebd488;border-radius:50%;pointer-events:none}
-#townMoveKnob{position:absolute;width:48px;height:48px;left:calc(50% - 24px);top:calc(50% - 24px);border-radius:50%;background:linear-gradient(140deg,#d8eed0,#6fb39a);border:2px solid #f7f4cc;box-shadow:0 3px 12px #0007;pointer-events:none}
-#townMovePad>span{position:absolute;bottom:-20px;left:50%;transform:translateX(-50%);font-size:10px;font-weight:900;color:#f8f6dc;text-shadow:0 1px 5px #000}
-.townRumourButton{position:absolute;z-index:5;right:16px;top:67px;background:#193a34cf;border:1px solid #e4d39f8c;border-radius:13px;padding:8px 12px;color:#fff3ce;font-weight:850;font-size:11px}
-#villageStage .stage-bottom{left:auto;right:16px;bottom:19px;width:auto;max-width:55%;display:flex;flex-direction:column;align-items:stretch;gap:8px}
-#villageStage .stage-bottom button{min-width:140px;box-shadow:0 7px 18px #001e188f}
-#villageStage .town-dialogue{position:absolute;z-index:10;left:50%;bottom:20%;width:min(500px,90%);transform:translateX(-50%);background:#142820f4;border:1px solid #ebdaab;border-radius:15px;padding:18px 20px;box-shadow:0 15px 60px #0009;min-height:0;font-size:13px;color:#e7f0de}
+.villageQuest{position:absolute;top:84px;left:17px;z-index:3;display:flex;align-items:flex-start;flex-direction:column;gap:4px;max-width:min(325px,63%);pointer-events:none;text-shadow:0 2px 7px #07150c}
+.villageQuest small{font-size:11px;color:#f0dc9f;font-weight:800}.villageQuest b{font-size:13px;color:#fff6d9}
+#townWalkingHint{font-size:10px;color:#f0ebcc;line-height:1.55;max-width:260px}
+.townRumourButton{position:absolute;z-index:5;right:15px;top:67px;background:#193a34d9;border:1px solid #e4d39f8c;border-radius:13px;padding:8px 12px;color:#fff3ce;font-weight:850;font-size:11px}
+#villageStage .town-dialogue{position:absolute;z-index:10;left:50%;top:50%;bottom:auto;transform:translate(-50%,-50%);width:min(470px,92%);background:linear-gradient(145deg,#17332ceF,#09211eef);border:1px solid #ecd8a2;border-radius:19px;padding:25px;box-shadow:0 15px 60px #000d;min-height:0;font-size:13px;color:#e7f0de}
 #villageStage .town-dialogue[hidden]{display:none!important}
-#villageStage .town-dialogue b{color:#f6dc96;font-size:15px}
-#villageStage .town-dialogue .controls{margin:10px 0 0}
-.townDialogueClose{position:absolute;top:9px;right:10px;border:1px solid #a0bca678;background:#254637;color:#e9f9e2;width:28px;height:28px;border-radius:8px;font-size:18px}
+#villageStage .town-dialogue b{color:#f6dc96;font-size:22px;margin:5px 0 15px;display:block}
+#villageStage .town-dialogue .controls{margin:18px 0 0}
+.town-dialogue-tag{font-size:11px;color:#acc9b5;letter-spacing:.1em;font-weight:750}
+.town-progress{height:8px;background:#071e1e;border-radius:10px;overflow:hidden;margin-top:14px}
+.town-progress span{height:100%;display:block;background:linear-gradient(90deg,#9ebf85,#e6d59a);width:0}
+.town-progress[hidden]{display:none!important}
+.townDialogueClose{position:absolute;top:11px;right:12px;border:1px solid #a0bca678;background:#254637;color:#e9f9e2;width:31px;height:31px;border-radius:8px;font-size:18px}
 .villageJournal{margin:12px 0;border:1px solid #9eb69860;border-radius:12px;padding:0 12px;background:#0e2927}
 .villageJournal>summary{cursor:pointer;list-style-position:inside;padding:13px 7px;color:#e4eed1;font-size:13px;font-weight:850}
 .villageJournal[open]>summary{border-bottom:1px solid #9eb69851}
 .villageJournal .townRumour{margin-top:15px}
+.avatar-display:before{display:none}
+.avatar-art{position:absolute;inset:0;z-index:1;display:grid;place-items:center}
+.avatar-art svg{display:block;width:100%;height:100%;object-fit:contain;filter:drop-shadow(0 10px 20px #031b1c8a)}
+.avatar-display{height:490px;background:#132e2a}
+.avatar-caption{background:linear-gradient(90deg,transparent,#0b2526bc 16%,#0b2526bc 84%,transparent);padding:7px 13px}
+@media(max-width:750px){.loadout-layout{grid-template-columns:1fr}.avatar-display{height:430px}}
 @media(max-width:650px){
- #villageStage{min-height:460px}
- #villageStage canvas{height:min(76svh,650px);min-height:460px}
+ #villageStage{height:clamp(490px,73svh,620px);min-height:490px}
+ .village-art{background-position:center;background-size:auto 100%}
  .villageTopHud{left:8px;right:8px;top:8px}
- .villageProfile{padding:6px 8px;gap:6px}
- .villageProfileIcon{width:29px;height:29px;font-size:16px}
- .villageProfile b{font-size:10px}
- .villageProfile small{font-size:9px}
- .villageBag{padding:7px 9px;font-size:10px}
- .villageQuest{top:65px;left:9px}
- .villageQuest small{font-size:9px}
- .villageQuest b{font-size:11px}
- #townWalkingHint{font-size:9px}
- #townMovePad{width:101px;height:101px;left:12px;bottom:23px}
- #townMoveKnob{width:42px;height:42px;left:calc(50% - 21px);top:calc(50% - 21px)}
- .townRumourButton{top:60px;right:7px}
- #villageStage .stage-bottom{right:8px;bottom:13px;max-width:48%;gap:6px}
- #villageStage .stage-bottom button{font-size:11px;min-width:0;padding:10px 11px}
- #villageStage .town-dialogue{bottom:21%;padding:14px 15px}
+ .villageProfile{padding:6px 8px;gap:6px}.villageProfileIcon{width:29px;height:29px;font-size:15px}
+ .villageProfile b{font-size:10px}.villageProfile small{font-size:9px}.villageBag{padding:7px 9px;font-size:10px}
+ .villageQuest{top:65px;left:9px;max-width:76%}.villageQuest small{font-size:9px}.villageQuest b{font-size:11px}
+ #townWalkingHint{font-size:9px;max-width:215px}.townRumourButton{top:68px;right:8px}
+ .village-hotspots{inset:auto 9px 13px;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;align-items:stretch}
+ .village-hotspot{position:relative;transform:none!important;left:auto;top:auto;min-width:0;padding:7px 8px;gap:7px}
+ .village-hotspot b{font-size:12px}.village-hotspot small{font-size:9px}
+ .spot-icon{width:26px;height:26px;flex:0 0 26px;font-size:16px}
+ .spot-forest{grid-column:1 / -1}
+ #villageStage .town-dialogue{padding:17px 18px}
+ .avatar-display{height:385px}
 }
 </style></head>
 <body><div class="app">
-<header class="top"><div class="mark">MOTION RPG <em> / 경계의 숲</em></div><div class="version">마을 플레이 빌드 · 0.39</div></header>
+<header class="top"><div class="mark">MOTION RPG <em> / 경계의 숲</em></div><div class="version">거점 허브 · 0.40</div></header>
 <nav class="menu" aria-label="게임 메뉴"><button data-view="village" class="active">🏘 마을</button><button data-view="character">🎒 가방 · 장비</button></nav>
 <section class="page active" id="page-village">
  <div class="stage" id="villageStage">
- <canvas id="village3d" tabindex="0" aria-label="움직일 수 있는 경계의 숲마을. 화면의 건물 이름을 누르거나 조이스틱을 사용해 이동할 수 있어"></canvas>
+ <div class="village-art" role="img" aria-label="숲속 길드, 시장, 대장간, 숲으로 이어지는 문이 보이는 경계의 숲마을 전경"></div>
+ <div class="village-hotspots" aria-label="마을 시설">
+  <button class="village-hotspot spot-guild" data-town="guild" type="button"><span class="spot-icon" aria-hidden="true">✦</span><span><b>길드</b><small>의뢰 · 진행 상황</small></span></button>
+  <button class="village-hotspot spot-smith" data-go="character" type="button"><span class="spot-icon" aria-hidden="true">⚒</span><span><b>대장간</b><small>장비 · 제작</small></span></button>
+  <button class="village-hotspot spot-trader" data-town="trader" type="button"><span class="spot-icon" aria-hidden="true">⚖</span><span><b>시장</b><small>물품 · 소문</small></span></button>
+  <button class="village-hotspot spot-forest" data-go="indoor" type="button"><span class="spot-icon" aria-hidden="true">⚔</span><span><b>숲 사냥</b><small>실내 3D 전투</small></span></button>
+  <button class="village-hotspot spot-ranger" data-go="run" type="button"><span class="spot-icon" aria-hidden="true">➤</span><span><b>숲 원정</b><small>GPS · 러닝머신</small></span></button>
+ </div>
  <div class="villageTopHud">
   <div class="villageProfile"><div class="villageProfileIcon">⚔</div><div><b>숲의 사냥꾼 <span id="townHudLevel">Lv. 1</span></b><small id="townHudGold">보유 골드 0 G</small></div></div>
   <button class="villageBag" id="townBagButton" title="장비와 재료 확인">🎒 가방</button>
  </div>
- <div class="villageQuest"><small>경계의 숲 · 사냥꾼 마을</small><b id="townQuest">숲으로 떠날 준비를 하자</b><span id="townWalkingHint">건물 이름 터치 → 자동 이동 · 왼쪽 패드 → 직접 걷기</span></div>
- <div id="townMovePad" aria-label="마을 이동 조이스틱" role="group"><div class="townJoyRing"></div><div id="townMoveKnob"></div><span>이동</span></div>
+ <div class="villageQuest"><small>경계의 숲 · 사냥꾼 마을</small><b id="townQuest">숲으로 떠날 준비를 하자</b><span id="townWalkingHint">시설을 터치해 의뢰를 확인하거나 숲으로 출발</span></div>
+ 
  <button id="townTalkButton" class="townRumourButton" title="마을의 소문 듣기">💬 소문</button>
- <div class="stage-bottom"><button class="cta" data-go="indoor">⚔ 숲 사냥</button><button class="cta alt" data-go="run">🏃 야외 탐험</button></div>
- <div class="town-dialogue" id="townEncounter" hidden aria-live="polite"><button id="closeTownTalk" class="townDialogueClose" aria-label="대화 닫기">×</button><b id="townNpc">마을 안내인</b><div id="townMessage">길드·대장간·숲 안내인에게 다가가 이야기를 들어봐.</div><div class="controls"><button class="cta alt" id="townAction" data-go="indoor">숲 사냥 출발</button></div></div>
+ 
+ <div class="town-dialogue" id="townEncounter" hidden aria-live="polite" role="dialog" aria-modal="false" aria-labelledby="townNpc">
+  <button id="closeTownTalk" class="townDialogueClose" aria-label="창 닫기">×</button>
+  <small class="town-dialogue-tag" id="townPanelTag">경계의 숲 · 마을 소식</small>
+  <b id="townNpc">길드 의뢰</b>
+  <div id="townMessage">길드에 등록된 의뢰와 현재 진행 상황을 확인할 수 있어.</div>
+  <div id="townProgress" class="town-progress" hidden><span id="townProgressBar"></span></div>
+  <div class="controls"><button class="cta alt" id="townAction" data-go="indoor">숲 사냥 출발</button></div>
+ </div>
 </div>
-<p class="world-note">마을 이동은 터치와 가상 조이스틱을 사용해. 시설까지 가면 대화가 시작돼. 이 화면은 현재 원근감을 표현한 캔버스 기반 플레이 마을이야.</p>
+<p class="world-note">마을은 휴식과 준비를 위한 거점이야. 이동 조작 없이 건물과 숲길을 터치해 이용할 수 있어.</p>
  <details class="villageJournal" id="villageJournal"><summary>📜 소문 · 성장 기록 보기</summary>
 <div class="section-title"><h2>모험가 상태</h2><span class="badge">실내 · 야외 성장 공유</span></div>
  <div class="grid villageStats"><div class="card"><div class="stat" id="homeLevel">1<small>레벨</small></div></div><div class="card"><div class="stat" id="homeGold">0<small>골드</small></div></div><div class="card"><div class="stat" id="homeXp">0<small>누적 경험치</small></div></div></div>
@@ -208,7 +233,7 @@
 <section class="page" id="page-character"><div class="mark">CHARACTER & PROGRESSION</div><h1 style="font-size:30px;margin:9px 0">모험가의 성장</h1><p class="intro">숲의 전투와 야외 러닝은 별개 게임이 아니라 같은 캐릭터를 성장시키는 다른 방법이야. 저장된 진행 상황을 확인해 봐.</p>
 <div class="section-title"><h2>내 캐릭터 · 장비 외형 미리보기</h2><span class="badge">실전 장비 · 제작 가능</span></div>
 <div class="loadout-layout">
- <div class="avatar-display"><canvas id="avatarCanvas" aria-label="장비를 착용한 모험가 전신 일러스트"></canvas><div class="avatar-title"><span class="badge">ADVENTURER</span><span class="badge">장비 변경 즉시 반영</span></div><div class="avatar-caption">마을 화면에도 같은 장비 외형이 표시돼</div></div>
+ <div class="avatar-display"><div id="avatarPortrait" class="avatar-art" aria-label="장착한 장비에 따라 외형이 바뀌는 모험가 일러스트"></div><div class="avatar-title"><span class="badge">ADVENTURER</span><span class="badge">장비별 외형 반영</span></div><div class="avatar-caption" id="avatarCaption">선택한 장비의 외형을 미리 보고 있어</div></div>
  <div class="loadout-panel"><h2>모험가 장비실</h2><p class="gear-intro">숲 모험가 장비를 제작해 장착하면 실제 전투에도 능력치가 반영돼. 아래 메뉴는 자유롭게 외형을 미리 보는 <b>시착 기능</b>이야.</p>
   <div class="gear-list">
    <label><span>무기</span><select id="gear-weapon"></select></label>
@@ -237,16 +262,17 @@
 </div>
 <script type="module">
 import {createAdventure,startAdventure,advanceAdventure,endAdventure,summarizeAdventure,settleAdventure} from "./src/expedition.mjs?v=0.37";
-import {GEAR,DEFAULT_LOADOUT,SAMPLE_SETS,sanitizeLoadout,describeLoadout,drawAvatar} from "./src/avatar.mjs";
+import {GEAR,DEFAULT_LOADOUT,SAMPLE_SETS,sanitizeLoadout,describeLoadout} from "./src/avatar.mjs";
+import {renderHeroIllustration} from "./src/hero-illustration.mjs?v=0.40";
 import {QUESTS,REGIONS,newGame} from "./src/engine.mjs?v=0.37";
 import {experienceProgress} from "./src/progression.mjs?v=0.37";
 import {villageRumour,villageObjective} from "./src/town-life.mjs?v=0.37";
-import {VILLAGE_SITES,createVillageExplorer,setVillageDestination,setVillageGroundDestination,advanceVillageExplorer,villageGroundFromScreen,villageSiteAtScreen,renderVillageWorld} from "./src/village-world.mjs?v=0.39";
+// Village art is static: combat, GPS and character state retain their original modules.
 import {MATERIALS,RECIPES,normalizeRpgGear,gearRequirement,craftGear,equipGear,combatStats,claimIndoorBattle,addExpeditionMaterials} from "./src/gear-game.mjs?v=0.37";
 const $=id=>document.getElementById(id);
 const pages=["village","run","indoor","character"];
 function go(page){if(!pages.includes(page))return;
-if(page==="indoor"){location.assign("./indoor.html?v=0.38&return=preview");return;}const previous=pages.find(x=>$("page-"+x).classList.contains("active"));if(previous==="indoor"&&page!=="indoor"&&$("indoorFrame").contentWindow){$("indoorFrame").contentWindow.postMessage({type:"motion-rpg-pause-input"},location.origin);}pages.forEach(x=>$("page-"+x).classList.toggle("active",x===page));document.querySelectorAll("[data-view]").forEach(b=>b.classList.toggle("active",b.dataset.view===page));if(page==="indoor"){const frame=$("indoorFrame"),signature=JSON.stringify(normalizeRpgGear(sharedCharacter()).equipped);if(!frame.src||frame.dataset.gearSignature!==signature){frame.src="./indoor.html?return=preview&load="+Date.now();frame.dataset.gearSignature=signature;}}if(page==="village"){drawVillage();$("townEncounter").hidden=true;}if(page==="character"){drawEquipment();}if(page==="character"||page==="village")syncCharacter();window.scrollTo({top:0,behavior:"smooth"});}
+if(page==="indoor"){location.assign("./indoor.html?v=0.38&return=preview");return;}const previous=pages.find(x=>$("page-"+x).classList.contains("active"));if(previous==="indoor"&&page!=="indoor"&&$("indoorFrame").contentWindow){$("indoorFrame").contentWindow.postMessage({type:"motion-rpg-pause-input"},location.origin);}pages.forEach(x=>$("page-"+x).classList.toggle("active",x===page));document.querySelectorAll("[data-view]").forEach(b=>b.classList.toggle("active",b.dataset.view===page));if(page==="indoor"){const frame=$("indoorFrame"),signature=JSON.stringify(normalizeRpgGear(sharedCharacter()).equipped);if(!frame.src||frame.dataset.gearSignature!==signature){frame.src="./indoor.html?return=preview&load="+Date.now();frame.dataset.gearSignature=signature;}}if(page==="village"){$("townEncounter").hidden=true;}if(page==="character"){drawEquipment();}if(page==="character"||page==="village")syncCharacter();window.scrollTo({top:0,behavior:"smooth"});}
 document.querySelectorAll("[data-view]").forEach(b=>b.onclick=()=>go(b.dataset.view));
 document.querySelectorAll("[data-go]").forEach(b=>b.onclick=()=>go(b.dataset.go));
 $("restartIndoor").onclick=()=>$("indoorFrame").src="./indoor.html?return=preview&reload="+Date.now();
@@ -268,6 +294,14 @@ function townTalk(type){
  const q=s.quests?.[r]||{attempts:0,successes:0,bossDefeated:false},target=QUESTS[r];
  const npc=$("townNpc"),msg=$("townMessage"),action=$("townAction");
  $("townEncounter").hidden=false;
+ $("townPanelTag").textContent=({guild:"길드 의뢰 · 진행 기록",trader:"시장 · 소문",smith:"대장간 · 장비 제작",ranger:"숲 원정 · 출발 준비",rumour:"마을의 소문"})[type]||"경계의 숲";
+ const progressBar=$("townProgress"),barFill=$("townProgressBar");
+ progressBar.hidden=type!=="guild";
+ if(type==="guild"){
+  const total=Math.max(1,target.goalAttempts+target.goalSuccesses);
+  const done=Math.min(target.goalAttempts,q.attempts)+Math.min(target.goalSuccesses,q.successes);
+  barFill.style.width=Math.round(done/total*100)+"%";
+ }
  action.onclick=()=>go("village");
  if(type==="rumour"){
   const rumour=villageRumour(s,new Date().toLocaleDateString("sv-SE"),++rumorOffset);
@@ -284,7 +318,7 @@ function townTalk(type){
   npc.textContent="마을 상인";msg.textContent="오늘 장터에는 가죽 장갑과 약초가 들어왔어. 준비를 마쳤으면 가방의 장비를 살펴봐.";
   action.textContent="가방 · 장비 보기";action.dataset.go="character";action.onclick=()=>go("character");
  }else if(type==="smith"){
-  npc.textContent="숲마을 대장장이";msg.textContent="가죽옷, 사냥활, 후드, 여행 가방을 갖추고 떠나는 게 어때요? 장비실에서 외형을 바꿀 수 있어요. 아직 무료 시착이며 제작 재화는 소모되지 않아요.";
+  npc.textContent="숲마을 대장장이";msg.textContent="가죽옷, 사냥활, 후드, 여행 가방을 갖추고 떠나는 게 어때요? 장비실에서 외형을 바꿀 수 있어요. 시착은 무료지만 실제 제작에는 골드와 재료가 필요합니다.";
   action.textContent="장비 시착실 열기";action.dataset.go="character";action.onclick=()=>go("character");
  }else{
   npc.textContent="숲길 안내인";msg.textContent="오늘 숲에는 늑대의 흔적이 보여요. 야외에서는 이어폰으로 사건을 듣고 달리는 속도로 대응합니다. 러닝머신에서도 모험 기록을 이어갈 수 있어요.";
@@ -309,16 +343,12 @@ function updateGearStatus(){
   $("gearStatus").textContent="현재 외형: "+describeLoadout(loadout)+". 이 조합은 외형 미리보기로만 적용돼.";
 }
 function drawEquipment(){
- const canvas=$("avatarCanvas");if(!canvas)return;
- const w=canvas.clientWidth||350,h=canvas.clientHeight||400,ratio=Math.min(window.devicePixelRatio||1,2);
- canvas.width=Math.round(w*ratio);canvas.height=Math.round(h*ratio);
- const g=canvas.getContext("2d");if(!g)return;g.setTransform(ratio,0,0,ratio,0,0);
- const avatarScale=Math.min(1.34,(h-85)/265,w/250);
- drawAvatar(g,w*.5,h*.86,avatarScale,loadout);
+ renderHeroIllustration($("avatarPortrait"),loadout);
+ $("avatarCaption").textContent=describeLoadout(loadout);
 }
 function savePreviewGear(){
  try{localStorage.setItem(EQUIPMENT_KEY,JSON.stringify(loadout));}catch{}
- updateGearStatus();drawVillage();
+ updateGearStatus();
  if($("page-character").classList.contains("active"))drawEquipment();
 }
 
@@ -434,120 +464,13 @@ function dist(a,b){const toRad=Math.PI/180,lat=(a.latitude+b.latitude)*toRad/2,d
 function startGeo(){if(!navigator.geolocation){message("GPS 사용 불가","이 브라우저는 위치 기능을 지원하지 않아.");stop();return;}let lastNotice=Date.now();watchId=navigator.geolocation.watchPosition(pos=>{if(!session||session.phase==="complete"||session.mode!=="gps")return;const p=pos.coords;const t=pos.timestamp||Date.now();if(p.accuracy>45){if(Date.now()-lastNotice>15000){message("GPS 안정화 중","정확도가 낮아 기록을 일시적으로 보류하고 있어.");lastNotice=Date.now();}return;}const now={latitude:p.latitude,longitude:p.longitude,time:t};if(!lastGps){lastGps=now;message("GPS 연결","정확한 위치 신호를 받았어. 숲길 탐험을 시작해.");return;}const dt=(t-lastGps.time)/1000,d=dist(lastGps,now);if(dt<=0)return;if(dt>35){lastGps=now;return;}if(d>Math.max(20,dt*7.5)){lastGps=now;return;}lastGps=now;if(dt<2)return;const measured=d>=3?clamp(1000*dt/(d*60),5,30):99999;stepGame(Math.min(dt,35),measured);},err=>{message("GPS 연결 오류",err.code===1?"위치 접근 권한을 허용해야 해.":"GPS 신호를 받지 못했어.");resetTimers();if(session)stop();},{enableHighAccuracy:true,maximumAge:2000,timeout:15000});}
 function clamp(n,lo,hi){return Math.max(lo,Math.min(hi,n));}
 window.addEventListener("pagehide",()=>resetTimers());
-const cvs=$("village3d"),ctx=cvs.getContext("2d");let w=0,h=0;
-function poly(points,color,stroke){ctx.beginPath();points.forEach((p,i)=>i?ctx.lineTo(p[0],p[1]):ctx.moveTo(p[0],p[1]));ctx.closePath();ctx.fillStyle=color;ctx.fill();if(stroke){ctx.strokeStyle=stroke;ctx.lineWidth=1;ctx.stroke();}}
-function box(x,y,size,color){const z=size*.36;poly([[x-z,y-size],[x+size,y-size],[x+size,y],[x-z,y]],color);poly([[x-z,y-size],[x+size,y-size],[x+size+z,y-size-z*.6],[x,y-size-z*.6]],"#95a68a");poly([[x+size,y-size],[x+size+z,y-size-z*.6],[x+size+z,y-z*.6],[x+size,y]],"#284237");}
-function tree(x,y,s){ctx.fillStyle="#413f2c";ctx.fillRect(x-s*.09,y-s*.6,s*.18,s*.6);poly([[x,y-s*1.9],[x-s*.63,y-s*.6],[x+s*.61,y-s*.6]],"#17483f");poly([[x,y-s*2.35],[x-s*.55,y-s*1.18],[x+s*.56,y-s*1.18]],"#25664f");poly([[x,y-s*2.65],[x-s*.42,y-s*1.75],[x+s*.42,y-s*1.75]],"#36785a");}
-function house(x,y,s,roof){box(x-s*.45,y,s,"#9b9e7b");poly([[x-s*1.0,y-s],[x-s*.1,y-s*1.85],[x+s*1.05,y-s]],roof);ctx.fillStyle="#322f2a";ctx.fillRect(x-s*.12,y-s*.55,s*.3,s*.55);ctx.fillStyle="#e4bb75";ctx.fillRect(x-s*.62,y-s*.65,s*.25,s*.23);}
-function paintVillageLantern(x,y,size=1){
- const v=11*size;
- ctx.strokeStyle="#4b4731";ctx.lineWidth=2*size;
- ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(x,y-v*3);ctx.lineTo(x+v*.65,y-v*3);ctx.lineTo(x+v*.65,y-v*2.5);ctx.stroke();
- const g=ctx.createRadialGradient(x+v*.65,y-v*2.36,0,x+v*.65,y-v*2.36,v*3.3);
- g.addColorStop(0,"#ffcd7e66");g.addColorStop(1,"#ffc76a00");ctx.fillStyle=g;
- ctx.fillRect(x-v*3,y-v*5,v*7,v*7);
- ctx.fillStyle="#ffdf9a";ctx.fillRect(x+v*.35,y-v*2.55,v*.6,v*.8);
- poly([[x+v*.25,y-v*2.6],[x+v*1.05,y-v*2.6],[x+v*.65,y-v*2.95]],"#443e32");
-}
-function paintVillageResident(x,y,scale=1,colour="#62764f"){
- ctx.fillStyle="#061d1c44";ctx.beginPath();ctx.ellipse(x,y+3*scale,12*scale,3*scale,0,0,Math.PI*2);ctx.fill();
- ctx.fillStyle=colour;ctx.beginPath();ctx.moveTo(x-5*scale,y-18*scale);ctx.lineTo(x+6*scale,y-18*scale);ctx.lineTo(x+9*scale,y-3*scale);ctx.lineTo(x-8*scale,y-3*scale);ctx.fill();
- ctx.fillStyle="#d6b69a";ctx.beginPath();ctx.arc(x,y-22*scale,5.4*scale,0,Math.PI*2);ctx.fill();
- ctx.fillStyle="#55472f";ctx.fillRect(x-5.5*scale,y-29*scale,11*scale,3.7*scale);
- ctx.strokeStyle="#313e32";ctx.lineWidth=3.2*scale;ctx.beginPath();ctx.moveTo(x-3.5*scale,y-3*scale);ctx.lineTo(x-4.6*scale,y+6*scale);ctx.moveTo(x+4*scale,y-3*scale);ctx.lineTo(x+5*scale,y+6*scale);ctx.stroke();
-}
-function paintVillageStall(x,y,s){
- poly([[x-s,y-s*.7],[x+s*.9,y-s*.7],[x+s*1.2,y-s*.48],[x-s*.8,y-s*.48]],"#7b533a");
- poly([[x-s*1.4,y-s*1.2],[x+s*1.2,y-s*1.2],[x+s*.8,y-s*1.85],[x-s*.9,y-s*1.85]],"#5d6f52");
- for(let n=0;n<5;n++)poly([[x-s*.9+n*s*.43,y-s*1.82],[x-s*.65+n*s*.43,y-s*1.82],[x-s*.83+n*s*.43,y-s*1.2]],n%2?"#a79f67":"#c5ab78");
- ctx.strokeStyle="#51452f";ctx.lineWidth=Math.max(2,s*.06);
- for(let side of [-1,1]){let px=x+side*s*.82;ctx.beginPath();ctx.moveTo(px,y);ctx.lineTo(px,y-s*1.25);ctx.stroke();}
- for(let i=0;i<7;i++){
-  ctx.fillStyle=i%2?"#8cb16a":"#dfaf63";
-  ctx.beginPath();ctx.arc(x-s*.70+i*s*.2,y-s*.78-(i%3)*s*.08,s*.092,0,Math.PI*2);ctx.fill();
- }
-}
-const villageState=createVillageExplorer();
-let villageHitLabels=[],villageStick={x:0,y:0},villagePointer=null,villageFrameTime=null;
-function drawVillage(){
- const width=cvs.clientWidth||880,height=cvs.clientHeight||540;
- if(!width||!height)return;
- const ratio=Math.min(1.7,window.devicePixelRatio||1);
- if(cvs.width!==Math.round(width*ratio)||cvs.height!==Math.round(height*ratio)){
-  cvs.width=Math.round(width*ratio);cvs.height=Math.round(height*ratio);
- }
- ctx.setTransform(ratio,0,0,ratio,0,0);w=width;h=height;
- villageHitLabels=renderVillageWorld(ctx,villageState,w,h,{drawHero:drawAvatar,loadout});
-}
-function visitVillageSite(id){
- $("townWalkingHint").textContent="마을 주민에게 다가왔어. 대화를 마치고 다시 이동할 수 있어.";
- if(id==="forest"){go("indoor");return;}
- townTalk(id);
-}
-function gotoVillageSite(id){
- if(!VILLAGE_SITES.some(site=>site.id===id))return;
- $("townEncounter").hidden=true;
- const site=VILLAGE_SITES.find(item=>item.id===id);
- const d=Math.hypot(villageState.x-site.approachX,villageState.z-site.approachZ);
- if(d<=.9){visitVillageSite(id);return;}
- setVillageDestination(villageState,id);
- $("townWalkingHint").textContent=site.name+" 쪽으로 걸어가는 중 · 조이스틱을 움직이면 자동 이동을 취소해.";
-}
-function drawVillageFrame(time){
- const dt=villageFrameTime===null?0:Math.min(.055,Math.max(0,(time-villageFrameTime)/1000));
- villageFrameTime=time;
- if($("page-village").classList.contains("active")&&!document.hidden){
-  const destination=$("townEncounter").hidden?advanceVillageExplorer(villageState,dt,villageStick):null;
-  drawVillage();
-  if(destination)visitVillageSite(destination);
- }
- requestAnimationFrame(drawVillageFrame);
-}
-function pointerVillagePosition(event){
- const rect=cvs.getBoundingClientRect();
- return {x:event.clientX-rect.left,y:event.clientY-rect.top};
-}
-cvs.addEventListener("pointerup",event=>{
- if(event.pointerType==="mouse"&&event.button!==0)return;
- const {x,y}=pointerVillagePosition(event);
- const label=villageHitLabels.find(item=>Math.abs(x-item.x)<item.w/2+8&&Math.abs(y-item.y)<item.h/2+11);
- const projected=villageSiteAtScreen(villageState,w,h,x,y);
- const id=label?.id||projected?.id;
- if(id){gotoVillageSite(id);return;}
- const ground=villageGroundFromScreen(villageState,w,h,x,y);
- if(ground){
-  setVillageGroundDestination(villageState,ground.x,ground.z);
-  $("townEncounter").hidden=true;
-  $("townWalkingHint").textContent="선택한 길로 이동 중 · 주민 이름을 누르면 해당 시설로 갈 수 있어.";
- }
-});
-const villagePad=$("townMovePad"),villageKnob=$("townMoveKnob");
-function updateVillagePad(e){
- const b=villagePad.getBoundingClientRect();
- const dx=e.clientX-(b.left+b.width/2),dy=e.clientY-(b.top+b.height/2);
- const radius=Math.max(21,b.width*.34),length=Math.hypot(dx,dy);
- const factor=length>radius?radius/length:1;
- const x=dx*factor,y=dy*factor;
- villageStick={x:x/radius,y:y/radius};
- villageKnob.style.transform="translate("+x.toFixed(1)+"px,"+y.toFixed(1)+"px)";
- if(Math.hypot(villageStick.x,villageStick.y)>.14){
-  $("townEncounter").hidden=true;
-  $("townWalkingHint").textContent="직접 이동 중 · 시설 이름을 누르면 자동으로 찾아갈 수 있어.";
- }
-}
-function resetVillagePad(){villagePointer=null;villageStick={x:0,y:0};villageKnob.style.transform="translate(0px,0px)";}
-villagePad.addEventListener("pointerdown",e=>{
- e.preventDefault();villagePointer=e.pointerId;
- try{villagePad.setPointerCapture(e.pointerId);}catch{}
- updateVillagePad(e);
-});
-villagePad.addEventListener("pointermove",e=>{if(villagePointer!==e.pointerId)return;e.preventDefault();updateVillagePad(e);});
-for(const type of ["pointerup","pointercancel"])villagePad.addEventListener(type,e=>{if(villagePointer===e.pointerId)resetVillagePad();});
-document.addEventListener("visibilitychange",()=>{if(document.hidden)resetVillagePad();});
+// The visual hub has no canvas, joystick, character mesh, or perpetual animation loop.
+function drawVillage(){ /* Static backdrop; dynamic HUD is updated by syncCharacter(). */ }
 $("townBagButton").onclick=()=>go("character");
 $("townTalkButton").onclick=()=>townTalk("rumour");
 $("closeTownTalk").onclick=()=>{$("townEncounter").hidden=true;};
-requestAnimationFrame(drawVillageFrame);
-
-window.addEventListener("resize",()=>{drawVillage();if($("page-character").classList.contains("active"))drawEquipment();});drawVillage();syncRun();claimPendingBattle();
+document.addEventListener("keydown",event=>{
+ if(event.key==="Escape"&&!$("townEncounter").hidden)$("townEncounter").hidden=true;
+});
+syncRun();claimPendingBattle();
 </script></body></html>
