@@ -34,6 +34,13 @@ for(const keyword of ['class="jobPortrait"','class="bodySilhouette"','viewBox="0
  assert.ok(hub.includes(keyword),"Missing session or equipment UI "+keyword);
 for(const keyword of ['id="huntExit"','id="confirmHuntReturn"','function showHuntSummary()','function currentHuntRecord()','huntLog.push','huntDodgeSuccess++','motionActions:huntMotionActions','huntElapsedSec+=dt'])
  assert.ok(arena.includes(keyword),"Missing hunt tracking "+keyword);
+assert.ok(hub.includes('object-position:50% 0%!important'),"Job portrait must anchor from top so face is visible");
+assert.ok(hub.includes("hands ends above the hips")||hub.includes("shoulder-to-hand is shorter"),"Mannequin arms must have anatomically improved proportions");
+assert.ok(hub.includes('./src/item-art.mjs?v=0.43.1'),"Inventory should load illustrated gear art");
+const art=fs.readFileSync(new URL("../src/item-art.mjs",import.meta.url),"utf8");
+assert.ok(art.includes('gear-illustrations.webp?v=0.43.1'),"Painted weapon sprites should replace starter vector pictograms");
+for(const id of ["sword","bow","hunterCap","hunter","satchel","staff"])assert.ok(art.includes(id),"Missing illustrated item: "+id);
+assert.ok(fs.existsSync(new URL("../assets/gear-illustrations.webp",import.meta.url)),"Equipment illustration atlas missing");
 assert.ok(arena.includes('⚔ 처치 <span id="stage">00</span>'),"Encounter ordinal must no longer masquerade as kill total");
 assert.ok(hub.includes('id="claimCombat" class="primary" hidden'),"Do not show a redundant manual payout button");
 console.log("V0.43 PASS: balanced equipment proportions, resource drawings, honest hunt count, auto claim and workout summaries");
