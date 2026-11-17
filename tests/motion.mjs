@@ -133,7 +133,8 @@ for(const [name,html] of [["arena",arena],["controller",controller]]){
   const check=spawnSync(process.execPath,["--check",tmp],{encoding:"utf8"});
   assert.equal(check.status,0,name+" module parse failed: "+check.stderr);
  }finally{if(fs.existsSync(tmp))fs.unlinkSync(tmp);}
- const markup=html.split(/<script\b/)[0];\n const ids=[...markup.matchAll(/id="([^"]+)"/g)].map(m=>m[1]);
+ const markup=html.split(/<script\b/)[0];
+ const ids=[...markup.matchAll(/id="([^"]+)"/g)].map(m=>m[1]);
  assert.equal(ids.length,new Set(ids).size,"Duplicate IDs in "+name);
 }
 for(const id of ["motionPanel","motionOpen","motionRoom","hostStart","hostStop","cameraStart","cameraStop","posePreview","poseStatus","remoteStatus"]){
