@@ -160,6 +160,20 @@
 #skillAttack{background:#2d4f51;border-color:#e1cb88}
 #skillAttack:disabled{opacity:.48}
 @media (prefers-reduced-motion:reduce){#reactionFx.reaction{animation-duration:.25s;animation-iteration-count:1}}
+
+#skillBurst{position:fixed;left:50%;top:46%;width:min(490px,72vw);height:min(380px,57vh);transform:translate(-50%,-50%);z-index:6;pointer-events:none;opacity:0;filter:drop-shadow(0 0 22px #9ffad2)}
+#skillBurst::before,#skillBurst::after{content:"";position:absolute;inset:5%;border-radius:50%;border:14px solid transparent;border-top-color:#fef4bb;border-right-color:#bdf8db;filter:drop-shadow(0 0 24px #b5ffe5)}
+#skillBurst::after{inset:18%;border:7px solid transparent;border-bottom-color:#b7e3fd;border-left-color:#b5fff0}
+#skillBurst i{position:absolute;top:50%;left:50%;display:block;width:48%;height:5px;transform-origin:left center;background:linear-gradient(90deg,#fff0ad,transparent);box-shadow:0 0 15px #c9f6bb;opacity:.9}
+#skillBurst i:nth-child(1){transform:rotate(25deg)}#skillBurst i:nth-child(2){transform:rotate(145deg)}#skillBurst i:nth-child(3){transform:rotate(267deg)}
+#skillBurst.active{animation:burstAura 1.0s cubic-bezier(.18,.56,.21,.96) forwards}
+#skillBurst.arrow::before{border-radius:38% 68% 35% 70%;border-top-color:#8bfcff;border-right-color:#e6e4ff}
+#skillBurst.arrow{filter:drop-shadow(0 0 28px #64eaff)}
+@keyframes burstAura{0%{opacity:0;transform:translate(-50%,-50%) rotate(-60deg) scale(.28)}18%{opacity:1;transform:translate(-50%,-50%) rotate(10deg) scale(.86)}48%{opacity:.94;transform:translate(-50%,-50%) rotate(100deg) scale(1.1)}100%{opacity:0;transform:translate(-50%,-50%) rotate(220deg) scale(1.48)}}
+#weaponToggle{width:77px;height:77px;font-size:11px;padding:5px;text-align:center}
+#skillAttack{width:72px;height:72px}
+@media(max-width:600px){#weaponToggle{width:51px;height:51px;font-size:9px}#skillAttack{width:52px;height:52px}.action .icon{font-size:18px}}
+@media(prefers-reduced-motion:reduce){#skillBurst.active{animation-duration:.25s}}
 </style></head><body>
 <div id="sky"></div><canvas id="game"></canvas><div id="vignette"></div><div id="bottomShade"></div><div id="screenFx"></div><canvas id="weaponCanvas" aria-hidden="true"></canvas>
 <div class="ui" id="brand"><div id="sigil">✦</div><div><h1>Motion RPG</h1><p>BORDERWOOD · HUNT</p></div></div>
@@ -171,7 +185,7 @@
 <div id="enemyArrow" hidden><div id="enemyArrowIcon">▲</div><span id="enemyArrowText">적 발견</span></div>
 <div id="spawnNotice" hidden role="status" aria-live="polite"></div>
 <div id="attackBanner" hidden aria-live="off"><b id="attackBannerText">공격 준비</b><div class="attackMeter"><i id="attackBannerMeter"></i></div><small id="attackBannerHint"></small></div>
-<div class="ui glass" id="playerHud"><b id="gearHud">숲 사냥꾼</b><div id="heroHpText">기력 100 / 100</div><div id="heroHpWrap"><div id="heroHp"></div></div><small id="dodgeInfo">적의 경고에 맞춰 회피</small></div><div id="forestZoneHud" aria-live="off">사냥꾼의 숲길</div><div id="lockHud" aria-live="off" hidden>◎ 락온 · 가까운 적 조준 보조</div><div id="cross"><div class="ring"></div></div><div class="ui" id="instruction">화면을 드래그하면 시야가 움직입니다</div><div id="weaponStatus">무기 준비 중</div><div id="attackFeedback"></div><div id="reactionFx" role="status" aria-live="polite"></div><div id="toast"></div><div id="hitFx" aria-hidden="true"></div><div id="damageNumber" aria-hidden="true"></div>
+<div class="ui glass" id="playerHud"><b id="gearHud">숲 사냥꾼</b><div id="heroHpText">기력 100 / 100</div><div id="heroHpWrap"><div id="heroHp"></div></div><small id="dodgeInfo">적의 경고에 맞춰 회피</small></div><div id="forestZoneHud" aria-live="off">사냥꾼의 숲길</div><div id="lockHud" aria-live="off" hidden>◎ 락온 · 가까운 적 조준 보조</div><div id="cross"><div class="ring"></div></div><div class="ui" id="instruction">화면을 드래그하면 시야가 움직입니다</div><div id="weaponStatus">무기 준비 중</div><div id="attackFeedback"></div><div id="reactionFx" role="status" aria-live="polite"></div><div id="skillBurst" aria-hidden="true"><i></i><i></i><i></i></div><div id="toast"></div><div id="hitFx" aria-hidden="true"></div><div id="damageNumber" aria-hidden="true"></div>
 <div class="ui" id="controls"><div id="moveArea"><div id="joy"><div id="stick">✦</div></div><span>이동 · 키보드 WASD</span></div><div id="actions"><button class="action weaponSwitch" id="weaponToggle" aria-label="무기 전환">검/활</button><button class="action skillTrigger" id="skillAttack" aria-label="스킬 발동"><span class="icon">✦</span><b>스킬</b></button><button class="action" id="dodge" aria-label="회피"><span class="icon">↪</span><b>회피</b></button><button class="action" id="sword" aria-label="근접 휘두르기"><span class="icon">⚔️</span><b>근접 휘두르기</b></button><button class="action" id="fire" aria-label="마법 투척"><span class="icon">✨</span><b>마법 투척</b></button></div></div><div id="footerNote">근접 버튼: 좌우 드래그 = 가로 베기 · 아래 = 내려찍기 · 위 = 찌르기</div>
 <div id="intro"><div id="introCard"><div class="emblem">✦ 🧙 ✦</div><h2>경계의 숲</h2><p>숲을 탐색하고 몬스터의 움직임을 살펴봐.<br><b>S21로 무기를 휘두르고</b> 실제 몸으로 공격을 피해.<br>골렘의 투석과 몬스터의 돌진은 움직여서 벗어날 수 있어.</p><button id="begin">사냥 시작하기</button><small>드래그: 시야 이동 · 근접 버튼 방향 드래그: 가로/세로/찌르기<br>오른쪽 상단 [모션 설정]에서 S21 무선 무기와 전면 카메라 회피를 연결할 수 있어</small></div></div>
 <div id="err"></div><div id="retryWrap" hidden><strong>기력이 소진됐어</strong><p>S21 연결은 유지돼. 바로 재도전하면 새 연결 코드를 입력할 필요 없어.</p><button id="retryCombat">기력 회복 · 다시 싸우기</button></div>
@@ -657,6 +671,7 @@ function activateSkill(){
  if(!ok)return false;
  skillPrimed=true;skillCooldownUntil=clock+24;
  showReaction("skill",activeWeaponMode==="melee"?"✦ 숲의 반월참":"✦ 정령 관통 사격");
+ const burst=el("skillBurst");burst.className="";void burst.offsetWidth;burst.className=activeWeaponMode==="melee"?"active blade":"active arrow";
  beep(860,.34,"triangle",.14);
  return true;
 }
@@ -1000,6 +1015,7 @@ const motionHost=createWirelessHost({
  onStatus:state=>{
   el("linkStatus").textContent=state.message+(state.connected&&state.latencyMs?" · 연결 지연 "+state.latencyMs+"ms":"");
   if(state.connected&&!wasLinked){
+   motionHost.send({type:"weapon-state",mode:activeWeaponMode,label:equippedWeapon()});
    lastMotionSequence=-1;lastMotionAt=-Infinity;remoteInput.reset();
    targetLocked=false;motionHost.send({type:"target-state",enabled:false});
   }
@@ -1021,7 +1037,7 @@ const motionHost=createWirelessHost({
     autoSwitchEnabled=remote.mode==="auto";
     const desired=remote.mode==="ranged"?"ranged":"melee";
     if(!autoSwitchEnabled)switchWeapon(desired);
-    motionHost.send({type:"weapon-state",label:(autoSwitchEnabled?"자동 전환 시험 · ":"")+equippedWeapon()});
+    motionHost.send({type:"weapon-state",mode:autoSwitchEnabled?"auto":activeWeaponMode,label:(autoSwitchEnabled?"자동 전환 시험 · ":"")+equippedWeapon()});
    }else if(remote.type==="skill"){
     const ok=activateSkill();
     motionHost.send({type:"input-ack",message:ok?"스킬 발동":"스킬 대기 중 또는 전투 중"});
