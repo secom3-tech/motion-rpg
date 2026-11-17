@@ -86,6 +86,25 @@
  .rumourIcon{width:38px;height:38px;font-size:22px}
 }
 
+
+/* Immersive player hub: two global actions, one compact status ribbon. */
+.devOnly,.devOnly[hidden]{display:none!important}
+.menu{justify-content:flex-end;gap:8px;padding-bottom:12px}
+.menu button{font-size:12px;padding:9px 13px;border-radius:999px}
+.villageStats{grid-template-columns:repeat(3,minmax(0,1fr));gap:0;border:1px solid #7ca18a61;background:#122d2b;border-radius:14px;overflow:hidden}
+.villageStats .card{border:0;border-right:1px solid #9cb6a632;border-radius:0;background:transparent;box-shadow:none;text-align:center;padding:12px 5px}
+.villageStats .card:last-child{border-right:0}
+.villageStats .stat{font-size:clamp(19px,4vw,26px)}
+.villageStats .stat small{font-size:10px;margin-top:3px}
+#page-village>.section-title{margin:14px 0 10px}
+#page-village .homeProgress{margin-top:0}
+#page-village .town-dialogue{margin-top:12px}
+#page-run .runTopNav{margin-bottom:13px}
+#page-run .runTopNav .cta{display:inline-block;font-size:12px;padding:9px 14px}
+#page-run .tracker{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}
+#page-run .tracker .card{padding:12px}
+@media(max-width:620px){.menu button{padding:7px 10px;font-size:11px}.villageStats .card{padding:10px 3px}.stage-bottom .cta{padding:10px 11px}}
+
 </style></head>
 <body><div class="app">
 <header class="top"><div class="mark">MOTION RPG <em> / 경계의 숲</em></div><div class="version">통합 플레이 빌드 · 0.37</div></header>
