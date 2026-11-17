@@ -48,7 +48,7 @@ export function enemyEdgePointer(player,yaw,target,width,height){
  if(!rel||!finite(width)||!finite(height)||width<=0||height<=0)return null;
  const x=width/2+Math.sin(rel.angle)*Math.min(width*.34,235);
  const y=height*.49-Math.cos(rel.angle)*Math.min(height*.30,155);
- return {...rel,x:clamp(x,45,width-45),y:clamp(y,68,height-87),
+ return {...rel,x:clamp(x,45,width-45),y:clamp(y,68,Math.max(68,height-135)),
   degrees:rel.angle*180/Math.PI};
 }
 export function monsterHeadHeight(kind){
