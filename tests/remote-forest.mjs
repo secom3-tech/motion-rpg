@@ -80,6 +80,17 @@ const controller=fs.readFileSync(new URL("../controller.html",import.meta.url),"
 const paths=["movePad","lookPad","lockToggle","controlState"];
 for(const id of paths)assert.ok(controller.includes('id="'+id+'"'),"Missing remote UI: "+id);
 assert.ok(controller.includes("controlSend(\"move\"")&&controller.includes('controlSend("look"'),"Live movement and camera");
+for(const needle of ['id="lookSensitivity"','id="lookSensitivityLabel"',
+ 'const LOOK_SPEEDS=[0.5,0.75,1,1.4,1.9]',
+ 'LOOK_SPEED_KEY="motion-rpg-s21-look-sensitivity-v1"',
+ 'localStorage.setItem(LOOK_SPEED_KEY','lookSensitivityLabel',
+ 'const speed=LOOK_SPEEDS[lookSensitivity-1]',
+ '(e.clientX-startX)/95*speed','(e.clientY-startY)/95*speed']){
+ assert.ok(controller.includes(needle),"Independent S21 look sensitivity UI must exist: "+needle);
+}
+assert.ok(controller.includes('id="sensitivity"'),"Attack motion sensitivity setting must remain independent");
+assert.ok(arena.includes('yaw+=remote.dx*.125;')&&arena.includes('pitch=Math.max(-.72'),"Fold6 should still receive bounded look deltas");
+
 assert.ok(controller.includes('controlSend("control-stop")'),"Safety stop");
 assert.ok(arena.includes("remoteInput.current(Date.now())"),"Remote motion must be consumed in arena loop");
 assert.ok(arena.includes("lockOnYaw(camera,enemy)"),"Lock-on view tracking");
