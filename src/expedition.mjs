@@ -41,7 +41,7 @@ function rand(s){let x=s.seed>>>0;x^=x<<13;x^=x>>>17;x^=x<<5;s.seed=x>>>0||98765
 const itemIds=["torch","map","bandage"];
 function pickEncounter(s){
  const seen=new Set(s.events.slice(-4).map(e=>e.id));
- const pool=SCENARIOS.filter(e=>!seen.has(e.id));
+ const pool=SCENARIOS.filter(e=>!seen.has(e.id)&&(s.mode!=="walk"||e.kind!=="surge"));
  const e=pool[Math.floor(rand(s)*pool.length)];
  const m=MODIFIERS[Math.floor(rand(s)*MODIFIERS.length)];
  return {...e,modifier:m.name,flavor:m.flavor,durationSec:35+Math.floor(rand(s)*4)*5,qualitySec:0,requiredSec:0};
@@ -57,19 +57,19 @@ export function paceQualifies(type,pace,base){
  return (!r.upper||pace<=r.upper)&&(!r.lower||pace>=r.lower);
 }
 export function createAdventure({mode="demo",basePace=8.5,style="scout",durationMin=20,seed=17,level=1}={}){
- if(!["gps","demo","treadmill"].includes(mode)||!STYLES[style])throw Error("Invalid mode/style");
+ if(!["gps","walk","demo","treadmill"].includes(mode)||!STYLES[style])throw Error("Invalid mode/style");
  if(!Number.isFinite(basePace)||basePace<5||basePace>15)throw Error("Invalid baseline pace");
  if(![0,12,20,30,45,60].includes(durationMin))throw Error("Invalid duration");
- return {version:2,mode,basePace,style,freeRoam:durationMin===0,durationSec:durationMin===0?120*60:durationMin*60,seed:(seed>>>0)||17,level:Math.max(1,Math.floor(level)),
+ return {version:3,mode,basePace,style,freeRoam:durationMin===0,durationSec:durationMin===0?120*60:durationMin*60,seed:(seed>>>0)||17,level:Math.max(1,Math.floor(level)),
  phase:"ready",elapsedSec:0,phaseSeconds:0,event:null,events:[],success:0,fail:0,xp:0,gold:0,loot:{torch:0,map:0,bandage:0},
  hp:100,distanceM:0,announcements:[],lastAnnouncement:"탐험 준비 완료",battleRank:Math.max(1,Math.floor((level-1)/4)+1),endReason:null};
 }
 function announce(s,head,detail){const item={at:Math.round(s.elapsedSec),head,detail};s.announcements.push(item);if(s.announcements.length>12)s.announcements.shift();s.lastAnnouncement=head+" "+detail;}
-export function startAdventure(prev){if(prev.phase!=="ready")throw Error("Already started");const s=structuredClone(prev);s.phase="travel";s.phaseSeconds=45;announce(s,"경계의 숲에 도착했다","천천히 숲을 탐험하며 호흡을 정리하자.");return s}
+export function startAdventure(prev){if(prev.phase!=="ready")throw Error("Already started");const s=structuredClone(prev);s.phase="travel";s.phaseSeconds=45;announce(s,s.mode==="walk"?"산책 탐색 시작":"경계의 숲에 도착했다",s.mode==="walk"?"천천히 걸으며 숲의 흔적을 발견해. 강아지가 멈추면 함께 쉬어도 괜찮아.":"천천히 숲을 탐험하며 호흡을 정리하자.");return s}
 function beginEncounter(s){
  s.phase="challenge";s.event=pickEncounter(s);s.phaseSeconds=s.event.durationSec;
  const req=paceRequirement(s.event.kind,s.basePace);
- announce(s,s.event.name,s.event.flavor+" "+s.event.line+" "+req.label+". "+req.hint);
+ announce(s,s.event.name,s.mode==="walk"?s.event.flavor+" "+s.event.line+" 주변을 안전하게 살펴보고 편안히 걸어가자. 속도를 높일 필요는 없어.":s.event.flavor+" "+s.event.line+" "+req.label+". "+req.hint);
 }
 function resolveEncounter(s){
  const e=s.event,ratio=e.requiredSec>0?e.qualitySec/e.requiredSec:0,bonus=STYLES[s.style][e.kind];
@@ -96,7 +96,7 @@ export function advanceAdventure(prev,dtSec,pace){
   const n=Math.min(left,s.phaseSeconds,s.durationSec-s.elapsedSec);
   if(n<=0){finish(s);break}
   s.elapsedSec+=n;s.distanceM+=n*1000/(pace*60);s.phaseSeconds-=n;left-=n;
-  if(s.phase==="challenge"){s.event.requiredSec+=n;if(paceQualifies(s.event.kind,pace,s.basePace))s.event.qualitySec+=n}
+  if(s.phase==="challenge"){s.event.requiredSec+=n;if(s.mode==="walk"?pace>=8&&pace<=65:paceQualifies(s.event.kind,pace,s.basePace))s.event.qualitySec+=n}
   if(s.phaseSeconds<=0.00001){
    if(s.phase==="travel")beginEncounter(s);
    else if(s.phase==="challenge")resolveEncounter(s);
@@ -106,14 +106,34 @@ export function advanceAdventure(prev,dtSec,pace){
  }
  s.distanceM=Math.round(s.distanceM*10)/10;return s;
 }
+
+/** Verified GPS-based session payout. Walk mode values discovery, never requires running. */
+export function expeditionReward(session){
+ const distance=Math.max(0,Number(session?.distanceM)||0);
+ const elapsed=Math.max(1,Number(session?.elapsedSec)||1);
+ const xp=Math.max(0,Number(session?.xp)||0),gold=Math.max(0,Number(session?.gold)||0);
+ if(session?.mode==="walk")return {
+  xp:Math.min(180,Math.round(xp*.72)+Math.min(18,Math.floor(distance/350)*2)),
+  gold:Math.min(80,Math.round(gold*.55)),mode:"walk"
+ };
+ // Moderate or faster real movement earns the higher outdoor-running reward;
+ // an extremely slow route does not get the running multiplier automatically.
+ const movingEnough=distance/elapsed>=.075;
+ return {
+  xp:Math.min(360,Math.round(xp*(movingEnough?1.65:1.0))+Math.min(26,Math.floor(distance/300)*2)),
+  gold:Math.min(175,Math.round(gold*(movingEnough?1.5:1.0))+Math.min(18,Math.floor(distance/450)*2)),
+  mode:"gps"
+ };
+}
 export function summarizeAdventure(s){return {elapsedSec:Math.round(s.elapsedSec),distanceM:Math.round(s.distanceM),success:s.success,fail:s.fail,xp:s.xp,gold:s.gold,loot:{...s.loot},reason:s.endReason,mode:s.mode};}
 export function settleAdventure(shared,session,claimId){
- if(session.mode!=="gps"||session.phase!=="complete"||!claimId||session.elapsedSec<180||session.distanceM<200)return {state:shared,awarded:false};
+ if(!["gps","walk"].includes(session.mode)||session.phase!=="complete"||!claimId||session.elapsedSec<180||session.distanceM<200)return {state:shared,awarded:false};
  const claimed=Array.isArray(shared.runnerClaims)?shared.runnerClaims:[];
  if(claimed.includes(claimId))return {state:shared,awarded:false};
  const s={...shared,inventory:{...(shared.inventory||{})},runnerClaims:[...claimed,claimId].slice(-40)};
- s.xp=(Number(s.xp)||0)+session.xp;s.gold=(Number(s.gold)||0)+session.gold;
+ const reward=expeditionReward(session);
+ s.xp=(Number(s.xp)||0)+reward.xp;s.gold=(Number(s.gold)||0)+reward.gold;
  Object.assign(s,applyExperienceCurve(shared,s));
  for(const id of itemIds)s.inventory[id]=(Number(s.inventory[id])||0)+session.loot[id];
- return {state:s,awarded:true};
+ return {state:s,awarded:true,xp:reward.xp,gold:reward.gold};
 }
