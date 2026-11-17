@@ -262,7 +262,7 @@
 <div id="err"></div><div id="retryWrap" hidden><strong>기력이 소진됐어</strong><p>S21 연결은 유지돼. 바로 재도전하면 새 연결 코드를 입력할 필요 없어.</p><button id="retryCombat">기력 회복 · 다시 싸우기</button></div>
 <div id="motionPanel" hidden role="dialog" aria-modal="true" aria-label="실전 모션 입력 설정">
  <div class="motionDialog">
-  <div class="motionTop"><div><small>MOTION RPG / v0.43.5</small><h2>실전 모션 전투 설정</h2></div><button id="motionClose" class="subtle">게임으로 돌아가기</button></div>
+  <div class="motionTop"><div><small>MOTION RPG / v0.43.6</small><h2>실전 모션 전투 설정</h2></div><button id="motionClose" class="subtle">게임으로 돌아가기</button></div>
   <p class="motionLead">폴드6에서는 3D 전투와 전면 카메라 회피를 사용하고, S21에서는 실제 휘두르기·투척 동작을 전송해. 둘 다 선택 기능이야.</p>
   <section class="motionSection">
    <h3>① S21 무기 컨트롤러 연결 · 숫자 6자리</h3>
@@ -1179,9 +1179,11 @@ const motionHost=createWirelessHost({
   lastMotionSequence=packet.seq;
   // Diagnose every authentic sensor event, including ones that cannot attack.
   const action=packet.gesture==="throw"?"투척":({sweep:"가로 베기",overhead:"내려찍기",thrust:"찌르기"}[packet.style]||"검격");
+  const skillRequested=packet.skillHeld===true;
   const respond=(accepted,reason)=>{
-   motionHost.send({type:"gesture-ack",seq:packet.seq,accepted,reason,time:Date.now()});
-   el("remoteStatus").textContent="S21 "+action+" 감지됨 · "+(accepted?"전투 공격 실행":reason)+" · 강도 "+packet.strength;
+   motionHost.send({type:"gesture-ack",seq:packet.seq,accepted,skill:accepted&&skillRequested,reason,time:Date.now()});
+   el("remoteStatus").textContent="S21 "+(skillRequested?"스킬 + ":"")+action+
+     " 감지됨 · "+(accepted?(skillRequested?"스킬 공격 발동":"일반 공격 실행"):reason)+" · 강도 "+packet.strength;
   };
   if(!active||worldMode){
    respond(false,heroHp<=0?"기력 0 · 다시 싸우기 눌러":"전투 시작 버튼을 먼저 눌러");
@@ -1194,9 +1196,25 @@ const motionHost=createWirelessHost({
   // This is a prototype, not an authoritative anti-cheat sensor verifier.
   if(autoSwitchEnabled&&packet.autoSwitch===true)switchWeapon(packet.gesture==="throw"?"ranged":"melee",false);
   const mismatch=packet.gesture==="throw"&&activeWeaponMode!=="ranged"||packet.gesture==="melee"&&activeWeaponMode!=="melee";
-  const accepted=!mismatch&&(packet.gesture==="throw"?magic():swordHit(packet.style));
-  if(accepted){huntMotionActions++;showReaction("detect","모션 인식 · "+action);}
-  respond(!!accepted,accepted?"":mismatch?"무기 전환 후 시도해":"공격 쿨다운 중");
+  let accepted=false,reason="";
+  if(mismatch){
+   reason="무기 전환 후 시도해";
+  }else if(skillRequested){
+   if(clock<skillCooldownUntil){
+    reason="스킬 재사용 대기 "+Math.ceil(skillCooldownUntil-clock)+"초";
+   }else{
+    accepted=activateSkill();
+    if(!accepted)reason="공격 동작 또는 스킬 사용 대기 중";
+   }
+  }else{
+   accepted=packet.gesture==="throw"?magic():swordHit(packet.style);
+   if(!accepted)reason="공격 쿨다운 중";
+  }
+  if(accepted){
+   huntMotionActions++;
+   if(!skillRequested)showReaction("detect","모션 인식 · "+action);
+  }
+  respond(accepted,reason);
  }
 });
 const remoteInput=createRemoteInput();let targetLocked=false;
