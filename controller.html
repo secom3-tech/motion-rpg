@@ -176,7 +176,7 @@ const wireless=createWirelessController({
    $("modeInfo").textContent=(mode==="auto"?"거리 자동 · ":"전투 무기: ")+data.label;
   }
   if(data?.type==="gesture-ack"){
-   const desc=data.accepted?(data.skill?"폴드6 스킬 발동 확인":"폴드6 전투 입력 확인"):data.reason||"전투에서 입력을 사용할 수 없어";
+   const desc=data.queued?"폴드6 스킬 예약 확인 · 공격 종료 후 발동":data.accepted?(data.skill?"폴드6 스킬 발동 확인":"폴드6 전투 입력 확인"):data.reason||"전투에서 입력을 사용할 수 없어";
    $("lastSignal").textContent="최근 동작: "+desc+" · "+new Date().toLocaleTimeString("ko-KR");
   }
  }
@@ -413,7 +413,7 @@ async function startSensor(){
   detector.reset();active=true;sensorEvents=0;sensorStartedAt=Date.now();
   startCooldownTicker();
   $("start").disabled=true;$("stop").disabled=false;
-  setStatus("센서 시작 · 투척 후 1.9초 쉬고 팔을 가만히 두면 다음 공격이 준비돼.");
+  setStatus("센서 시작 · 근접 약 0.7초, 원거리 투척 후 중복 방지 1.9초. 팔을 잠시 멈추면 다음 공격이 준비돼.");
   $("sensorDetail").textContent="센서 이벤트 수신 대기...";
   setTimeout(()=>{if(active&&sensorEvents===0){$("sensorDetail").textContent="센서 이벤트 0회 · 이 브라우저에서 동작 센서가 차단됐을 수 있어. Chrome/삼성 인터넷에서 열어 줘.";}},2500);
  }catch(e){setStatus("센서 켜기 실패: "+e.message);}
