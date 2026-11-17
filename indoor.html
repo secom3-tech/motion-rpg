@@ -306,10 +306,11 @@ import {createMonsterMind,monsterMotionStep,retainTarget} from "./src/monster-ai
 import {canAutoAcquire,followTargetYaw,assistedAimYaw,AUTO_LOCK_MANUAL_PAUSE} from "./src/target-assist.mjs?v=0.44";
 import {automaticWeaponMode,autoMotionAttackMode} from "./src/auto-weapon.mjs?v=0.45";
 import {rangedProfile,isRangedStyle,canStartRanged,fireRangedProjectile,projectileStep} from "./src/enemy-ranged.mjs?v=0.38";
-import {dodgePrompt} from "./src/dodge-cue.mjs?v=0.44.1";
+import {dodgePrompt,DODGE_PROMPT_WINDOW_SEC} from "./src/dodge-cue.mjs?v=0.46";
+import {dodgeCameraPose,DODGE_SIDE_STEP_M,canReserveTimedDodge,shouldDodgeMeleeHit} from "./src/dodge-feedback.mjs?v=0.47";
 import {relativeTarget,radarTarget,projectEnemyHead,enemyEdgePointer,monsterHeadHeight,compassDirection,RADAR_RANGE} from "./src/combat-navigation.mjs?v=0.36";
 import {validMotionPacket} from "./src/motion-core.mjs?v=0.43.6";
-import {createPoseCamera} from "./src/pose-camera.mjs?v=0.31";
+import {createPoseCamera} from "./src/pose-camera.mjs?v=0.47";
 import {ATTACKS,angleToTarget,turnToTarget,strikeInfo,spawnAroundPlayer,distance2d,dodgeMatches} from "./src/combat-spatial.mjs?v=0.35";
 (()=>{'use strict';
 const cvs=document.getElementById('game'),gl=cvs.getContext('webgl',{antialias:true,alpha:true,premultipliedAlpha:false,powerPreference:'high-performance'})||cvs.getContext('experimental-webgl');
@@ -322,7 +323,7 @@ let activeWeaponMode=battleGear.activeWeapon||"melee",autoSwitchEnabled=true,ski
 const currentWeapon=()=>activeWeaponMode==="melee"?equipped.meleeWeapon:equipped.rangedWeapon;
 const equippedWeapon=()=>GEAR.weapon.find(item=>item.id===currentWeapon())?.name||"기본 장비";
 const sessionId="arena-"+Date.now()+"-"+Math.random().toString(36).slice(2,11);
-let heroHp=stats.maxHp,dodgeUntil=0,dodgeCooldown=0,lastDodgeKind="button",dodgeVisualUntil=0,bandageReadyAt=0,dodgeMessageUntil=0,dodgeMessage="";
+let heroHp=stats.maxHp,dodgeUntil=0,dodgeCooldown=0,lastDodgeKind="button",dodgeVisualUntil=0,bandageReadyAt=0,dodgeMessageUntil=0,dodgeMessage="",dodgeProtectedAttack=0,enemyAttackSeq=0,dodgeVisualStart=-99;
 let huntElapsedSec=0,huntDodgeInputs=0,huntDodgeSuccess=0,huntMotionActions=0;const huntLog=[];
 let enemySpawnClock=-99,lastRadarClock=-99,dodgePromptPlayed=false;
 let meleeAction=null,rangedAction=null,queuedSkillUntil=-1;
@@ -468,7 +469,14 @@ function matModel(x,y,z,sx,sy,sz,rot=0){let c=Math.cos(rot),s=Math.sin(rot);retu
 const identity=matModel(0,0,0,1,1,1);
 function mul(a,b){let o=new Float32Array(16);for(let c=0;c<4;c++)for(let r=0;r<4;r++)o[c*4+r]=a[r]*b[c*4]+a[4+r]*b[c*4+1]+a[8+r]*b[c*4+2]+a[12+r]*b[c*4+3];return o}
 function perspective(fov,asp,near,far){let f=1/Math.tan(fov/2),o=new Float32Array(16);o[0]=f/asp;o[5]=f;o[10]=(far+near)/(near-far);o[11]=-1;o[14]=(2*far*near)/(near-far);return o}
-function viewMatrix(){let fy=Math.sin(pitch),fx=Math.sin(yaw)*Math.cos(pitch),fz=-Math.cos(yaw)*Math.cos(pitch);let right=[Math.cos(yaw),0,Math.sin(yaw)],up=[-Math.sin(yaw)*Math.sin(pitch),Math.cos(pitch),Math.cos(yaw)*Math.sin(pitch)];let dot=(a,b)=>a[0]*b.x+a[1]*b.y+a[2]*b.z;return new Float32Array([right[0],up[0],-fx,0,right[1],up[1],-fy,0,right[2],up[2],-fz,0,-dot(right,camera),-dot(up,camera),fx*camera.x+fy*camera.y+fz*camera.z,1])}
+function viewMatrix(){
+ let fy=Math.sin(pitch),fx=Math.sin(yaw)*Math.cos(pitch),fz=-Math.cos(yaw)*Math.cos(pitch);
+ const right=[Math.cos(yaw),0,Math.sin(yaw)],up=[-Math.sin(yaw)*Math.sin(pitch),Math.cos(pitch),Math.cos(yaw)*Math.sin(pitch)];
+ const roll=dodgeCameraPose(lastDodgeKind,clock-dodgeVisualStart).roll,c=Math.cos(roll),si=Math.sin(roll);
+ const r=right.map((v,i)=>v*c+up[i]*si),u=up.map((v,i)=>v*c-right[i]*si);
+ let dot=(a,b)=>a[0]*b.x+a[1]*b.y+a[2]*b.z;
+ return new Float32Array([r[0],u[0],-fx,0,r[1],u[1],-fy,0,r[2],u[2],-fz,0,-dot(r,camera),-dot(u,camera),fx*camera.x+fy*camera.y+fz*camera.z,1]);
+}
 function draw(asset,model=identity,tint=[1,1,1],glow=0,alpha=1,fog=1){gl.bindBuffer(gl.ARRAY_BUFFER,asset.buf);gl.vertexAttribPointer(loc.pos,3,gl.FLOAT,false,36,0);gl.vertexAttribPointer(loc.nor,3,gl.FLOAT,false,36,12);gl.vertexAttribPointer(loc.col,3,gl.FLOAT,false,36,24);gl.enableVertexAttribArray(loc.pos);gl.enableVertexAttribArray(loc.nor);gl.enableVertexAttribArray(loc.col);gl.uniformMatrix4fv(loc.model,false,model);gl.uniform3fv(loc.tint,tint);gl.uniform1f(loc.glow,glow);gl.uniform1f(loc.alpha,alpha);gl.uniform1f(loc.fog,fog);if(alpha<1){gl.enable(gl.BLEND);gl.blendFunc(gl.SRC_ALPHA,gl.ONE_MINUS_SRC_ALPHA);gl.depthMask(false)}else{gl.disable(gl.BLEND);gl.depthMask(true)}gl.drawArrays(gl.TRIANGLES,0,asset.n);if(alpha<1){gl.depthMask(true)}}
 function terrainHeight(x,z){return .11*Math.sin(x*.17+z*.07)+.07*Math.sin(z*.25-x*.24)+.07*Math.cos(x*.36)}
 const world=builder();let N=65,step=2;for(let i=0;i<N;i++)for(let j=0;j<N;j++){let x=(i-N/2)*step,z=(j-N/2)*step-19;let v=(a,b)=>[a,terrainHeight(a,b)-.11,b];let a=v(x,z),b=v(x+step,z),c=v(x+step,z+step),d=v(x,z+step);let path=Math.abs(x-.26*Math.sin(z*.095))<2.12&&z<9;let noise=rand();const bio=forestZoneAt(x,z).id;let col=path?[.47+noise*.09,.48+noise*.07,.35+noise*.04]:bio==="marsh"?[.12+noise*.08,.30+noise*.11,.30+noise*.10]:bio==="ruins"?[.28+noise*.08,.36+noise*.10,.30+noise*.07]:bio==="grove"?[.24+noise*.11,.37+noise*.12,.23+noise*.09]:[.19+noise*.12,.38+noise*.13,.24+noise*.07];pushT(world,a,b,d,col);pushT(world,b,c,d,col)}
@@ -833,6 +841,7 @@ const tint=weapon==="axe"||weapon==="ember"?[1,.58,.26]:weapon==="staff"||weapon
 for(let i=0;i<16;i++){let p=(rand()-.5)*6,t=rand()*6.28,s=.65+rand()*2.6;sparks.push({x,y,z,vx:Math.cos(t)*s,vy:rand()*3.7,vz:Math.sin(t)*s,r:.04+rand()*.07,life:.4+rand()*.5,t:0,col:[tint[0],Math.min(1,tint[1]+rand()*.16),Math.min(1,tint[2]+rand()*.10)]})}toast('✦ '+n+' 데미지');beep(165,.12,'triangle',.11);if(enemy.hp<=0){enemy.dead=true;targetLocked=false;syncTargetUi();enemy.windup=0;enemy.impactUntil=0;enemyShots=[];el('attackBanner').hidden=true;el('enemyTag').hidden=true;el('enemyArrow').hidden=true;enemy.respawn=1.6;score+=80+enemy.kind*20;kills++;huntLog.push({name:enemy.name||"몬스터",at:huntElapsedSec});if(huntLog.length>25)huntLog.shift();heroHp=Math.min(stats.maxHp,heroHp+5);showHero();bankProgress();el('score').textContent=String(score).padStart(3,'0');el('enemyHud').style.opacity='0';el('stage').textContent=String(kills).padStart(2,'0');el('status').textContent='마력체 격파! 마을로 돌아가면 보상을 수령한다';setTimeout(()=>toast('마력체 격파 · 마을 보상 저장!'),350);beep(830,.25,'sine',.1)}}
 function spawnEnemy(){
  const oldKind=enemy.kind,area=forestZoneAt(camera.x,camera.z);
+ dodgeProtectedAttack=0;
  enemy.kind=chooseForestMonster(area.id,rand,oldKind);
  const creature=FOREST_MONSTERS[enemy.kind];
  enemy.max=creature.hp+Math.min(340,Math.floor(kills*12));
@@ -933,6 +942,7 @@ function updateEnemy(dt){
       enemy.kind===5?(rand()<.83?"charge":"sweep"):enemy.kind===6?(rand()<.78?"sweep":"slam"):enemy.kind===7?(rand()<.82?"slam":"sweep"):rand()<.5?"sweep":"slam";
     enemy.windupTotal=attackWindup(attack,enemy.attackStyle,enemy.kind);
     enemy.windup=enemy.windupTotal;enemy.moveSpeed=0;dodgePromptPlayed=false;
+    enemyAttackSeq++;dodgeProtectedAttack=0;
     el("attackCue").className="warning";
     el("attackCue").textContent="⚠ "+enemy.name+" · "+(enemy.attackStyle==="rock"?"돌 투척! 움직이며 피하기":enemy.attackStyle==="bolt"?"청염탄! 좌우 이동":enemy.attackStyle==="charge"?"돌진! 좌우 회피":enemy.attackStyle==="sweep"?"가로 공격! 앉기":"내려찍기! 좌우 회피");
     el("status").textContent=enemy.attackStyle==="rock"?"골렘이 거석을 들어올렸다! 발사 방향을 보고 비켜나세요.":enemy.attackStyle==="bolt"?"도깨비불이 청염탄을 모은다! 발사 후 옆으로 피하세요.":enemy.attackStyle==="charge"?"멧돼지가 돌진을 준비한다! 앞쪽 좁은 길에서 옆으로 비켜나세요.":enemy.attackStyle==="sweep"?"가로 공격을 준비한다! 몸을 낮추거나 공격 범위를 벗어나세요.":"정면 찍기! 좌우로 피하거나 적 뒤로 이동하세요.";
@@ -972,7 +982,7 @@ if(!enemy.dead){
  }
 }
 updateAutoWeaponMode();
-camera.y=1.7+(len>.02?Math.sin(clock*10)*.045:Math.sin(clock*1.5)*.015)-(lastDodgeKind==="duck"?0.36*Math.min(1,Math.max(0,(dodgeVisualUntil-clock)/.35)):0);weaponKick=Math.max(0,weaponKick-dt*3.2);el("dodge").disabled=clock<dodgeCooldown;
+camera.y=1.7+(len>.02?Math.sin(clock*10)*.045:Math.sin(clock*1.5)*.015)-dodgeCameraPose(lastDodgeKind,clock-dodgeVisualStart).crouch;weaponKick=Math.max(0,weaponKick-dt*3.2);el("dodge").disabled=clock<dodgeCooldown;
  el("skillAttack").disabled=clock<skillCooldownUntil;
  syncBandage();
  el("skillAttack").querySelector("b").textContent=clock<skillCooldownUntil?"스킬 "+Math.ceil(skillCooldownUntil-clock)+"초":"스킬";el("dodgeInfo").textContent=clock<dodgeMessageUntil?dodgeMessage:clock<dodgeCooldown?"회피 재사용 "+(dodgeCooldown-clock).toFixed(1)+"초":"경고 시 좌우 이동·숙이기 / Q";
@@ -1379,7 +1389,7 @@ function refreshMotionIndicator(){
 el("retryCombat").onclick=()=>{
  // Test-mode recovery, keeps earned kills in the same capped battle session.
  heroHp=stats.maxHp;showHero();camera.x=0;camera.z=5.5;camera.y=1.7;
- yaw=0;pitch=-.032;lastFire=-999;dodgeCooldown=0;dodgeUntil=0;dodgeMessageUntil=0;queuedSkillUntil=-1;projectiles=[];enemyShots=[];sparks=[];meleeAction=null;rangedAction=null;
+ yaw=0;pitch=-.032;lastFire=-999;dodgeCooldown=0;dodgeUntil=0;dodgeMessageUntil=0;dodgeProtectedAttack=0;dodgeVisualStart=-99;queuedSkillUntil=-1;projectiles=[];enemyShots=[];sparks=[];meleeAction=null;rangedAction=null;
  el("retryWrap").hidden=true;active=true;spawnEnemy();
  el("status").textContent="전투 재개 · S21 연결은 그대로 유지 중";
 };
