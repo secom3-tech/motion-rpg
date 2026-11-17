@@ -379,17 +379,18 @@
 </div>
 <script type="module">
 import {createAdventure,startAdventure,advanceAdventure,endAdventure,summarizeAdventure,settleAdventure} from "./src/expedition.mjs?v=0.37";
-import {GEAR,DEFAULT_LOADOUT,SAMPLE_SETS,sanitizeLoadout,describeLoadout} from "./src/avatar.mjs";
-import {renderHeroIllustration} from "./src/hero-illustration.mjs?v=0.40";
+import {GEAR} from "./src/avatar.mjs";
+import {itemIllustration} from "./src/item-art.mjs?v=0.41";
+
 import {QUESTS,REGIONS,newGame} from "./src/engine.mjs?v=0.37";
 import {experienceProgress} from "./src/progression.mjs?v=0.37";
 import {villageRumour,villageObjective} from "./src/town-life.mjs?v=0.37";
 // Village art is static: combat, GPS and character state retain their original modules.
-import {MATERIALS,RECIPES,normalizeRpgGear,gearRequirement,craftGear,equipGear,combatStats,claimIndoorBattle,addExpeditionMaterials} from "./src/gear-game.mjs?v=0.37";
+import {MATERIALS,RECIPES,normalizeRpgGear,gearRequirement,craftGear,equipGear,chooseActiveWeapon,weaponSlotFor,RANGED_WEAPONS,MELEE_WEAPONS,combatStats,claimIndoorBattle,addExpeditionMaterials} from "./src/gear-game.mjs?v=0.37";
 const $=id=>document.getElementById(id);
 const pages=["village","run","indoor","character"];
 function go(page){if(!pages.includes(page))return;
-if(page==="indoor"){location.assign("./indoor.html?v=0.38&return=preview");return;}const previous=pages.find(x=>$("page-"+x).classList.contains("active"));if(previous==="indoor"&&page!=="indoor"&&$("indoorFrame").contentWindow){$("indoorFrame").contentWindow.postMessage({type:"motion-rpg-pause-input"},location.origin);}pages.forEach(x=>$("page-"+x).classList.toggle("active",x===page));document.querySelectorAll("[data-view]").forEach(b=>b.classList.toggle("active",b.dataset.view===page));if(page==="indoor"){const frame=$("indoorFrame"),signature=JSON.stringify(normalizeRpgGear(sharedCharacter()).equipped);if(!frame.src||frame.dataset.gearSignature!==signature){frame.src="./indoor.html?return=preview&load="+Date.now();frame.dataset.gearSignature=signature;}}if(page==="village"){$("townEncounter").hidden=true;}if(page==="character"){drawEquipment();}if(page==="character"||page==="village")syncCharacter();window.scrollTo({top:0,behavior:"smooth"});}
+if(page==="indoor"){location.assign("./indoor.html?v=0.38&return=preview");return;}const previous=pages.find(x=>$("page-"+x).classList.contains("active"));if(previous==="indoor"&&page!=="indoor"&&$("indoorFrame").contentWindow){$("indoorFrame").contentWindow.postMessage({type:"motion-rpg-pause-input"},location.origin);}pages.forEach(x=>$("page-"+x).classList.toggle("active",x===page));document.querySelectorAll("[data-view]").forEach(b=>b.classList.toggle("active",b.dataset.view===page));if(page==="indoor"){const frame=$("indoorFrame"),signature=JSON.stringify(normalizeRpgGear(sharedCharacter()).equipped);if(!frame.src||frame.dataset.gearSignature!==signature){frame.src="./indoor.html?return=preview&load="+Date.now();frame.dataset.gearSignature=signature;}}if(page==="village"){$("townEncounter").hidden=true;$("craftBench").hidden=true;}if(page==="character"){drawEquipment();}if(page==="character"||page==="village")syncCharacter();window.scrollTo({top:0,behavior:"smooth"});}
 document.querySelectorAll("[data-view]").forEach(b=>b.onclick=()=>go(b.dataset.view));
 document.querySelectorAll("[data-go]").forEach(b=>b.onclick=()=>go(b.dataset.go));
 $("restartIndoor").onclick=()=>$("indoorFrame").src="./indoor.html?return=preview&reload="+Date.now();
@@ -435,8 +436,8 @@ function townTalk(type){
   npc.textContent="마을 상인";msg.textContent="오늘 장터에는 가죽 장갑과 약초가 들어왔어. 준비를 마쳤으면 가방의 장비를 살펴봐.";
   action.textContent="가방 · 장비 보기";action.dataset.go="character";action.onclick=()=>go("character");
  }else if(type==="smith"){
-  npc.textContent="숲마을 대장장이";msg.textContent="가죽옷, 사냥활, 후드, 여행 가방을 갖추고 떠나는 게 어때요? 장비실에서 외형을 바꿀 수 있어요. 시착은 무료지만 실제 제작에는 골드와 재료가 필요합니다.";
-  action.textContent="장비 시착실 열기";action.dataset.go="character";action.onclick=()=>go("character");
+  npc.textContent="숲마을 대장장이";msg.textContent="가죽옷, 사냥활, 후드, 여행 가방을 갖추고 떠나는 게 어때요? 장비실에서 외형을 바꿀 수 있어요. 실제 보유한 장비만 장착할 수 있고 제작에는 골드와 재료가 필요합니다.";
+  action.textContent="장비실 열기";action.dataset.go="character";action.onclick=()=>go("character");
  }else{
   npc.textContent="숲길 안내인";msg.textContent="오늘 숲에는 늑대의 흔적이 보여요. 야외에서는 이어폰으로 사건을 듣고 달리는 속도로 대응합니다. 러닝머신에서도 모험 기록을 이어갈 수 있어요.";
   action.textContent="숲 원정 준비";action.dataset.go="run";action.onclick=()=>go("run");
@@ -451,32 +452,31 @@ $("townHudGold").textContent="보유 골드 "+(s.gold||0)+" G";
 $("homeLevel").innerHTML=(s.level||1)+"<small>레벨</small>";
 $("homeXpProgress").style.width=(exp.ratio*100).toFixed(1)+"%";
 $("homeNextXp").textContent="Lv."+(exp.level+1)+"까지 "+exp.remaining+" XP 남음";$("homeXp").innerHTML=(s.xp||0)+"<small>누적 경험치</small>";$("homeGold").innerHTML=(s.gold||0)+"<small>골드</small>";$("cLevel").innerHTML=(s.level||1)+"<small>레벨</small>";$("cXp").innerHTML=(s.xp||0)+" XP<small>경험치</small>";$("cGold").innerHTML=(s.gold||0)+" G<small>골드</small>";const bag=s.inventory||{};$("cTorch").innerHTML=(bag.torch||0)+"<small>횃불</small>";$("cMap").innerHTML=(bag.map||0)+"<small>지도 조각</small>";$("cBandage").innerHTML=(bag.bandage||0)+"<small>붕대</small>";renderCrafting();updateTownRumour();}
-// Temporary preview loadout, deliberately separate from the real RPG save.
-const EQUIPMENT_KEY="motion-rpg-preview-equipment-v1";
-function loadPreviewGear(){try{return sanitizeLoadout(JSON.parse(localStorage.getItem(EQUIPMENT_KEY)||"null"));}catch{return {...DEFAULT_LOADOUT};}}
-let loadout=loadPreviewGear();
-const gearSlots={weapon:"무기",head:"머리",armor:"갑옷",offhand:"보조장비"};
-function updateGearStatus(){
-  $("gearStatus").textContent="현재 외형: "+describeLoadout(loadout)+". 이 조합은 외형 미리보기로만 적용돼.";
-}
+// V0.41 – display and equip only items the character actually owns.
+const gearSlots={meleeWeapon:"근접 무기",rangedWeapon:"원거리 무기",head:"머리",armor:"갑옷",offhand:"보조장비"};
+let loadout={};
+function gearSource(slot){return slot==="meleeWeapon"||slot==="rangedWeapon"?GEAR.weapon:GEAR[slot]||[];}
+function gearLabel(slot,id){return gearSource(slot).find(item=>item.id===id)?.name||id;}
 function drawEquipment(){
- renderHeroIllustration($("avatarPortrait"),loadout);
- $("avatarCaption").textContent=describeLoadout(loadout);
+ const data=normalizeRpgGear(sharedCharacter()),gear=data.equipped;
+ loadout={...gear};
+ $("avatarCaption").textContent=Object.entries(gearSlots).map(([slot])=>gearLabel(slot,gear[slot])).join(" · ");
+ for(const slot of Object.keys(gearSlots)){
+  const selected=gear[slot],elSelect=$("gear-"+slot);
+  const choices=gearSource(slot).filter(item=>data.owned.includes(item.id)&&
+    (slot==="meleeWeapon"?MELEE_WEAPONS.includes(item.id):slot==="rangedWeapon"?RANGED_WEAPONS.includes(item.id):true));
+  elSelect.replaceChildren(...choices.map(item=>{
+   const option=document.createElement("option");option.value=item.id;option.textContent=item.name;return option;
+  }));
+  elSelect.value=selected;
+  $("slotArt-"+slot).innerHTML=itemIllustration(selected,slot==="meleeWeapon"||slot==="rangedWeapon"?"weapon":slot);
+ }
+ document.querySelectorAll("[data-active-weapon]").forEach(btn=>btn.classList.toggle("active",btn.dataset.activeWeapon===data.activeWeapon));
+ $("gearStatus").textContent="실제 장착 장비만 표시 중 · 숲 사냥에는 검과 활을 함께 가져가며 전투 중 S21에서 전환할 수 있어.";
 }
-function savePreviewGear(){
- try{localStorage.setItem(EQUIPMENT_KEY,JSON.stringify(loadout));}catch{}
- updateGearStatus();
- if($("page-character").classList.contains("active"))drawEquipment();
-}
-
 const SAVE_KEY="motion-rpg-save-v1",INDOOR_KEY="motion-rpg-indoor-result-v1";
 function saveCharacter(s){localStorage.setItem(SAVE_KEY,JSON.stringify(s));}
-function updateEquippedVisual(s){
- loadout=sanitizeLoadout(normalizeRpgGear(s).equipped);
- for(const slot of Object.keys(gearSlots))$("gear-"+slot).value=loadout[slot];
- savePreviewGear();
-}
-function gearLabel(slot,id){return GEAR[slot].find(e=>e.id===id)?.name||id;}
+function updateEquippedVisual(s){drawEquipment();}
 function showCraftMessage(str){$("craftStatus").textContent=str;}
 function renderCrafting(){
  const state=sharedCharacter(),gear=normalizeRpgGear(state),stats=combatStats(state);
@@ -490,13 +490,18 @@ function renderCrafting(){
   "피해 감소 "+Math.round(stats.defence*100)+"%"
  ];
  $("combatStats").replaceChildren(...info.map(t=>{const x=document.createElement("span");x.textContent=t;return x;}));
- const all=Object.entries(GEAR).flatMap(([slot,items])=>items.map(item=>({...item,slot})));
+ const all=Object.entries(GEAR).flatMap(([slot,items])=>items.map(item=>({...item,slot}))).filter(item=>{
+  const recipe=RECIPES.find(r=>r.id===item.id);
+  return gear.owned.includes(item.id)||(recipe&&recipe.minLevel<=Math.max(1,state.level||1)&&(!recipe.boss||state.quests?.forest?.bossDefeated));
+ });
  $("craftList").replaceChildren(...all.map(item=>{
   const owned=gear.owned.includes(item.id);
-  const equipped=gear.equipped[item.slot]===item.id;
+  const targetSlot=item.slot==="weapon"?weaponSlotFor(item.id):item.slot;
+  const equipped=gear.equipped[targetSlot]===item.id;
   const recipe=RECIPES.find(r=>r.id===item.id);
   const test=recipe?gearRequirement(state,item.id):{ok:false,reason:"시작 장비"};
   const row=document.createElement("div");row.className="craft-row";
+  const art=document.createElement("div");art.className="craftArt";art.innerHTML=itemIllustration(item.id,item.slot);
   const name=document.createElement("strong");name.textContent=item.name;
   const desc=document.createElement("p");desc.textContent=recipe?.description||"기본 지급 장비";
   const req=document.createElement("small");req.textContent=recipe?
@@ -515,7 +520,7 @@ function renderCrafting(){
     showCraftMessage((owned?"장착 완료: ":"제작 완료: ")+item.name+". 실내 전투에 반영돼.");
    }catch(error){showCraftMessage("진행할 수 없어: "+error.message);}
   };
-  row.append(name,desc,req,button,hint);return row;
+  row.append(art,name,desc,req,button,hint);return row;
  }));
  if(!$("craftStatus").dataset.touched){
   $("craftStatus").textContent="실전 장착: "+Object.entries(gear.equipped).map(([slot,id])=>gearLabel(slot,id)).join(" · ")+". 전투를 통해 재료를 획득해.";
@@ -545,20 +550,21 @@ window.addEventListener("message",e=>{
  go("village");
 });
 for(const slot of Object.keys(gearSlots)){
- const select=$("gear-"+slot);
- for(const item of GEAR[slot]){
-  const option=document.createElement("option");option.value=item.id;option.textContent=item.name;select.append(option);
- }
- select.value=loadout[slot];
- select.addEventListener("change",()=>{loadout=sanitizeLoadout({...loadout,[slot]:select.value});savePreviewGear();});
+ $("gear-"+slot).addEventListener("change",event=>{
+  try{
+   const updated=equipGear(sharedCharacter(),event.target.value);
+   saveCharacter(updated);syncCharacter();drawEquipment();
+  }catch(error){$("gearStatus").textContent="장착할 수 없어: "+error.message;drawEquipment();}
+ });
 }
-document.querySelectorAll("[data-outfit]").forEach(button=>button.addEventListener("click",()=>{
- const next=SAMPLE_SETS[button.dataset.outfit];if(!next)return;
- loadout=sanitizeLoadout(next);
- for(const slot of Object.keys(gearSlots))$("gear-"+slot).value=loadout[slot];
- savePreviewGear();
+document.querySelectorAll("[data-active-weapon]").forEach(button=>button.addEventListener("click",()=>{
+ const updated=chooseActiveWeapon(sharedCharacter(),button.dataset.activeWeapon);
+ saveCharacter(updated);syncCharacter();drawEquipment();
 }));
-updateGearStatus();
+$("openCraft").onclick=()=>{$("craftBench").hidden=false;renderCrafting();};
+$("closeCraft").onclick=()=>{$("craftBench").hidden=true;};
+$("craftBench").addEventListener("click",e=>{if(e.target===$("craftBench"))$("craftBench").hidden=true;});
+document.addEventListener("keydown",e=>{if(e.key==="Escape")$("craftBench").hidden=true;});
 syncCharacter();
 let session=null,timer=null,voice=false,paceType="steady",watchId=null,lastGps=null,lastGpsAt=0,seed=Date.now()>>>0,runId="";
 function message(head,detail){$("storyHead").textContent=head;$("storyDetail").textContent=detail;}
