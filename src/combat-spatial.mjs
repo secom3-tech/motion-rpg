@@ -37,7 +37,10 @@ export const ATTACKS=Object.freeze([
  Object.freeze({name:"달빛 슬라임",range:3.2,arc:58*Math.PI/180,windup:.94,damage:17,turnSpeed:1.8}),
  Object.freeze({name:"불꽃 슬라임",range:3.5,arc:58*Math.PI/180,windup:.88,damage:21,turnSpeed:1.7}),
  Object.freeze({name:"그림자 늑대",range:4.15,arc:50*Math.PI/180,windup:.78,damage:18,turnSpeed:2.05}),
- Object.freeze({name:"유적 골렘",range:4.75,arc:70*Math.PI/180,windup:1.4,damage:28,turnSpeed:.84})
+ Object.freeze({name:"유적 골렘",range:4.75,arc:70*Math.PI/180,windup:1.4,damage:28,turnSpeed:.84}),
+ Object.freeze({name:"가시 멧돼지",range:5.15,arc:42*Math.PI/180,windup:1.30,damage:20,turnSpeed:1.63}),
+ Object.freeze({name:"푸른 도깨비불",range:6.8,arc:74*Math.PI/180,windup:1.18,damage:15,turnSpeed:2.14}),
+ Object.freeze({name:"고목 파수꾼",range:5.45,arc:76*Math.PI/180,windup:1.7,damage:29,turnSpeed:.66})
 ]);
 const insideBounds=(p,b)=>p.x>=b.minX&&p.x<=b.maxX&&p.z>=b.minZ&&p.z<=b.maxZ;
 /** Pick from a front-facing 150deg sector; widen gracefully near map edges.
