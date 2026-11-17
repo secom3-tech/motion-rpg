@@ -241,11 +241,12 @@ import {GEAR,DEFAULT_LOADOUT,SAMPLE_SETS,sanitizeLoadout,describeLoadout,drawAva
 import {QUESTS,REGIONS,newGame} from "./src/engine.mjs?v=0.37";
 import {experienceProgress} from "./src/progression.mjs?v=0.37";
 import {villageRumour,villageObjective} from "./src/town-life.mjs?v=0.37";
+import {VILLAGE_SITES,createVillageExplorer,setVillageDestination,setVillageGroundDestination,advanceVillageExplorer,villageGroundFromScreen,villageSiteAtScreen,renderVillageWorld} from "./src/village-world.mjs?v=0.39";
 import {MATERIALS,RECIPES,normalizeRpgGear,gearRequirement,craftGear,equipGear,combatStats,claimIndoorBattle,addExpeditionMaterials} from "./src/gear-game.mjs?v=0.37";
 const $=id=>document.getElementById(id);
 const pages=["village","run","indoor","character"];
 function go(page){if(!pages.includes(page))return;
-if(page==="indoor"){location.assign("./indoor.html?v=0.38&return=preview");return;}const previous=pages.find(x=>$("page-"+x).classList.contains("active"));if(previous==="indoor"&&page!=="indoor"&&$("indoorFrame").contentWindow){$("indoorFrame").contentWindow.postMessage({type:"motion-rpg-pause-input"},location.origin);}pages.forEach(x=>$("page-"+x).classList.toggle("active",x===page));document.querySelectorAll("[data-view]").forEach(b=>b.classList.toggle("active",b.dataset.view===page));if(page==="indoor"){const frame=$("indoorFrame"),signature=JSON.stringify(normalizeRpgGear(sharedCharacter()).equipped);if(!frame.src||frame.dataset.gearSignature!==signature){frame.src="./indoor.html?return=preview&load="+Date.now();frame.dataset.gearSignature=signature;}}if(page==="village"){drawVillage();townTalk("guild");}if(page==="character"){drawEquipment();}if(page==="character"||page==="village")syncCharacter();window.scrollTo({top:0,behavior:"smooth"});}
+if(page==="indoor"){location.assign("./indoor.html?v=0.38&return=preview");return;}const previous=pages.find(x=>$("page-"+x).classList.contains("active"));if(previous==="indoor"&&page!=="indoor"&&$("indoorFrame").contentWindow){$("indoorFrame").contentWindow.postMessage({type:"motion-rpg-pause-input"},location.origin);}pages.forEach(x=>$("page-"+x).classList.toggle("active",x===page));document.querySelectorAll("[data-view]").forEach(b=>b.classList.toggle("active",b.dataset.view===page));if(page==="indoor"){const frame=$("indoorFrame"),signature=JSON.stringify(normalizeRpgGear(sharedCharacter()).equipped);if(!frame.src||frame.dataset.gearSignature!==signature){frame.src="./indoor.html?return=preview&load="+Date.now();frame.dataset.gearSignature=signature;}}if(page==="village"){drawVillage();$("townEncounter").hidden=true;}if(page==="character"){drawEquipment();}if(page==="character"||page==="village")syncCharacter();window.scrollTo({top:0,behavior:"smooth"});}
 document.querySelectorAll("[data-view]").forEach(b=>b.onclick=()=>go(b.dataset.view));
 document.querySelectorAll("[data-go]").forEach(b=>b.onclick=()=>go(b.dataset.go));
 $("restartIndoor").onclick=()=>$("indoorFrame").src="./indoor.html?return=preview&reload="+Date.now();
@@ -258,6 +259,7 @@ function updateTownRumour(){
  const objective=villageObjective(state);
  $("homeObjective").textContent=objective.title;
  $("homeObjectiveDesc").textContent=objective.detail;
+ $("townQuest").textContent=objective.title+" · "+objective.detail;
 }
 $("rumourNext").onclick=()=>{rumorOffset++;updateTownRumour();};
 function townTalk(type){
@@ -265,11 +267,22 @@ function townTalk(type){
  const r=typeof s.region==="string"&&QUESTS[s.region]?s.region:"forest";
  const q=s.quests?.[r]||{attempts:0,successes:0,bossDefeated:false},target=QUESTS[r];
  const npc=$("townNpc"),msg=$("townMessage"),action=$("townAction");
+ $("townEncounter").hidden=false;
+ action.onclick=()=>go("village");
+ if(type==="rumour"){
+  const rumour=villageRumour(s,new Date().toLocaleDateString("sv-SE"),++rumorOffset);
+  npc.textContent=rumour.who;msg.textContent="“"+rumour.line+"”";
+  action.textContent="다른 소문 듣기";action.dataset.go="";
+  action.onclick=()=>townTalk("rumour");return;
+ }
  if(type==="guild"){
   npc.textContent="길드 의뢰원";
   const area=REGIONS[r].label;
   msg.textContent=q.bossDefeated?area+"의 지역 보스를 이미 격파했어요. 다음 모험을 준비하세요.":area+" 조사 "+q.attempts+"/"+target.goalAttempts+"회, 성공 "+q.successes+"/"+target.goalSuccesses+"회. "+((q.attempts>=target.goalAttempts&&q.successes>=target.goalSuccesses)?"보스 도전 가능!":"길드의 의뢰를 진행해 지역 보스에 도전하세요.")+" 진행 상황은 기존 캐릭터 저장 기록을 참고해요.";
   action.textContent="숲 사냥으로 출발";action.dataset.go="indoor";action.onclick=()=>go("indoor");
+ }else if(type==="trader"){
+  npc.textContent="마을 상인";msg.textContent="오늘 장터에는 가죽 장갑과 약초가 들어왔어. 준비를 마쳤으면 가방의 장비를 살펴봐.";
+  action.textContent="가방 · 장비 보기";action.dataset.go="character";action.onclick=()=>go("character");
  }else if(type==="smith"){
   npc.textContent="숲마을 대장장이";msg.textContent="가죽옷, 사냥활, 후드, 여행 가방을 갖추고 떠나는 게 어때요? 장비실에서 외형을 바꿀 수 있어요. 아직 무료 시착이며 제작 재화는 소모되지 않아요.";
   action.textContent="장비 시착실 열기";action.dataset.go="character";action.onclick=()=>go("character");
@@ -282,6 +295,8 @@ document.querySelectorAll("[data-town]").forEach(b=>b.addEventListener("click",(
 $("townAction").onclick=()=>go("indoor");
 function sharedCharacter(){try{const s=JSON.parse(localStorage.getItem("motion-rpg-save-v1")||"null");return s&&typeof s==="object"&&!Array.isArray(s)?s:newGame();}catch{return newGame();}}
 function syncCharacter(){const s=sharedCharacter();const exp=experienceProgress(s);
+$("townHudLevel").textContent="Lv. "+(s.level||1);
+$("townHudGold").textContent="보유 골드 "+(s.gold||0)+" G";
 $("homeLevel").innerHTML=(s.level||1)+"<small>레벨</small>";
 $("homeXpProgress").style.width=(exp.ratio*100).toFixed(1)+"%";
 $("homeNextXp").textContent="Lv."+(exp.level+1)+"까지 "+exp.remaining+" XP 남음";$("homeXp").innerHTML=(s.xp||0)+"<small>누적 경험치</small>";$("homeGold").innerHTML=(s.gold||0)+"<small>골드</small>";$("cLevel").innerHTML=(s.level||1)+"<small>레벨</small>";$("cXp").innerHTML=(s.xp||0)+" XP<small>경험치</small>";$("cGold").innerHTML=(s.gold||0)+" G<small>골드</small>";const bag=s.inventory||{};$("cTorch").innerHTML=(bag.torch||0)+"<small>횃불</small>";$("cMap").innerHTML=(bag.map||0)+"<small>지도 조각</small>";$("cBandage").innerHTML=(bag.bandage||0)+"<small>붕대</small>";renderCrafting();updateTownRumour();}
@@ -452,90 +467,87 @@ function paintVillageStall(x,y,s){
   ctx.beginPath();ctx.arc(x-s*.70+i*s*.2,y-s*.78-(i%3)*s*.08,s*.092,0,Math.PI*2);ctx.fill();
  }
 }
+const villageState=createVillageExplorer();
+let villageHitLabels=[],villageStick={x:0,y:0},villagePointer=null,villageFrameTime=null;
 function drawVillage(){
- const width=cvs.clientWidth||880,height=cvs.clientHeight||490;
+ const width=cvs.clientWidth||880,height=cvs.clientHeight||540;
  if(!width||!height)return;
- const ratio=Math.min(2,window.devicePixelRatio||1);
+ const ratio=Math.min(1.7,window.devicePixelRatio||1);
  if(cvs.width!==Math.round(width*ratio)||cvs.height!==Math.round(height*ratio)){
   cvs.width=Math.round(width*ratio);cvs.height=Math.round(height*ratio);
  }
  ctx.setTransform(ratio,0,0,ratio,0,0);w=width;h=height;
- const sky=ctx.createLinearGradient(0,0,0,h);
- sky.addColorStop(0,"#608993");sky.addColorStop(.31,"#aec5a9");sky.addColorStop(.53,"#dfd4a1");sky.addColorStop(.54,"#638c71");sky.addColorStop(1,"#274c39");
- ctx.fillStyle=sky;ctx.fillRect(0,0,w,h);
- const cy=h*.53;
- // Forest-covered hills, village smoke and distant watchtower.
- for(let layer=0;layer<3;layer++){
-  ctx.fillStyle=["#8a9c79","#5a816c","#3e6b58"][layer];
-  ctx.beginPath();ctx.moveTo(0,cy+layer*h*.048);
-  for(let i=0;i<=28;i++){
-   const x=i*w/28,y=cy-h*(.17-layer*.055)+Math.sin(i*.63+layer)*h*.035+Math.sin(i*1.6+layer)*h*.01;
-   ctx.lineTo(x,y);
-  }
-  ctx.lineTo(w,cy+h*.23);ctx.lineTo(0,cy+h*.23);ctx.closePath();ctx.fill();
- }
- const archX=w*.55,archY=cy+h*.024;
- poly([[archX-w*.044,archY+h*.075],[archX-w*.032,archY-h*.095],[archX-w*.023,archY-h*.102],[archX-w*.02,archY+h*.075]],"#716f54");
- poly([[archX+w*.043,archY+h*.075],[archX+w*.032,archY-h*.095],[archX+w*.023,archY-h*.102],[archX+w*.02,archY+h*.075]],"#6f725c");
- poly([[archX-w*.065,archY-h*.10],[archX+w*.065,archY-h*.10],[archX+w*.077,archY-h*.077],[archX-w*.074,archY-h*.077]],"#64573e");
- poly([[archX-w*.030,archY-h*.082],[archX+w*.031,archY-h*.082],[archX+w*.036,archY-h*.055],[archX-w*.038,archY-h*.055]],"#cbbd89");
- // Woodland path, stepping stones and shallow water ditch.
- poly([[w*.51,cy],[w*.58,cy],[w*.92,h],[w*.21,h]],"#958f65");
- poly([[w*.52,cy],[w*.55,cy],[w*.77,h],[w*.38,h]],"#c2b88b");
- for(let i=0;i<38;i++){
-  const z=(i*37%43)/43,factor=Math.pow(z,1.7),y=cy+factor*(h-cy);
-  const x=w*(.53+((i*13%19)-9)*(.004+.013*factor));
-  const rw=(2+factor*16),rh=1+factor*5;
-  ctx.fillStyle=i%3?"#aca47d":"#ded0aa";
-  ctx.beginPath();ctx.ellipse(x,y,rw,rh,(i%5-2)*.08,0,Math.PI*2);ctx.fill();
- }
- // Tree silhouettes frame the view while village buildings occupy the midground.
- for(let i=0;i<9;i++){
-  const depth=i/9,y=cy+Math.pow(depth,1.4)*h*.51,size=10+depth*47;
-  tree(w*(.03+depth*.22),y,size);
-  tree(w*(.98-depth*.16),y,size*.91);
- }
- house(w*.69,cy+h*.34,w*.126,"#564737");
- house(w*.32,cy+h*.28,w*.112,"#65513c");
- house(w*.84,cy+h*.11,w*.076,"#504b38");
- // Three landmarks: village shop canopy, blacksmith chimney, hunter notice board.
- paintVillageStall(w*.27,cy+h*.30,Math.max(15,w*.042));
- const forgeX=w*.70,forgeY=cy+h*.34;
- ctx.fillStyle="#6b6b60";ctx.fillRect(forgeX+w*.07,forgeY-w*.18,w*.021,w*.10);
- const smoke=ctx.createRadialGradient(forgeX+w*.08,forgeY-w*.24,1,forgeX+w*.08,forgeY-w*.24,w*.085);
- smoke.addColorStop(0,"#dfdfc980");smoke.addColorStop(1,"#d8e3d100");
- ctx.fillStyle=smoke;ctx.fillRect(forgeX,forgeY-w*.33,w*.18,w*.17);
- // Guild board and public notice under the gate.
- const noticeX=w*.46,noticeY=cy+h*.18,boardW=Math.max(25,w*.051);
- ctx.fillStyle="#5f4c35";ctx.fillRect(noticeX-boardW*.07,noticeY-boardW*.27,boardW*.14,boardW*1.3);
- poly([[noticeX-boardW*.70,noticeY-boardW*1.25],[noticeX+boardW*.7,noticeY-boardW*1.25],[noticeX+boardW*.75,noticeY-boardW*.34],[noticeX-boardW*.76,noticeY-boardW*.34]],"#8d6d44","#d6ad70");
- poly([[noticeX-boardW*.51,noticeY-boardW*1.03],[noticeX+boardW*.45,noticeY-boardW*1.03],[noticeX+boardW*.45,noticeY-boardW*.52],[noticeX-boardW*.51,noticeY-boardW*.52]],"#d4c296");
- ctx.strokeStyle="#8a633f";ctx.lineWidth=1.3;for(let t=0;t<3;t++){ctx.beginPath();ctx.moveTo(noticeX-boardW*.37,noticeY-boardW*(.90-t*.13));ctx.lineTo(noticeX+boardW*.30,noticeY-boardW*(.90-t*.13));ctx.stroke()}
- // Wooden fence, warm lanterns and people make the backdrop feel inhabited.
- for(let side of [-1,1]){
-  for(let i=0;i<8;i++){
-   const z=i/7,y=cy+h*(.15+.65*z),near=10+z*14;
-   const x=w*(side<0?(.26-.19*z):(.79+.18*z));
-   ctx.strokeStyle="#876b48";ctx.lineWidth=2.5+z*2;
-   ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(x,y-near);ctx.stroke();
-   ctx.beginPath();ctx.moveTo(x,y-near*.59);ctx.lineTo(x+side*(10+z*17),y-near*.73);ctx.stroke();
-  }
- }
- paintVillageLantern(w*.40,cy+h*.62,Math.max(.65,w/850));
- paintVillageLantern(w*.83,cy+h*.53,Math.max(.6,w/850));
- paintVillageResident(w*.42,cy+h*.36,Math.max(.52,w/840),"#6b8568");
- paintVillageResident(w*.61,cy+h*.22,Math.max(.40,w/1200),"#7a6550");
- paintVillageResident(w*.20,cy+h*.39,Math.max(.52,w/870),"#756548");
- // Ground vegetation, small flowers and blue daylight highlights.
- for(let i=0;i<78;i++){
-  const x=((i*127+63)%997)/997*w;
-  const y=cy+(i*79%491)/491*h*.46;
-  const size=.6+((i*23)%7)*.28;
-  ctx.fillStyle=i%5===0?"#e3ca91":i%7===0?"#e9b8a6":"#bad49d";
-  ctx.beginPath();ctx.arc(x,y,size,0,Math.PI*2);ctx.fill();
- }
- drawAvatar(ctx,w*.77,h*.84,Math.max(.53,Math.min(1.05,w/970)),loadout);
+ villageHitLabels=renderVillageWorld(ctx,villageState,w,h,{drawHero:drawAvatar,loadout});
 }
+function visitVillageSite(id){
+ $("townWalkingHint").textContent="마을 주민에게 다가왔어. 대화를 마치고 다시 이동할 수 있어.";
+ if(id==="forest"){go("indoor");return;}
+ townTalk(id);
+}
+function gotoVillageSite(id){
+ if(!VILLAGE_SITES.some(site=>site.id===id))return;
+ $("townEncounter").hidden=true;
+ const site=VILLAGE_SITES.find(item=>item.id===id);
+ const d=Math.hypot(villageState.x-site.approachX,villageState.z-site.approachZ);
+ if(d<=.9){visitVillageSite(id);return;}
+ setVillageDestination(villageState,id);
+ $("townWalkingHint").textContent=site.name+" 쪽으로 걸어가는 중 · 조이스틱을 움직이면 자동 이동을 취소해.";
+}
+function drawVillageFrame(time){
+ const dt=villageFrameTime===null?0:Math.min(.055,Math.max(0,(time-villageFrameTime)/1000));
+ villageFrameTime=time;
+ if($("page-village").classList.contains("active")&&!document.hidden){
+  const destination=$("townEncounter").hidden?advanceVillageExplorer(villageState,dt,villageStick):null;
+  drawVillage();
+  if(destination)visitVillageSite(destination);
+ }
+ requestAnimationFrame(drawVillageFrame);
+}
+function pointerVillagePosition(event){
+ const rect=cvs.getBoundingClientRect();
+ return {x:event.clientX-rect.left,y:event.clientY-rect.top};
+}
+cvs.addEventListener("pointerup",event=>{
+ if(event.pointerType==="mouse"&&event.button!==0)return;
+ const {x,y}=pointerVillagePosition(event);
+ const label=villageHitLabels.find(item=>Math.abs(x-item.x)<item.w/2+8&&Math.abs(y-item.y)<item.h/2+11);
+ const projected=villageSiteAtScreen(villageState,w,h,x,y);
+ const id=label?.id||projected?.id;
+ if(id){gotoVillageSite(id);return;}
+ const ground=villageGroundFromScreen(villageState,w,h,x,y);
+ if(ground){
+  setVillageGroundDestination(villageState,ground.x,ground.z);
+  $("townEncounter").hidden=true;
+  $("townWalkingHint").textContent="선택한 길로 이동 중 · 주민 이름을 누르면 해당 시설로 갈 수 있어.";
+ }
+});
+const villagePad=$("townMovePad"),villageKnob=$("townMoveKnob");
+function updateVillagePad(e){
+ const b=villagePad.getBoundingClientRect();
+ const dx=e.clientX-(b.left+b.width/2),dy=e.clientY-(b.top+b.height/2);
+ const radius=Math.max(21,b.width*.34),length=Math.hypot(dx,dy);
+ const factor=length>radius?radius/length:1;
+ const x=dx*factor,y=dy*factor;
+ villageStick={x:x/radius,y:y/radius};
+ villageKnob.style.transform="translate("+x.toFixed(1)+"px,"+y.toFixed(1)+"px)";
+ if(Math.hypot(villageStick.x,villageStick.y)>.14){
+  $("townEncounter").hidden=true;
+  $("townWalkingHint").textContent="직접 이동 중 · 시설 이름을 누르면 자동으로 찾아갈 수 있어.";
+ }
+}
+function resetVillagePad(){villagePointer=null;villageStick={x:0,y:0};villageKnob.style.transform="translate(0px,0px)";}
+villagePad.addEventListener("pointerdown",e=>{
+ e.preventDefault();villagePointer=e.pointerId;
+ try{villagePad.setPointerCapture(e.pointerId);}catch{}
+ updateVillagePad(e);
+});
+villagePad.addEventListener("pointermove",e=>{if(villagePointer!==e.pointerId)return;e.preventDefault();updateVillagePad(e);});
+for(const type of ["pointerup","pointercancel"])villagePad.addEventListener(type,e=>{if(villagePointer===e.pointerId)resetVillagePad();});
+document.addEventListener("visibilitychange",()=>{if(document.hidden)resetVillagePad();});
+$("townBagButton").onclick=()=>go("character");
+$("townTalkButton").onclick=()=>townTalk("rumour");
+$("closeTownTalk").onclick=()=>{$("townEncounter").hidden=true;};
+requestAnimationFrame(drawVillageFrame);
 
 window.addEventListener("resize",()=>{drawVillage();if($("page-character").classList.contains("active"))drawEquipment();});drawVillage();syncRun();claimPendingBattle();
 </script></body></html>
