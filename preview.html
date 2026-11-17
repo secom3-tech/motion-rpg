@@ -207,7 +207,7 @@ function townTalk(type){
   npc.textContent="길드 의뢰원";
   const area=REGIONS[r].label;
   msg.textContent=q.bossDefeated?area+"의 지역 보스를 이미 격파했어요. 다음 모험을 준비하세요.":area+" 조사 "+q.attempts+"/"+target.goalAttempts+"회, 성공 "+q.successes+"/"+target.goalSuccesses+"회. "+((q.attempts>=target.goalAttempts&&q.successes>=target.goalSuccesses)?"보스 도전 가능!":"길드의 의뢰를 진행해 지역 보스에 도전하세요.")+" 진행 상황은 기존 캐릭터 저장 기록을 참고해요.";
-  action.textContent="기존 의뢰 기록 열기";action.dataset.go="";action.onclick=()=>location.assign("./index.html");
+  action.textContent="숲 사냥으로 출발";action.dataset.go="indoor";action.onclick=()=>go("indoor");
  }else if(type==="smith"){
   npc.textContent="숲마을 대장장이";msg.textContent="가죽옷, 사냥활, 후드, 여행 가방을 갖추고 떠나는 게 어때요? 장비실에서 외형을 바꿀 수 있어요. 아직 무료 시착이며 제작 재화는 소모되지 않아요.";
   action.textContent="장비 시착실 열기";action.dataset.go="character";action.onclick=()=>go("character");
