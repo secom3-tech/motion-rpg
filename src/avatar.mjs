@@ -20,7 +20,7 @@ export const GEAR = Object.freeze({
   ]),
   weapon: Object.freeze([
     {id:"sword",name:"초보자의 검"},
-    {id:"bow",name:"숲의 사냥활"},
+    {id:"bow",name:"허름한 활"},
     {id:"greatsword",name:"청명한 장검"},
     {id:"staff",name:"고목 마법지팡이"},
     {id:"axe",name:"전투 도끼"}
@@ -33,7 +33,7 @@ export const GEAR = Object.freeze({
     {id:"lantern",name:"탐험 랜턴"}
   ])
 });
-export const DEFAULT_LOADOUT=Object.freeze({head:"hunterCap",armor:"hunter",weapon:"bow",offhand:"satchel"});
+export const DEFAULT_LOADOUT=Object.freeze({head:"hunterCap",armor:"hunter",weapon:"sword",offhand:"satchel"});
 export const SAMPLE_SETS=Object.freeze({
   beginner: Object.freeze({head:"bare",armor:"traveler",weapon:"sword",offhand:"none"}),
   hunter: Object.freeze({...DEFAULT_LOADOUT}),
