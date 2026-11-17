@@ -69,12 +69,12 @@ assert.equal(villageSiteAtScreen(scene,360,640,NaN,NaN),null);
 // Legacy walking simulation still has deterministic tests, but the player hub
 // intentionally no longer mounts it: choosing a building is now a direct touch.
 const html=fs.readFileSync(new URL("../preview.html",import.meta.url),"utf8");
-for(const id of ["villageStage","townEncounter","townHudLevel","townHudGold","townQuest","closeTownTalk","townProgress","avatarPortrait"]){
+for(const id of ["villageStage","townEncounter","townHudLevel","townHudGold","townQuest","closeTownTalk","townProgress"]){
  assert.ok(html.includes('id="'+id+'"'),"Missing v0.40 village interface "+id);
 }
 for(const place of ["guild","trader"])assert.ok(html.includes('data-town="'+place+'"'));
 for(const mode of ["indoor","run","character"])assert.ok(html.includes('data-go="'+mode+'"'));
-assert.ok(html.includes('class="village-art"'),"Rendered illustration is present");
+assert.ok(html.includes('class="village-art"')&&html.includes('class="heroPortrait"'),"Village and character illustrations are present");
 assert.ok(!html.includes('id="village3d"')&&!html.includes('id="townMovePad"'),"Walking UI removed from player hub");
 assert.ok(!html.includes('advanceVillageExplorer(villageState'),"Legacy walking simulation cannot run on home screen");
 assert.ok(html.includes('location.assign("./indoor.html?'),"Forest destination must enter existing 3D combat");
