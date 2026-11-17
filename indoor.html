@@ -356,6 +356,56 @@ function showEnemyStrike(){
 function renderBeast(ex,ey,ez,visual){
  const golem=enemy.kind===4;
  const prepare=visual.stage==="windup"?visual.progress:0,strike=visual.impact;
+ if(enemy.kind===5){
+  // Thorn boar. Low centre of gravity, horns and heavy forward charging pose.
+  const rush=visual.style==="charge"?strike*.76:0;
+  enemyPart(lowSphere,ex,ey-.29-.18*prepare,ez-.38+.50*rush,1.07,.72,1.47,[.43,.33,.27]);
+  enemyPart(lowSphere,ex,ey-.04-.17*prepare,ez+.68+.55*rush,.79,.69,.78,[.53,.39,.30]);
+  enemyPart(lowSphere,ex,ey-.31-.12*prepare,ez+1.27+.60*rush,.52,.31,.56,[.70,.52,.37]);
+  enemyPart(lowSphere,ex,ey-.31-.12*prepare,ez+1.60+.62*rush,.32,.21,.24,[.82,.62,.48]);
+  for(const side of [-1,1]){
+   enemyPart(cone,ex+side*.41,ey+.64,ez+.75,.22,.54,.20,[.35,.27,.23],side*.22);
+   enemyPart(cone,ex+side*.57,ey-.25,ez+1.39+.58*rush,.14,.53,.14,[.95,.92,.75],side*.38);
+   for(const leg of [-.83,.64])enemyPart(lowSphere,ex+side*.68,.40,ez+leg,.29,.52,.32,[.36,.29,.24]);
+  }
+  for(let i=0;i<3;i++)enemyPart(cone,ex-.25+i*.25,ey+.57,ez-.50-i*.28,.17,.42,.18,[.41,.52,.28],0);
+  enemyPart(lowSphere,ex-.3,ey+.06,ez+1.28,.09,.1,.065,[1,.75,.45],0,.8);
+  enemyPart(lowSphere,ex+.3,ey+.06,ez+1.28,.09,.1,.065,[1,.75,.45],0,.8);
+  return;
+ }
+ if(enemy.kind===6){
+  // Cyan swamp wisp: orbiting runes and translucent flame body.
+  const float=Math.sin(clock*2.9)*.2;
+  enemyPart(lowSphere,ex,.09,ez,.80,.04,.83,[.23,.57,.57],0,.65,.42);
+  enemyPart(lowSphere,ex,ey+float+.37,ez,.87+.18*prepare,1.02+.22*prepare,.83,[.31,.70,.80],0,1,.32);
+  enemyPart(sphere,ex,ey+float+.43,ez,.47+.14*prepare,.52+.15*prepare,.48,[.55,.90,1],0,1,.82);
+  enemyPart(lowSphere,ex,ey+float+.43,ez+.44,.13,.15,.12,[.94,1,1],0,1,.98);
+  for(let i=0;i<5;i++){
+   const a=clock*1.8+i*Math.PI*2/5;
+   enemyPart(lowSphere,ex+Math.cos(a)*(.83+prepare*.18),ey+float+.4+Math.sin(a*1.3)*.36,ez+Math.sin(a)*.8,.12,.14,.12,[.47,.87,1],0,1,.73);
+  }
+  enemyPart(cone,ex,ey+float+1.22,ez,.26,.72,.27,[.36,.76,.93]);
+  return;
+ }
+ if(enemy.kind===7){
+  // Ancient treant: bark torso, shoulder branches and striking woody arms.
+  const lean=visual.style==="slam"?strike*.34:0;
+  enemyPart(lowSphere,ex,.12,ez,1.8,.08,1.4,[.18,.25,.17],0,.15,.65);
+  enemyPart(cylinder,ex,ey-.14,ez-.12+.19*lean,.73,1.38,.73,[.38,.28,.20]);
+  enemyPart(lowSphere,ex,ey+1.2,ez+.19,.99,1.01,.78,[.43,.34,.24]);
+  enemyPart(lowSphere,ex,ey+1.27,ez+.92,.41,.37,.15,[.56,.71,.39]);
+  for(const side of [-1,1]){
+   enemyPart(cylinder,ex+side*.44,.49,ez,.38,.65,.41,[.34,.29,.22]);
+   enemyPart(cylinder,ex+side*1.3,ey+.34+prepare*.62-strike*.52,ez+.23+strike*.6,.31,1.04,.29,[.40,.31,.23],side*.25);
+   enemyPart(lowSphere,ex+side*1.27,ey+1.55,ez,.64,.65,.62,[.29,.53,.31]);
+   enemyPart(cone,ex+side*1.48,ey+2.04,ez,.46,.65,.48,[.31,.58,.31]);
+   enemyPart(lowSphere,ex+side*.31,ey+1.47,ez+1.00,.1,.14,.08,[.91,.95,.50],0,.75);
+  }
+  enemyPart(cone,ex,ey+2.33,ez-.19,.78,1.08,.73,[.35,.56,.33]);
+  enemyPart(lowSphere,ex,ey+.56,ez+.70,.28,.41,.10,[.40,.73,.50],0,.85);
+  return;
+ }
+
  const shade=golem?[.43,.52,.52]:[.30,.42,.35];
  enemyPart(lowSphere,ex,.15,ez,1.4,.07,1.2,[.11,.2,.16],0,0,.7);
  if(golem){
