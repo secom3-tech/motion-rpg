@@ -78,6 +78,14 @@ assert.ok(html.includes('class="village-art"')&&html.includes('class="bodySilhou
 assert.ok(!html.includes('id="village3d"')&&!html.includes('id="townMovePad"'),"Walking UI removed from player hub");
 assert.ok(!html.includes('advanceVillageExplorer(villageState'),"Legacy walking simulation cannot run on home screen");
 assert.ok(html.includes('location.assign("./indoor.html?'),"Forest destination must enter existing 3D combat");
+// A collapsed journal must sit above (not on top of) the mobile village grid.
+const mobileHub=html.slice(html.lastIndexOf("/* v0.43.2 mobile hub:"),html.indexOf("</style></head>"));
+assert.ok(mobileHub.includes("top:154px;bottom:auto"),"Phone journal must be anchored outside the facility grid");
+assert.ok(mobileHub.includes("grid-template-rows:repeat(3,59px)"),"Mobile facility buttons occupy a bounded grid");
+for(const area of [".spot-guild{grid-column:1;grid-row:1}",".spot-smith{grid-column:2;grid-row:1}",".spot-trader{grid-column:1;grid-row:2}",".spot-ranger{grid-column:2;grid-row:2}",".spot-forest{grid-column:1 / -1;grid-row:3}"])
+ assert.ok(mobileHub.includes(area),"Every mobile hotspot must have a unique explicit grid cell: "+area);
+assert.ok(mobileHub.includes(".villageJournal[open]"),"Expanded journal has its own overlay layout");
+assert.ok(html.includes('id="startWalk"')&&html.includes('speak(last.head+". "+last.detail)'),"Walk exploration shares event voice announcements");
 assert.ok(html.includes("syncCharacter()"),"Existing saved XP, gold and gear remain connected");
 const script=html.match(/<script type="module">([\s\S]*?)<\/script>/)?.[1];
 assert.ok(script);
