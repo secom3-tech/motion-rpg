@@ -3,6 +3,7 @@ import fs from "node:fs";
 import {canAutoAcquire,followTargetYaw,assistedAimYaw,AUTO_LOCK_MANUAL_PAUSE,AUTO_LOCK_RANGE} from "../src/target-assist.mjs";
 import {monsterMovementProfile,createMonsterMind,monsterMotionStep,retainTarget} from "../src/monster-ai.mjs";
 import {createMeleeAction,meleeHitInfo} from "../src/player-combat.mjs";
+import {dodgePrompt,DODGE_PROMPT_WINDOW_SEC} from "../src/dodge-cue.mjs";
 
 const player={x:0,z:0},front={x:0,z:-8,dead:false},behind={x:0,z:8,dead:false};
 assert.equal(canAutoAcquire(player,0,front),true,"Near visible monster gets automatic lock");
@@ -56,4 +57,19 @@ assert.ok(pad.includes("자동 락온 끄기")&&pad.includes("data.autoEnabled")
  "S21 must expose the automatic target mode and reflect host state");
 assert.ok(motion.includes("throwCooldownMs")&&motion.includes("rearmQuiet"),
  "Previously tuned gesture rearm/cooldown must be left intact");
-console.log("V0.44 PASS: smooth automatic targeting, narrow range-limited aim assist, manual override, calmer monster orbit and unchanged attack cooldown.");
+assert.equal(DODGE_PROMPT_WINDOW_SEC,.90,"Prompt must be inside the 1.05s dodge protection");
+assert.equal(dodgePrompt("slam",1.3),null,"Do not warn too early");
+assert.equal(dodgePrompt("slam",.8)?.text,"지금 좌우로 피해!");
+assert.equal(dodgePrompt("charge",.5)?.ready,true);
+assert.equal(dodgePrompt("sweep",.6)?.text,"지금 숙여!");
+assert.equal(dodgePrompt("sweep",.6,1)?.ready,false,"Cooldown must not promise success");
+assert.equal(dodgePrompt("rock",.4),null,"Thrown rocks need a flight-time cue");
+assert.equal(dodgePrompt("bolt",.4),null,"Magic projectiles need a flight-time cue");
+assert.equal(dodgePrompt("slam",0),null,"Stop cue at impact");
+assert.ok(arena.includes("const prompt=dodgePrompt(enemy.attackStyle,enemy.windup"),
+ "Countdown must feed actual remaining windup to the cue");
+assert.ok(arena.includes('banner.className=enemy.attackStyle+(prompt?.ready?" dodgeNow":"")'),
+ "Show prominent warning only when dodge is possible");
+assert.ok(arena.includes('dodgeUntil=clock+1.05;dodgeCooldown=clock+2.2'),
+ "Existing dodge duration and cooldown are unchanged");
+console.log("V0.44.1 PASS: action-timed dodge display, correct direction, cooldown safety, no false projectile warning.");
