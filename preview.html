@@ -310,7 +310,7 @@
 @media(max-width:750px){.jobPortrait{height:38%}.bodySilhouette{top:35%;height:57%;width:62%;left:19%}.figureGear{width:46px;min-height:54px}.figureGear>span{width:35px;height:35px}.figHead{top:40%}.figArmor{top:64%}.figMelee,.figRanged{top:55%}.figOffhand{top:75%}.reportStats{gap:5px}.reportStats>div{font-size:17px}}
 </style></head>
 <body><div class="app">
-<header class="top"><div class="mark">MOTION RPG <em> / 경계의 숲</em></div><div class="version">모험 허브 · 0.41</div></header>
+<header class="top"><div class="mark">MOTION RPG <em> / 경계의 숲</em></div><div class="version">모험 허브 · 0.43</div></header>
 <nav class="menu" aria-label="게임 메뉴"><button data-view="village" class="active">🏘 마을</button><button data-view="character">🎒 가방 · 장비</button></nav>
 <section class="page active" id="page-village">
  <div class="stage" id="villageStage">
@@ -469,6 +469,7 @@ import {GEAR} from "./src/avatar.mjs?v=0.42";
 import {itemIllustration} from "./src/item-art.mjs?v=0.42";
 import {gearBenefits,craftingDeficits} from "./src/gear-details.mjs?v=0.42";
 import {materialIllustration} from "./src/material-art.mjs?v=0.43";
+import {summarizeHuntResult,summarizeExpeditionResult} from "./src/session-report.mjs?v=0.43";
 
 import {QUESTS,REGIONS,newGame} from "./src/engine.mjs?v=0.37";
 import {experienceProgress} from "./src/progression.mjs?v=0.37";
@@ -563,7 +564,7 @@ function drawEquipment(){
  document.querySelectorAll("[data-active-weapon]").forEach(btn=>btn.classList.toggle("active",btn.dataset.activeWeapon===data.activeWeapon));
  $("gearStatus").textContent="실제 장착 중인 장비만 표시 · 검과 활은 전투 중 S21에서 전환할 수 있어.";
 }
-const SAVE_KEY="motion-rpg-save-v1",INDOOR_KEY="motion-rpg-indoor-result-v1";
+const SAVE_KEY="motion-rpg-save-v1",INDOOR_KEY="motion-rpg-indoor-result-v1",HUNT_HISTORY_KEY="motion-rpg-last-hunt-report-v1";
 function saveCharacter(s){localStorage.setItem(SAVE_KEY,JSON.stringify(s));}
 function updateEquippedVisual(s){drawEquipment();}
 function showCraftMessage(str){$("craftStatus").textContent=str;}
@@ -632,28 +633,58 @@ function renderCrafting(){
   $("craftStatus").textContent="실전 장착: "+Object.entries(gear.equipped).map(([slot,id])=>gearLabel(slot,id)).join(" · ")+". 전투를 통해 재료를 획득해.";
  }
 }
+
+function renderSessionReport(report){
+ if(!report)return;
+ $("sessionLabel").textContent=report.label||"MOTION RPG / REPORT";
+ $("sessionTitle").textContent=report.title||"모험 기록";
+ $("sessionDescription").textContent=report.description||"";
+ $("sessionStats").replaceChildren(...(report.metrics||[]).map(item=>{
+  const cell=document.createElement("div"),small=document.createElement("small");
+  cell.textContent=item.value;small.textContent=item.label;cell.append(small);return cell;
+ }));
+ $("sessionRewards").textContent=report.rewards||"";
+ $("sessionActivity").textContent=report.activity||"";
+ $("sessionLog").replaceChildren(...(report.entries||[]).map(msg=>{const li=document.createElement("li");li.textContent=msg;return li;}));
+ $("sessionLog").hidden=!(report.entries||[]).length;
+ $("sessionReport").hidden=false;
+}
+$("closeSessionReport").onclick=()=>{$("sessionReport").hidden=true;go("village");};
+$("sessionReport").addEventListener("click",e=>{if(e.target===$("sessionReport"))$("closeSessionReport").click();});
+function lastHunt(){
+ try{const v=JSON.parse(localStorage.getItem(HUNT_HISTORY_KEY)||"null");return v?.kind==="hunt"?v:null;}catch{return null;}
+}
+function refreshHuntShortcut(){
+ const last=lastHunt();
+ $("townReportButton").hidden=!last;
+ if(last)$("townReportButton").textContent="지난 사냥 기록 · "+(last.metrics?.[0]?.value||0)+"마리";
+}
+$("townReportButton").onclick=()=>renderSessionReport(lastHunt());
 function claimPendingBattle(){
- let result;try{result=JSON.parse(localStorage.getItem(INDOOR_KEY)||"null");}catch{localStorage.removeItem(INDOOR_KEY);return false;}
- if(!result)return false;
+ let result;try{result=JSON.parse(localStorage.getItem(INDOOR_KEY)||"null");}catch{localStorage.removeItem(INDOOR_KEY);return null;}
+ if(!result)return null;
  const claim=claimIndoorBattle(sharedCharacter(),result);
  localStorage.removeItem(INDOOR_KEY);
+ const report=summarizeHuntResult(result,claim);
+ try{localStorage.setItem(HUNT_HISTORY_KEY,JSON.stringify(report));}catch{}
+ refreshHuntShortcut();
  if(claim.awarded){
   saveCharacter(claim.state);
-  showCraftMessage("사냥 보상 수령: "+claim.kills+"마리 · XP +"+claim.xp+" · 골드 +"+claim.gold+" · 붕대 +"+(claim.bandages||0)+" · 제작 재료 획득.");
+  showCraftMessage("사냥 보상 자동 지급 · 처치 "+claim.kills+"마리 · XP +"+claim.xp+" · 골드 +"+claim.gold+" · 붕대 +"+(claim.bandages||0));
   $("craftStatus").dataset.touched="yes";
   updateEquippedVisual(claim.state);syncCharacter();
-  return true;
+ }else{
+  showCraftMessage(result.kills>0?"사냥 기록 확인 완료 · 이미 정산했거나 수령할 새 보상 없음":"사냥을 종료했어. 처치 기록은 없어.");
  }
- showCraftMessage("정산할 새 전투 기록이 없어. "+(claim.reason||""));
- return false;
+ return report;
 }
-$("claimCombat").onclick=()=>{if(!claimPendingBattle())showCraftMessage("새로운 전투 보상이 없어. 몬스터 사냥 후 마을로 복귀해.");};
+$("claimCombat").onclick=()=>{const report=claimPendingBattle()||lastHunt();if(report)renderSessionReport(report);};
 $("startCombat").onclick=()=>go("indoor");
 window.addEventListener("message",e=>{
  if(e.origin!==location.origin||e.data?.type!=="motion-rpg-indoor-return"||e.source!==$("indoorFrame").contentWindow)return;
- claimPendingBattle();
+ const report=claimPendingBattle();
  $("indoorFrame").src="./indoor.html?return=preview&reload="+Date.now();
- go("village");
+ go("village");if(report)renderSessionReport(report);
 });
 for(const slot of Object.keys(gearSlots)){
  $("gear-"+slot).addEventListener("change",event=>{
@@ -699,7 +730,7 @@ function stop(){if(!session)return;const old=session;session=endAdventure(sessio
 function finishRun(){
  resetTimers();if(!session)return;
  if(session.mode==="gps"&&session.elapsedSec>=180&&gpsPaces.length>=8){try{localStorage.setItem(PACE_KEY,String(session.basePace));}catch{}}
- const summary=summarizeAdventure(session),reward=expeditionReward(session);
+ const summary=summarizeAdventure(session);
  if(["gps","walk"].includes(session.mode)){
   const r=settleAdventure(sharedCharacter(),session,runId);
   if(r.awarded){
@@ -707,9 +738,16 @@ function finishRun(){
    const finalState=resources.awarded?resources.state:r.state;
    saveCharacter(finalState);syncCharacter();
    message(session.mode==="walk"?"산책 탐색 완료 · 채집 보상 지급":"달리기 원정 완료 · 성장 보상 지급",
-    "경험치 +"+r.xp+" · 골드 +"+r.gold+" · 전리품 "+Object.values(summary.loot).reduce((a,b)=>a+b,0)+"개 · 제작 재료 "+Object.values(resources.materials||{}).reduce((a,b)=>a+b,0)+"개.");
-  }else message("원정 기록 완료","GPS 이동 기록 3분·200m 이상이 확인돼야 게임 보상을 지급해. 실제 운동 기록은 계속 볼 수 있어.");
- }else message("연습 원정 종료","게임 속 임무를 연습했어. 수동 입력이므로 골드·경험치·재료는 지급하지 않아.");
+    "경험치 +"+r.xp+" · 골드 +"+r.gold+" · 전리품 "+Object.values(summary.loot).reduce((a,b)=>a+b,0)+"개.");
+   renderSessionReport(summarizeExpeditionResult(session,{awarded:true,xp:r.xp,gold:r.gold,materials:resources.materials||{}}));
+  }else{
+   message("원정 기록 완료","GPS 이동 기록 3분·200m 이상이 확인돼야 게임 보상을 지급해.");
+   renderSessionReport(summarizeExpeditionResult(session,{awarded:false}));
+  }
+ }else{
+  message("연습 원정 종료","수동 입력 기록으로 정식 보상을 지급하지 않아.");
+  renderSessionReport(summarizeExpeditionResult(session,{awarded:false}));
+ }
 }
 $("startDemo").onclick=()=>start("demo");$("startGps").onclick=()=>start("gps");$("startWalk").onclick=()=>start("walk");$("startTreadmill").onclick=()=>start("treadmill");$("stopRun").onclick=stop;
 $("skipMinute").onclick=()=>{if(session?.mode!=="demo"||session.phase==="complete")return;for(let i=0;i<6&&session.phase!=="complete";i++)stepGame(10,paceForGame());};
@@ -731,5 +769,9 @@ $("closeTownTalk").onclick=()=>{$("townEncounter").hidden=true;};
 document.addEventListener("keydown",event=>{
  if(event.key==="Escape"&&!$("townEncounter").hidden)$("townEncounter").hidden=true;
 });
-syncRun();claimPendingBattle();
+syncRun();
+const pendingHunt=claimPendingBattle();refreshHuntShortcut();
+if(new URLSearchParams(location.search).has("from")){
+ const report=pendingHunt||lastHunt();if(report)renderSessionReport(report);
+}
 </script></body></html>
