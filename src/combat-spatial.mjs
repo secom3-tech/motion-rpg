@@ -84,6 +84,6 @@ export function spawnAroundPlayer(player,heading,random=Math.random,bounds={minX
 export function dodgeMatches(attackStyle,direction){
  if(direction==="button")return true;
  if(attackStyle==="sweep")return direction==="duck";
- if(attackStyle==="slam")return direction==="left"||direction==="right";
+ if(attackStyle==="slam"||attackStyle==="charge")return direction==="left"||direction==="right";
  return false;
 }
