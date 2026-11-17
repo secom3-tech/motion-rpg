@@ -102,7 +102,8 @@ const controller=fs.readFileSync(new URL("../controller.html",import.meta.url),"
 assert.ok(arena.includes("createMeleeAction(currentWeapon(),style,clock)"));
 assert.ok(arena.includes("if(!meleeAction.damageDone&&clock>=meleeAction.contactAt)"));
 assert.ok(arena.includes("meleeHitInfo(meleeAction,camera,enemy,yaw)"),"Actual damage uses the same arc");
-assert.ok(arena.includes("drawFirstPersonWeapon(weaponCtx,W,H,currentWeapon()"),"First person weapon must be rendered");
+assert.ok(arena.includes("drawCombatEffects(weaponCtx,W,H,currentWeapon()"),"Combat effects must render without held weapon");
+assert.ok(!arena.includes("drawFirstPersonWeapon(weaponCtx,W,H,currentWeapon()"),"Do not render crude first-person weapon models");
 assert.ok(arena.includes('id="weaponCanvas"')&&arena.includes("renderPlayerProjectile(p)"));
 assert.ok(arena.includes('swordHit(packet.style)'),"Live S21 attack style must be used");
 assert.ok(arena.includes('swordHit("sweep")')&&arena.includes('swordHit("overhead")')&&arena.includes('swordHit("thrust")'));
