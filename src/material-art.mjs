@@ -1,0 +1,11 @@
+/** Self-contained painted SVG material emblems, avoids unsupported emoji fonts. */
+const icons={
+ wood:'<g stroke-linejoin="round"><path d="M10 48l23-24 33 10-21 29-33-10Z" fill="#a77b4f" stroke="#e1b682" stroke-width="3"/><path d="M10 48l22-27 11 5-20 30Z" fill="#765137" stroke="#d5a16e" stroke-width="3"/><path d="M20 51l22-28 14 5-22 28Z" fill="#9a633f" stroke="#bd9163" stroke-width="2"/><ellipse cx="52" cy="48" rx="16" ry="12" transform="rotate(-43 52 48)" fill="#e3c38d" stroke="#674b33" stroke-width="3"/><ellipse cx="52" cy="48" rx="9" ry="6" transform="rotate(-43 52 48)" fill="none" stroke="#936640" stroke-width="2"/><path d="M49 35l-4 27M40 28l-8 12M21 45l-7 3" stroke="#593b2e" stroke-width="2" opacity=".65"/></g>',
+ fang:'<g stroke-linejoin="round"><path d="M18 22c-9-4-13 7-7 15l8 6 9-6 27 22-1 7c2 9 15 7 15-2l-4-7 5-7-6-7-8 2L34 21l-3-8c-7-7-16-2-13 9Z" fill="#e9d8ae" stroke="#6b695b" stroke-width="3"/><path d="M29 22L56 50M20 42l9-5M54 60l4-10" stroke="#a78f6c" stroke-width="3"/><path d="M56 22l-8 14 13-3 6-12-5-8Z" fill="#f1e8c7" stroke="#b79f7a" stroke-width="2"/></g>',
+ essence:'<g><path d="M41 5L58 25 51 54 39 74 23 55 19 28Z" fill="#77ccd1" stroke="#d9ffff" stroke-width="3"/><path d="M41 5l-3 31L23 55 19 28Zm0 0 17 20-20 11Zm-3 31L51 54 39 74 23 55Z" fill="#a2e7e3" opacity=".76"/><path d="M38 36l20-11-7 29Z" fill="#4e9aaf"/><path d="M8 32l7-3 3-9 4 10 7 3-9 5-3 9-3-11Zm53 12 6-3 2-6 3 8 5 3-6 3-2 6-2-8Z" fill="#f2f7d2"/></g>',
+ ore:'<g><path d="M13 59l5-31 23-18 22 5 13 25-18 25-31 6Z" fill="#607f84" stroke="#c0cbb8" stroke-width="3"/><path d="M18 28l23-18 4 31-18 30-14-12Z" fill="#94b6b2"/><path d="M41 10l22 5 13 25-31 1Z" fill="#60747d"/><path d="M45 41l31-1-18 25-31 6Z" fill="#899ca2"/><path d="M18 28l27 13-18 30M63 15L45 41" stroke="#e0e1cf" stroke-width="2.5" opacity=".85"/><path d="M31 27l9-11-1 19Z" fill="#b6d5ce" opacity=".8"/></g>'
+};
+export function materialIllustration(id){
+ const drawing=icons[id]||icons.ore;
+ return '<svg viewBox="0 0 80 80" class="materialArtwork" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><defs><radialGradient id="mGlow"><stop stop-color="#aec5a1" stop-opacity=".35"/><stop offset="1" stop-color="#16342e" stop-opacity="0"/></radialGradient></defs><rect width="80" height="80" rx="16" fill="#173a36"/><circle cx="40" cy="38" r="37" fill="url(#mGlow)"/>'+drawing+'</svg>';
+}
