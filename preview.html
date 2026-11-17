@@ -377,6 +377,21 @@
 .gpsStatus[data-tone="error"]{border-color:#ff9e9e}.gpsStatus[data-tone="error"] b{color:#ffb2a8}
 .gpsStatus[data-tone="good"]{border-color:#9ee9b2}.gpsStatus[data-tone="good"] b{color:#b6ffd2}
 @media(max-width:750px){.gpsStatus{top:73px;padding:7px 10px}.gpsStatus b{font-size:12px}.gpsStatus small{font-size:9px}}
+
+/* v0.47 functional general-goods shop, usable on folded handsets. */
+.shopDialog[hidden]{display:none!important}
+.shopDialog{position:fixed;z-index:110;inset:0;display:grid;place-items:center;padding:12px;background:#041a19e3;backdrop-filter:blur(7px)}
+.shopWindow{width:min(740px,100%);max-height:92svh;overflow:auto;border-radius:20px;border:1px solid #d8d09d9b;background:#142e2a;padding:19px;box-shadow:0 24px 80px #000c}
+.shopHead{display:flex;justify-content:space-between;gap:12px}.shopHead small{color:#bdccad;font-size:10px}.shopHead h2{margin:3px 0;font-size:26px}.shopHead p{margin:2px 0 14px;color:#b7ccba;font-size:12px}
+.shopHead button{align-self:start;background:#264a40;color:#fff;border:1px solid #93bca4;border-radius:11px;padding:10px 15px}
+#shopGold{display:block;padding:12px;margin:7px 0 12px;border-radius:10px;background:#29483b;color:#ffe5a4;font-size:18px}
+.shopList{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.shopRow{display:grid;grid-template-columns:64px 1fr;gap:8px 10px;align-items:center;padding:12px;border:1px solid #9bbda16b;border-radius:13px;background:#1b3931;min-width:0}
+.shopIcon{width:61px;height:61px;grid-row:1 / 3}.shopRow b{font-size:15px}.shopRow p{color:#c7dcca;font-size:11px;line-height:1.55;margin:4px 0}.shopRow small{font-size:10px;color:#f0dba6}
+.shopRow button{grid-column:2;padding:10px 13px;border:1px solid #c8e8b7;border-radius:10px;background:#b5e0af;color:#11291e;font-weight:900}
+.shopRow button:disabled{opacity:.5}
+#shopStatus{color:#f7e8bc;font-size:13px;margin:15px 0 2px}
+@media(max-width:550px){.shopList{grid-template-columns:1fr}.shopWindow{padding:13px}.shopRow{grid-template-columns:53px 1fr}.shopIcon{width:52px;height:52px}}
 </style></head>
 <body><div class="app">
 <header class="top"><div class="mark">MOTION RPG <em> / 경계의 숲</em></div><div class="version">모험 허브 · 0.46</div></header>
@@ -537,6 +552,13 @@
   </div>
  </section>
 </section>
+<section id="shopDialog" class="shopDialog" hidden role="dialog" aria-modal="true" aria-labelledby="shopTitle">
+ <div class="shopWindow">
+  <div class="shopHead"><div><small>FOREST MARKET / GENERAL GOODS</small><h2 id="shopTitle">숲마을 잡화점</h2><p>사냥과 산책에서 모은 골드로 필요한 물품을 준비해.</p></div><button id="shopClose" type="button" aria-label="상점 닫기">✕</button></div>
+  <strong id="shopGold">보유 골드 0 G</strong>
+  <div id="shopList" class="shopList"></div><p id="shopStatus" role="status" aria-live="polite">상품을 선택해.</p>
+ </div>
+</section>
 <div class="sessionReport" id="sessionReport" hidden role="dialog" aria-modal="true" aria-labelledby="sessionTitle">
  <section class="reportSheet"><small id="sessionLabel">MOTION RPG / ADVENTURE REPORT</small>
   <h2 id="sessionTitle">모험 기록</h2><p id="sessionDescription">오늘의 활동 결과</p>
@@ -550,20 +572,21 @@
 import {createAdventure,startAdventure,advanceAdventure,endAdventure,summarizeAdventure,settleAdventure,expeditionReward} from "./src/expedition.mjs?v=0.42.1";
 import {gpsFeedback,GPS_ACCURACY_LIMIT_METERS} from "./src/gps-feedback.mjs?v=0.44.2";
 import {GEAR} from "./src/avatar.mjs?v=0.42";
-import {itemIllustration} from "./src/item-art.mjs?v=0.43.1";
+import {itemIllustration} from "./src/item-art.mjs?v=0.47";
 import {gearBenefits,craftingDeficits} from "./src/gear-details.mjs?v=0.42";
 import {materialIllustration} from "./src/material-art.mjs?v=0.43";
+import {SHOP_ITEMS,buyShopItem} from "./src/shop.mjs?v=0.47";
 import {summarizeHuntResult,summarizeExpeditionResult} from "./src/session-report.mjs?v=0.43.1";
 
 import {QUESTS,REGIONS,newGame} from "./src/engine.mjs?v=0.37";
 import {experienceProgress} from "./src/progression.mjs?v=0.37";
 import {villageRumour,villageObjective} from "./src/town-life.mjs?v=0.37";
 // Village art is static: combat, GPS and character state retain their original modules.
-import {MATERIALS,RECIPES,normalizeRpgGear,gearRequirement,craftGear,equipGear,chooseActiveWeapon,weaponSlotFor,RANGED_WEAPONS,MELEE_WEAPONS,combatStats,claimIndoorBattle,addExpeditionMaterials} from "./src/gear-game.mjs?v=0.42";
+import {MATERIALS,RECIPES,normalizeRpgGear,gearRequirement,craftGear,equipGear,chooseActiveWeapon,weaponSlotFor,RANGED_WEAPONS,MELEE_WEAPONS,combatStats,claimIndoorBattle,addExpeditionMaterials} from "./src/gear-game.mjs?v=0.47";
 const $=id=>document.getElementById(id);
 const pages=["village","run","indoor","character"];
 function go(page){if(!pages.includes(page))return;
-if(page==="indoor"){location.assign("./indoor.html?v=0.46&return=preview");return;}const previous=pages.find(x=>$("page-"+x).classList.contains("active"));if(previous==="indoor"&&page!=="indoor"&&$("indoorFrame").contentWindow){$("indoorFrame").contentWindow.postMessage({type:"motion-rpg-pause-input"},location.origin);}pages.forEach(x=>$("page-"+x).classList.toggle("active",x===page));document.querySelectorAll("[data-view]").forEach(b=>b.classList.toggle("active",b.dataset.view===page));if(page==="indoor"){const frame=$("indoorFrame"),signature=JSON.stringify(normalizeRpgGear(sharedCharacter()).equipped);if(!frame.src||frame.dataset.gearSignature!==signature){frame.src="./indoor.html?v=0.46&return=preview&load="+Date.now();frame.dataset.gearSignature=signature;}}if(page==="village"){$("townEncounter").hidden=true;$("craftBench").hidden=true;}if(page==="character"){drawEquipment();}if(page==="character"||page==="village")syncCharacter();window.scrollTo({top:0,behavior:"smooth"});}
+if(page==="indoor"){location.assign("./indoor.html?v=0.46&return=preview");return;}const previous=pages.find(x=>$("page-"+x).classList.contains("active"));if(previous==="indoor"&&page!=="indoor"&&$("indoorFrame").contentWindow){$("indoorFrame").contentWindow.postMessage({type:"motion-rpg-pause-input"},location.origin);}pages.forEach(x=>$("page-"+x).classList.toggle("active",x===page));document.querySelectorAll("[data-view]").forEach(b=>b.classList.toggle("active",b.dataset.view===page));if(page==="indoor"){const frame=$("indoorFrame"),signature=JSON.stringify(normalizeRpgGear(sharedCharacter()).equipped);if(!frame.src||frame.dataset.gearSignature!==signature){frame.src="./indoor.html?v=0.46&return=preview&load="+Date.now();frame.dataset.gearSignature=signature;}}if(page==="village"){$("townEncounter").hidden=true;$("craftBench").hidden=true;$("shopDialog").hidden=true;}if(page==="character"){drawEquipment();}if(page==="character"||page==="village")syncCharacter();window.scrollTo({top:0,behavior:"smooth"});}
 document.querySelectorAll("[data-view]").forEach(b=>b.onclick=()=>go(b.dataset.view));
 document.querySelectorAll("[data-go]").forEach(b=>b.onclick=()=>go(b.dataset.go));
 $("restartIndoor").onclick=()=>$("indoorFrame").src="./indoor.html?v=0.46&return=preview&reload="+Date.now();
@@ -607,7 +630,7 @@ function townTalk(type){
   action.textContent="숲 사냥으로 출발";action.dataset.go="indoor";action.onclick=()=>go("indoor");
  }else if(type==="trader"){
   npc.textContent="마을 상인";msg.textContent="오늘 장터에는 가죽 장갑과 약초가 들어왔어. 준비를 마쳤으면 가방의 장비를 살펴봐.";
-  action.textContent="가방 · 장비 보기";action.dataset.go="character";action.onclick=()=>go("character");
+  action.textContent="상점 열기 · 회복품 구매";action.dataset.go="";action.onclick=()=>openShop();
  }else if(type==="smith"){
   npc.textContent="숲마을 대장장이";msg.textContent="가죽옷, 사냥활, 후드, 여행 가방을 갖추고 떠나는 게 어때요? 장비실에서 외형을 바꿀 수 있어요. 실제 보유한 장비만 장착할 수 있고 제작에는 골드와 재료가 필요합니다.";
   action.textContent="장비실 열기";action.dataset.go="character";action.onclick=()=>go("character");
@@ -650,6 +673,36 @@ function drawEquipment(){
 }
 const SAVE_KEY="motion-rpg-save-v1",INDOOR_KEY="motion-rpg-indoor-result-v1",HUNT_HISTORY_KEY="motion-rpg-last-hunt-report-v1";
 function saveCharacter(s){localStorage.setItem(SAVE_KEY,JSON.stringify(s));}
+function renderShop(){
+ const state=sharedCharacter();
+ $("shopGold").textContent="보유 골드 "+(state.gold||0)+" G";
+ $("shopList").replaceChildren(...SHOP_ITEMS.map(item=>{
+  const row=document.createElement("article");row.className="shopRow";
+  const icon=document.createElement("div");icon.className="shopIcon";icon.innerHTML=itemIllustration(item.id,"offhand");
+  const info=document.createElement("div");
+  const title=document.createElement("b");title.textContent=item.name;
+  const desc=document.createElement("p");desc.textContent=item.description;
+  const owned=document.createElement("small");owned.textContent="보유 "+(state.inventory?.[item.id]||0)+"개";
+  info.append(title,desc,owned);
+  const buy=document.createElement("button");buy.textContent=item.price+" G · 구매";
+  buy.disabled=(state.gold||0)<item.price;
+  buy.onclick=()=>{
+   try{
+    const next=buyShopItem(sharedCharacter(),item.id);
+    saveCharacter(next);syncCharacter();renderShop();
+    $("shopStatus").textContent=item.name+" 구매 완료 · 1개를 가방에 넣었어.";
+   }catch(error){$("shopStatus").textContent="구매 실패 · "+error.message;}
+  };
+  row.append(icon,info,buy);
+  return row;
+ }));
+}
+function openShop(){
+ $("townEncounter").hidden=true;
+ $("shopDialog").hidden=false;
+ $("shopStatus").textContent="전투용 회복품과 야외 탐험 준비물을 골드로 구매할 수 있어.";
+ renderShop();
+}
 function updateEquippedVisual(s){drawEquipment();}
 function showCraftMessage(str){$("craftStatus").textContent=str;}
 let craftFilter="all";
@@ -782,10 +835,12 @@ document.querySelectorAll("[data-active-weapon]").forEach(button=>button.addEven
  const updated=chooseActiveWeapon(sharedCharacter(),button.dataset.activeWeapon);
  saveCharacter(updated);syncCharacter();drawEquipment();
 }));
+$("shopClose").onclick=()=>{$("shopDialog").hidden=true;syncCharacter();};
+$("shopDialog").addEventListener("click",e=>{if(e.target===$("shopDialog"))$("shopClose").click();});
 $("openCraft").onclick=()=>{$("craftBench").hidden=false;renderCrafting();};
 $("closeCraft").onclick=()=>{$("craftBench").hidden=true;};
 $("craftBench").addEventListener("click",e=>{if(e.target===$("craftBench"))$("craftBench").hidden=true;});
-document.addEventListener("keydown",e=>{if(e.key==="Escape")$("craftBench").hidden=true;});
+document.addEventListener("keydown",e=>{if(e.key==="Escape"){$("craftBench").hidden=true;$("shopDialog").hidden=true;}});
 syncCharacter();
 let session=null,timer=null,voice=true,paceType="steady",watchId=null,lastGps=null,lastGpsAt=0,seed=Date.now()>>>0,runId="",gpsPaces=[];
 let gpsMonitor=null,gpsGeneration=0,gpsStartedAt=0,gpsLastGoodAt=0,gpsState="idle";
