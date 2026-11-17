@@ -4,6 +4,6 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "test": "node tests/balance.mjs && node tests/expedition.mjs && node tests/preview-check.mjs && node tests/avatar.mjs && node tests/gear.mjs && node tests/combat-spatial.mjs && node tests/motion.mjs && node tests/network.mjs && node tests/attack-visual.mjs"
+    "test": "node tests/balance.mjs && node tests/expedition.mjs && node tests/preview-check.mjs && node tests/avatar.mjs && node tests/gear.mjs && node tests/combat-spatial.mjs && node tests/motion.mjs && node tests/network.mjs && node tests/attack-visual.mjs && node tests/player-combat.mjs"
   }
 }
