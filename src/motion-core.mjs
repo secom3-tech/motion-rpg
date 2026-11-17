@@ -32,18 +32,20 @@ export function createGestureDetector({
  throwCooldownMs=1900,throwQuietMs=750
 }={}){
  let last=-Infinity,nextReady=-Infinity,lowFrom=null,armed=true,previous=0,count=0,rearmQuiet=quietMs;
+ let lastCooldownDuration=0;
  let current={mode:SENSOR_MODES.includes(mode)?mode:"throw",sensitivity,axis};
  function configure(next){
   current={...current,...next};
   if(!SENSOR_MODES.includes(current.mode))current.mode="throw";
   if(!SENSOR_AXES.includes(current.axis))current.axis="";
-  armed=false;lowFrom=null;previous=0;nextReady=-Infinity;
+  armed=false;lowFrom=null;previous=0;nextReady=-Infinity;lastCooldownDuration=0;
   rearmQuiet=current.mode==="throw"?throwQuietMs:current.mode==="auto"?600:quietMs;
  }
- function reset(){last=-Infinity;nextReady=-Infinity;lowFrom=null;armed=true;previous=0;count=0;rearmQuiet=current.mode==="throw"?throwQuietMs:current.mode==="auto"?600:quietMs;}
+ function reset(){last=-Infinity;nextReady=-Infinity;lowFrom=null;armed=true;previous=0;count=0;lastCooldownDuration=0;rearmQuiet=current.mode==="throw"?throwQuietMs:current.mode==="auto"?600:quietMs;}
  function protectThrow(startTime=last){
   if(!Number.isFinite(startTime))return;
   nextReady=Math.max(nextReady,startTime+throwCooldownMs);
+  lastCooldownDuration=Math.max(lastCooldownDuration,throwCooldownMs);
   rearmQuiet=throwQuietMs;
   lowFrom=null;
   armed=false;
@@ -60,7 +62,8 @@ export function createGestureDetector({
   if(armed&&score>=threshold&&score>=previous*.92&&now>=nextReady){
    gesture={type:current.mode,strength:Math.round(score),time:now};
    armed=false;last=now;count++;
-   nextReady=now+(current.mode==="throw"?throwCooldownMs:current.mode==="auto"?950:cooldownMs);
+   lastCooldownDuration=current.mode==="throw"?throwCooldownMs:current.mode==="auto"?950:cooldownMs;
+   nextReady=now+lastCooldownDuration;
    rearmQuiet=current.mode==="throw"?throwQuietMs:current.mode==="auto"?600:quietMs;
   }
   previous=score;
@@ -68,7 +71,23 @@ export function createGestureDetector({
  }
  configure({mode,sensitivity,axis});
  reset();
- return {feed,reset,configure,protectThrow,get count(){return count},get mode(){return current.mode}};
+ /**
+  * Read-only timing for a separate visual countdown. Does not re-arm, consume
+  * samples or change attack mechanics.
+  */
+ function status(now=Date.now()){
+  const remainingMs=Math.max(0,nextReady-now);
+  const quietRemainingMs=armed?0:lowFrom===null?rearmQuiet:Math.max(0,rearmQuiet-(now-lowFrom));
+  return {
+   cooldownRemainingMs:remainingMs,
+   cooldownDurationMs:lastCooldownDuration,
+   quietRemainingMs,
+   armed,
+   ready:armed&&remainingMs===0,
+   waitingForNeutral:remainingMs===0&&!armed
+  };
+ }
+ return {feed,reset,configure,protectThrow,status,get count(){return count},get mode(){return current.mode}};
 }
 export function dominantAxis(samples){
  const peak={alpha:0,beta:0,gamma:0};
