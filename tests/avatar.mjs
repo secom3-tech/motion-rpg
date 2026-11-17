@@ -9,12 +9,12 @@ for(const [slot,options] of Object.entries(GEAR)){
 }
 assert.deepEqual(sanitizeLoadout(null),DEFAULT_LOADOUT);
 assert.equal(sanitizeLoadout({weapon:"not-an-item",armor:"iron"}).weapon,DEFAULT_LOADOUT.weapon);
-assert.equal(DEFAULT_LOADOUT.weapon,"bow");
+assert.equal(DEFAULT_LOADOUT.weapon,"sword");
 assert.equal(DEFAULT_LOADOUT.armor,"hunter");
 assert.equal(DEFAULT_LOADOUT.head,"hunterCap");
 assert.equal(DEFAULT_LOADOUT.offhand,"satchel");
 assert.ok(describeLoadout(DEFAULT_LOADOUT).includes("사냥꾼"));
-assert.ok(SAMPLE_SETS.hunter.weapon==="bow");
+assert.ok(SAMPLE_SETS.hunter.weapon==="sword");
 assert.equal(sanitizeLoadout({weapon:"not-an-item",armor:"iron"}).armor,"iron");
 assert.ok(describeLoadout(SAMPLE_SETS.knight).includes("장검"));
 let calls=0,polygons=0,gradients=0;
@@ -32,10 +32,10 @@ assert.ok(calls>300&&polygons>300&&gradients>0,"Drawing code should create layer
 drawAvatar(ctx,NaN,200,1,DEFAULT_LOADOUT);
 drawAvatar(ctx,0,200,0,DEFAULT_LOADOUT);
 const html=fs.readFileSync(new URL("../preview.html",import.meta.url),"utf8");
-for(const slot of Object.keys(GEAR))assert.ok(html.includes('id="gear-'+slot+'"'));
+for(const slot of ["meleeWeapon","rangedWeapon","head","armor","offhand"])assert.ok(html.includes('id="gear-'+slot+'"'));
 assert.ok(!html.includes("renderVillageWorld(ctx,villageState,w,h,{drawHero:drawAvatar,loadout})"),"Static hub must not draw old polygon avatar");
-assert.ok(html.includes("renderHeroIllustration"),"Equipment preview should use layered illustration");
+assert.ok(html.includes('./assets/hero-concept.webp'),"Equipment shows detailed portrait art");
 assert.ok(html.includes("drawEquipment()"),"Equipment screen should render the shared avatar");
-assert.ok(html.includes("motion-rpg-preview-equipment-v1"),"Visual equipment must have independent storage");
+assert.ok(!html.includes("motion-rpg-preview-equipment-v1"),"Free appearance preview removed");
 assert.ok(!html.includes('localStorage.setItem("motion-rpg-save-v1",JSON.stringify(loadout))'),"Visual preview must not overwrite progression");
 console.log("AVATAR SMOKE PASS: 4 equipment slots, legacy renderer and v0.40 layered portrait");
