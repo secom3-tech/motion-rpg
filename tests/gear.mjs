@@ -9,7 +9,8 @@ import {MATERIALS,RECIPES,STARTER_OWNED,normalizeRpgGear,withRpgGear,
  gearRequirement,craftGear,equipGear,combatStats,claimIndoorBattle,addExpeditionMaterials} from "../src/gear-game.mjs";
 
 const all=new Set(Object.values(GEAR).flatMap(items=>items.map(i=>i.id)));
-assert.equal(STARTER_OWNED.length,4);
+assert.equal(STARTER_OWNED.length,5);
+assert.ok(STARTER_OWNED.includes("sword")&&STARTER_OWNED.includes("bow"));
 for(const i of RECIPES){
  assert.ok(all.has(i.id),"Recipe must match avatar item: "+i.id);
  assert.ok(GEAR[i.slot].some(item=>item.id===i.id));
@@ -18,7 +19,10 @@ for(const i of RECIPES){
 assert.equal(new Set(RECIPES.map(x=>x.id)).size,RECIPES.length);
 const starter=newGame();
 const init=normalizeRpgGear(starter);
-assert.deepEqual(init.equipped,DEFAULT_LOADOUT);
+assert.equal(init.equipped.head,DEFAULT_LOADOUT.head);
+assert.equal(init.equipped.meleeWeapon,"sword");
+assert.equal(init.equipped.rangedWeapon,"bow");
+assert.equal(init.activeWeapon,"melee");
 assert.equal(combatStats(starter).maxHp,114,"Hunter equipment should give +14 HP");
 assert.equal(gearRequirement(starter,"greatsword").ok,false);
 assert.throws(()=>equipGear(starter,"greatsword"),/Craft/);
@@ -81,7 +85,7 @@ assert.ok(combatStats(rich).defence>before.defence);
 let invalid={...starter,rpgGear:{owned:["hacked","hood"],equipped:{weapon:"greatsword",head:"hacked"},
  materials:{wood:-100,fang:Infinity,ore:9999999}}};
 let fix=normalizeRpgGear(invalid);
-assert.equal(fix.equipped.weapon,"bow","Unowned weapon may not be equipped");
+assert.equal(fix.equipped.meleeWeapon,"sword","Unowned melee weapon may not be equipped");
 assert.equal(fix.equipped.head,"hunterCap","Unknown head item may not be equipped");
 assert.equal(fix.materials.wood,0);
 assert.equal(fix.materials.fang,0);
