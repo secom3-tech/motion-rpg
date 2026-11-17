@@ -322,10 +322,10 @@ let activeWeaponMode=battleGear.activeWeapon||"melee",autoSwitchEnabled=true,ski
 const currentWeapon=()=>activeWeaponMode==="melee"?equipped.meleeWeapon:equipped.rangedWeapon;
 const equippedWeapon=()=>GEAR.weapon.find(item=>item.id===currentWeapon())?.name||"기본 장비";
 const sessionId="arena-"+Date.now()+"-"+Math.random().toString(36).slice(2,11);
-let heroHp=stats.maxHp,dodgeUntil=0,dodgeCooldown=0,lastDodgeKind="button",dodgeVisualUntil=0,bandageReadyAt=0;
+let heroHp=stats.maxHp,dodgeUntil=0,dodgeCooldown=0,lastDodgeKind="button",dodgeVisualUntil=0,bandageReadyAt=0,dodgeMessageUntil=0,dodgeMessage="";
 let huntElapsedSec=0,huntDodgeInputs=0,huntDodgeSuccess=0,huntMotionActions=0;const huntLog=[];
 let enemySpawnClock=-99,lastRadarClock=-99,dodgePromptPlayed=false;
-let meleeAction=null,rangedAction=null;
+let meleeAction=null,rangedAction=null,queuedSkillUntil=-1;
 const weaponCanvas=el("weaponCanvas"),weaponCtx=weaponCanvas.getContext("2d",{alpha:true});
 const camera={x:0,y:1.7,z:5.5};const stick={x:0,y:0};let W=innerWidth,H=innerHeight,dpr=1,prevToast=null,moveTouch=false,lastFire=-999;const keys={};
 el('gearHud').textContent=equippedWeapon()+" · 장착 중";
@@ -403,24 +403,27 @@ function useBandage(){
  }catch{toast("붕대 사용 기록 저장 실패");return false;}
 }
 syncBandage();
+function showDodgeResult(message,duration=1.4){
+ dodgeMessage=message;dodgeMessageUntil=clock+duration;
+ el("dodgeInfo").textContent=message;
+}
 function dodge(direction="button"){
  if(!active)return false;
  if(clock<dodgeCooldown){el("poseStatus").textContent="회피 입력 인식 · 재사용 대기 "+Math.ceil(dodgeCooldown-clock)+"초";return false;}
  lastDodgeKind=["left","right","duck"].includes(direction)?direction:"button";
- dodgeUntil=clock+1.05;dodgeCooldown=clock+2.2;dodgeVisualUntil=clock+.65;weaponKick=.3;
+ dodgeUntil=clock+1.05;dodgeCooldown=clock+2.2;dodgeVisualUntil=clock+1.0;weaponKick=.3;
  if(lastDodgeKind==="left"||lastDodgeKind==="right"){
   const side=lastDodgeKind==="left"?-1:1;
   camera.x=Math.max(-22,Math.min(22,camera.x+side*Math.cos(yaw)*.72));
   camera.z=Math.max(-31,Math.min(7,camera.z+side*Math.sin(yaw)*.72));
  }
- el("dodgeInfo").textContent=lastDodgeKind==="duck"?"몸 낮추기!":lastDodgeKind==="button"?"버튼 회피!":"좌우 회피!";
+ showDodgeResult("회피 동작 인식 · 타격 순간 판정 대기",1.25);
  huntDodgeInputs++;
- showReaction("detect","회피 동작 인식");toast("회피 입력");beep(420,.10,"sine",.07);return true;
+ showReaction("detect","회피 입력 · 타이밍 판정 대기");toast("회피 동작 인식");beep(420,.10,"sine",.07);return true;
 }
 function evadeMatchesAttack(){
- if(clock>dodgeUntil)return false;
- if(lastDodgeKind==="button")return true;
- return dodgeMatches(enemy.attackStyle,lastDodgeKind);
+ // Any recognized side-step or crouch counts when it overlaps actual impact.
+ return clock<=dodgeUntil&&["button","left","right","duck"].includes(lastDodgeKind);
 }
 function flashHit(amount){
  const elements=["hitFx","damageNumber","game","heroHpWrap"];
@@ -432,6 +435,7 @@ function applyEnemyHit(factor=1){
  const type=ATTACKS[enemy.kind],taken=Math.max(1,Math.round(type.damage*factor*(1-stats.defence)));
  heroHp=Math.max(0,heroHp-taken);showHero();flashHit(taken);
  el("status").textContent="적의 공격에 맞았다! 위치를 바꾸거나 회피하세요.";
+ if(clock<dodgeMessageUntil)showDodgeResult("회피 타이밍이 맞지 않아 피격",1.4);
  toast("피격 -"+taken);beep(105,.23,"sawtooth",.11);
  if(heroHp<=0){
   active=false;enemy.impactUntil=0;bankProgress();el("attackBanner").hidden=true;el("retryWrap").hidden=false;el("attackCue").classList.remove("warning");
@@ -893,7 +897,7 @@ function updateEnemy(dt){
     }else{
      const dodged=outcome.canHit&&evadeMatchesAttack();
      const msg=dodged?"회피 성공!":outcome.reason==="outside-arc"?"적의 뒤·측면에서 공격을 피했다!":"사거리 밖으로 벗어나 공격을 피했다!";
-     toast(msg);el("status").textContent=msg;if(dodged){huntDodgeSuccess++;showReaction("success","회피 성공");}beep(dodged?760:455,.13,"sine",.06);
+     toast(msg);el("status").textContent=msg;if(dodged){huntDodgeSuccess++;showDodgeResult("✓ 회피 성공!",1.7);showReaction("success","회피 성공!");}beep(dodged?760:455,.13,"sine",.06);
     }
     }
    enemy.attackTimer=(isRangedStyle(enemy.attackStyle)?3.2:2.1)+Math.max(0,1-kills*.025);
@@ -960,10 +964,10 @@ if(!enemy.dead){
  }
 }
 updateAutoWeaponMode();
-camera.y=1.7+(len>.02?Math.sin(clock*10)*.045:Math.sin(clock*1.5)*.015)-((lastDodgeKind==="duck"&&clock<dodgeVisualUntil)?0.36:0);weaponKick=Math.max(0,weaponKick-dt*3.2);el("dodge").disabled=clock<dodgeCooldown;
+camera.y=1.7+(len>.02?Math.sin(clock*10)*.045:Math.sin(clock*1.5)*.015)-(lastDodgeKind==="duck"?0.36*Math.min(1,Math.max(0,(dodgeVisualUntil-clock)/.35)):0);weaponKick=Math.max(0,weaponKick-dt*3.2);el("dodge").disabled=clock<dodgeCooldown;
  el("skillAttack").disabled=clock<skillCooldownUntil;
  syncBandage();
- el("skillAttack").querySelector("b").textContent=clock<skillCooldownUntil?"스킬 "+Math.ceil(skillCooldownUntil-clock)+"초":"스킬";el("dodgeInfo").textContent=clock<dodgeCooldown?"회피 재사용 "+(dodgeCooldown-clock).toFixed(1)+"초":"경고 시 회피/Q · Shift";
+ el("skillAttack").querySelector("b").textContent=clock<skillCooldownUntil?"스킬 "+Math.ceil(skillCooldownUntil-clock)+"초":"스킬";el("dodgeInfo").textContent=clock<dodgeMessageUntil?dodgeMessage:clock<dodgeCooldown?"회피 재사용 "+(dodgeCooldown-clock).toFixed(1)+"초":"경고 시 좌우 이동·숙이기 / Q";
 updatePlayerActions();updateEnemy(dt);
 // Enemy projectiles travel in world coordinates; the player has time to
 // change position or actually sidestep instead of taking instant damage.
@@ -976,8 +980,8 @@ for(let i=enemyShots.length-1;i>=0;i--){
     vy:(rand()-.5)*2,vz:(rand()-.5)*2.6,r:.05+rand()*.1,
     life:.25+rand()*.4,t:0,col:shot.kind==="rock"?[.74,.64,.47]:[.4,.78,1]});
   }
-  if(clock<=dodgeUntil&&(lastDodgeKind==="button"||lastDodgeKind==="left"||lastDodgeKind==="right")){
-   toast("원거리 공격 회피 성공");huntDodgeSuccess++;showReaction("success","발사체 회피 성공");beep(745,.15,"sine",.07);
+  if(clock<=dodgeUntil&&["button","left","right","duck"].includes(lastDodgeKind)){
+   toast("원거리 공격 회피 성공");huntDodgeSuccess++;showDodgeResult("✓ 발사체 회피 성공!",1.7);showReaction("success","발사체 회피 성공");beep(745,.15,"sine",.07);
   }else applyEnemyHit(shot.damageFactor);
   continue;
  }
