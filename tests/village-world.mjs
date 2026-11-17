@@ -66,15 +66,19 @@ for(let i=0;i<300;i++)advanceVillageExplorer(scene,.033,{x:0,y:-1});
 labels=renderVillageWorld(ctx,scene,360,640,{drawHero(){avatarDraws++},loadout:DEFAULT_LOADOUT});
 assert.ok(labels.some(label=>label.id==="forest"),"Forest gate stays selectable after long walks");
 assert.equal(villageSiteAtScreen(scene,360,640,NaN,NaN),null);
+// Legacy walking simulation still has deterministic tests, but the player hub
+// intentionally no longer mounts it: choosing a building is now a direct touch.
 const html=fs.readFileSync(new URL("../preview.html",import.meta.url),"utf8");
-for(const id of ["villageStage","village3d","townMovePad","townMoveKnob","townEncounter","townHudLevel","townHudGold","townQuest","closeTownTalk"]){
- assert.ok(html.includes('id="'+id+'"'),"Missing player-facing village UI "+id);
+for(const id of ["villageStage","townEncounter","townHudLevel","townHudGold","townQuest","closeTownTalk","townProgress","avatarPortrait"]){
+ assert.ok(html.includes('id="'+id+'"'),"Missing v0.40 village interface "+id);
 }
-assert.ok(html.includes('renderVillageWorld(ctx,villageState,w,h,{drawHero:drawAvatar,loadout})'));
-assert.ok(html.includes("advanceVillageExplorer(villageState,dt,villageStick)"));
-assert.ok(html.includes("gotoVillageSite(id)"));
-assert.ok(html.includes('location.assign("./indoor.html?'),"Forest gate must enter existing connected 3D combat");
-assert.ok(html.includes("syncCharacter()"),"Existing saved XP/gold and gear stay connected");
+for(const place of ["guild","trader"])assert.ok(html.includes('data-town="'+place+'"'));
+for(const mode of ["indoor","run","character"])assert.ok(html.includes('data-go="'+mode+'"'));
+assert.ok(html.includes('class="village-art"'),"Rendered illustration is present");
+assert.ok(!html.includes('id="village3d"')&&!html.includes('id="townMovePad"'),"Walking UI removed from player hub");
+assert.ok(!html.includes('advanceVillageExplorer(villageState'),"Legacy walking simulation cannot run on home screen");
+assert.ok(html.includes('location.assign("./indoor.html?'),"Forest destination must enter existing 3D combat");
+assert.ok(html.includes("syncCharacter()"),"Existing saved XP, gold and gear remain connected");
 const script=html.match(/<script type="module">([\s\S]*?)<\/script>/)?.[1];
 assert.ok(script);
 const tmp=path.join(os.tmpdir(),"motion-village-"+process.pid+".mjs");
@@ -83,4 +87,4 @@ try{
  const parse=spawnSync(process.execPath,["--check",tmp],{encoding:"utf8"});
  assert.equal(parse.status,0,parse.stderr);
 }finally{if(fs.existsSync(tmp))fs.unlinkSync(tmp)}
-console.log("VILLAGE WORLD PASS: 5 locations, tap labels, camera-follow movement, mobile renderer, save-linked HUD.");
+console.log("VILLAGE HUB PASS: legacy movement module stable; v0.40 static hub, direct touch, save-linked HUD.");
