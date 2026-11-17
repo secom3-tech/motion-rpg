@@ -612,7 +612,7 @@ function magic(){
  lastFire=clock;weaponKick=.48;
  const duration=currentWeapon()==="bow"?.50:currentWeapon()==="staff"?.52:.42;
  rangedAction={weapon:currentWeapon(),startAt:clock,duration,releaseAt:clock+duration*.57,endsAt:clock+duration,released:false};
- attackFeedback(names.ranged+" 준비");
+ attackFeedback((weaponNames[currentWeapon()]||weaponNames.bow).ranged+" 준비");
  return true;
 }
 function swordHit(style=null){
