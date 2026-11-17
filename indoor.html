@@ -213,13 +213,13 @@
  </div>
 </div>
 <script type="module">
-import {combatStats,normalizeRpgGear} from "./src/gear-game.mjs?v=0.37";
-import {GEAR} from "./src/avatar.mjs";
+import {combatStats,normalizeRpgGear} from "./src/gear-game.mjs?v=0.41";
+import {GEAR} from "./src/avatar.mjs?v=0.41";
 import {weaponProfile,normalizeMeleeStyle,createMeleeAction,actionProgress,meleeHitInfo,projectileProfile} from "./src/player-combat.mjs?v=0.34";
 import {drawFirstPersonWeapon} from "./src/weapon-view.mjs?v=0.34";
 import {attackArea,attackWindup,attackVisualState,warningFootprint} from "./src/attack-visual.mjs?v=0.38";
-import {createWirelessHost} from "./src/peer-bridge.mjs?v=0.31";
-import {createRemoteInput,lockOnYaw,rotateToward} from "./src/remote-control.mjs?v=0.35";
+import {createWirelessHost} from "./src/peer-bridge.mjs?v=0.41";
+import {createRemoteInput,lockOnYaw,rotateToward} from "./src/remote-control.mjs?v=0.41";
 import {FOREST_MONSTERS,forestZoneAt,chooseForestMonster,monsterBehaviour} from "./src/forest-encounters.mjs?v=0.35";
 import {createMonsterMind,monsterMotionStep,canAcquireTarget,retainTarget} from "./src/monster-ai.mjs?v=0.38";
 import {rangedProfile,isRangedStyle,canStartRanged,fireRangedProjectile,projectileStep} from "./src/enemy-ranged.mjs?v=0.38";
@@ -1186,7 +1186,7 @@ meleeButton.addEventListener("pointerup",e=>{
  const cut=Math.abs(dx)>26&&Math.abs(dx)>Math.abs(dy)?"sweep":dy>27?"overhead":dy< -27?"thrust":null;
  swordHit(cut);
 });
-meleeButton.addEventListener("pointercancel",()=>{meleePointer=null;});el('campReturn').addEventListener('click',()=>{bankProgress();if(new URLSearchParams(location.search).get('return')==='preview'){if(window.parent!==window){window.parent.postMessage({type:'motion-rpg-indoor-return',sessionId},location.origin)}else{location.href='./preview.html?from=indoor'}}else{location.href='./index.html?from=indoor'}});window.addEventListener('keydown',e=>{keys[e.code]=true;if(['Space','ArrowLeft','ArrowRight','ArrowDown','ArrowUp'].includes(e.code))e.preventDefault();if(e.code==='KeyT'&&!e.repeat)switchWeapon(activeWeaponMode==='melee'?'ranged':'melee');if(e.code==='KeyG'&&!e.repeat)activateSkill();if(e.code==='Space'&&!e.repeat)magic();if(e.code==='KeyF'&&!e.repeat)swordHit("sweep");
+meleeButton.addEventListener("pointercancel",()=>{meleePointer=null;});el('campReturn').addEventListener('click',()=>{bankProgress();if(new URLSearchParams(location.search).get('return')==='preview'){if(window.parent!==window){window.parent.postMessage({type:'motion-rpg-indoor-return',sessionId},location.origin)}else{location.href='./preview.html?v=0.41&from=indoor'}}else{location.href='./index.html?from=indoor'}});window.addEventListener('keydown',e=>{keys[e.code]=true;if(['Space','ArrowLeft','ArrowRight','ArrowDown','ArrowUp'].includes(e.code))e.preventDefault();if(e.code==='KeyT'&&!e.repeat)switchWeapon(activeWeaponMode==='melee'?'ranged':'melee');if(e.code==='KeyG'&&!e.repeat)activateSkill();if(e.code==='Space'&&!e.repeat)magic();if(e.code==='KeyF'&&!e.repeat)swordHit("sweep");
 if(e.code==='KeyE'&&!e.repeat)swordHit("overhead");
 if(e.code==='KeyR'&&!e.repeat)swordHit("thrust");if((e.code==='ShiftLeft'||e.code==='KeyQ')&&!e.repeat)dodge()});window.addEventListener('keyup',e=>{keys[e.code]=false});document.addEventListener('visibilitychange',()=>{last=performance.now()});window.addEventListener('resize',resize);dragCamera();joystick();requestAnimationFrame(loop);
 })();
