@@ -8,9 +8,9 @@ import {attackArea,attackWindup,attackVisualState,warningFootprint} from "../src
 
 for(let kind=0;kind<ATTACKS.length;kind++){
  const attack=ATTACKS[kind],entity={x:2.5,z:-7.1,facing:Math.PI*.37,kind,dead:false};
- for(const style of ["slam","sweep"]){
+ for(const style of (kind===5?["slam","sweep","charge"]:["slam","sweep"])){
   const area=attackArea(attack,style);
-  assert.equal(area.range,attack.range);
+  assert.equal(area.range,style==="charge"?attack.range*1.05:attack.range);
   assert.ok(area.arc>0&&area.arc<=attack.arc);
   const time=attackWindup(attack,style,kind);
   assert.ok(time>=1.60&&time<3,"Visually readable windup on all enemies");
@@ -67,4 +67,4 @@ assert.ok(html.includes("if(enemy.windup<=0&&clock>=enemy.impactUntil)"),"Facing
 assert.ok(html.includes("if(dist<minDist)"),"Player should not be able to walk through monster body");
 assert.ok(html.includes("enemy.impactUntil=0;bankProgress()"),"Defeat should not leave an attack effect frozen");
 assert.ok(html.includes("if(!el(\"motionPanel\").hidden||document.hidden)return;"),"Attack timer must pause while setting up motion");
-console.log("ATTACK VISUAL TEST PASS: five monsters, two patterns, matching marker cones and timed poses");
+console.log("ATTACK VISUAL TEST PASS: eight monsters, charge/sweep/slam, matching cones and timed animations");
