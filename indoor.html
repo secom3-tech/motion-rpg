@@ -72,6 +72,8 @@
 .attackMeter{height:5px;border-radius:99px;background:#150f15a8;overflow:hidden;margin-top:7px}
 .attackMeter i{display:block;width:100%;height:100%;background:linear-gradient(90deg,#ffa65c,#ffe4a3);transition:width .08s linear}
 #attackBanner.sweep .attackMeter i{background:linear-gradient(90deg,#e95272,#ffd5b0)}
+#attackBanner.charge{border-color:#c9f88d;background:linear-gradient(135deg,#314533e9,#2c2925e9)}
+#attackBanner.charge .attackMeter i{background:linear-gradient(90deg,#75ec9a,#e9ff91)}
 @media(max-width:560px){#attackBanner{top:23%;width:min(260px,62vw);padding:7px 9px}#attackBanner b{font-size:13px}}
 
 #weaponCanvas{position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:4;display:block}
@@ -309,7 +311,8 @@ function enemyPart(mesh,x,y,z,sx,sy,sz,col,rot=0,glow=0,alpha=1){
 function renderAttackFootprint(visual){
  if(visual.stage!=="windup"||enemy.dead)return;
  const area=warningFootprint(enemy,ATTACKS[enemy.kind]||ATTACKS[0],visual.style,3,9);
- const amber=visual.style==="slam",rim=amber?[1,.68,.25]:[1,.27,.36],fill=amber?[1,.47,.18]:[.95,.13,.26];
+ const amber=visual.style==="slam",charge=visual.style==="charge";
+ const rim=charge?[.59,.98,.40]:amber?[1,.68,.25]:[1,.27,.36],fill=charge?[.29,.75,.43]:amber?[1,.47,.18]:[.95,.13,.26];
  const pulse=.78+.22*Math.sin(clock*14),strength=visual.charge*pulse;
  for(const p of area.fill)part(lowSphere,p.x,terrainHeight(p.x,p.z)+.065,p.z,.28,.027,.34,fill,p.heading,.8,.13+.23*strength);
  for(const p of area.edge)part(lowSphere,p.x,terrainHeight(p.x,p.z)+.074,p.z,.23,.027,.072,rim,p.heading,1,.42+.35*strength);
@@ -323,7 +326,18 @@ function renderEnemyAttack(visual){
  if(visual.stage!=="impact"||enemy.dead)return;
  const area=attackArea(ATTACKS[enemy.kind]||ATTACKS[0],visual.style);
  const strength=visual.impact,colour=visual.style==="slam"?[1,.89,.48]:[1,.52,.46];
- if(visual.style==="sweep"){
+ if(visual.style==="charge"){
+  // A narrow line of displaced dust/green energy races forward.
+  for(let i=1;i<=11;i++){
+   const step=area.range*i/11,x=enemy.x+Math.sin(enemy.facing)*step,z=enemy.z+Math.cos(enemy.facing)*step;
+   part(lowSphere,x,terrainHeight(x,z)+.11,z,.28+strength*.14,.08,.33+strength*.20,[.45,.92,.46],enemy.facing,.7,.20+.55*strength);
+  }
+  for(const side of [-1,1]){
+   const ang=enemy.facing+side*area.arc*.70;
+   const x=enemy.x+Math.sin(ang)*area.range,z=enemy.z+Math.cos(ang)*area.range;
+   part(cone,x,terrainHeight(x,z)+.17,z,.23,.68*strength+.1,.23,[.65,.92,.53],ang,.8,.32+.51*strength);
+  }
+ }else if(visual.style==="sweep"){
   // Physical sword-like crescent. The sweep takes place in front of the enemy.
   for(let i=0;i<12;i++){
    const angle=-area.arc+2*area.arc*i/11,heading=enemy.facing+angle;
@@ -350,7 +364,7 @@ function showEnemyStrike(){
   sparks.push({x:enemy.x+Math.sin(heading)*r,y:.2+rand()*.55,z:enemy.z+Math.cos(heading)*r,
    vx:(rand()-.5)*2.1,vy:1+rand()*2.5,vz:(rand()-.5)*2.1,r:.045+rand()*.075,life:.25+rand()*.36,t:0,col:colour});
  }
- beep(style==="sweep"?270:128,.18,style==="sweep"?"sawtooth":"triangle",.085);
+ beep(style==="charge"?185:style==="sweep"?270:128,.18,style==="charge"?"sawtooth":style==="sweep"?"sawtooth":"triangle",.085);
 }
 
 function renderBeast(ex,ey,ez,visual){
