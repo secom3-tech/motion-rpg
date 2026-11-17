@@ -575,7 +575,7 @@ function spawnEnemy(){
  el("status").textContent=area.name+" · "+enemy.name+" 출현. 움직임을 보고 공격하세요.";
  el("attackCue").className="";el("attackCue").textContent="적의 방향을 살펴보세요";
  el("attackBanner").hidden=true;
- toast(creature.name+" 출현!");
+ beep(635,.12,"sine",.060);
  const dir=relativeTarget(camera,yaw,enemy);
  el("spawnNotice").textContent="⚠ "+creature.name+" · "+(dir?compassDirection(dir.angle):"근처")+" "+Math.round(dir?.distance||0)+"m";
  el("spawnNotice").hidden=false;
