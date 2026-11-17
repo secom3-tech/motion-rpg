@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import {
  SCENARIOS,MODIFIERS,STYLES,createAdventure,startAdventure,advanceAdventure,endAdventure,
- paceQualifies,paceRequirement,summarizeAdventure,settleAdventure
+ paceQualifies,paceRequirement,summarizeAdventure,settleAdventure,expeditionReward
 } from "../src/expedition.mjs";
 import {newGame} from "../src/engine.mjs";
 
@@ -71,10 +71,10 @@ for(let i=0;i<72;i++)real=advanceAdventure(real,10,8.5);
 let shared=newGame();
 const award=settleAdventure(shared,real,"session-123");
 assert.equal(award.awarded,true);
-assert.equal(award.state.xp,real.xp);
+assert.equal(award.state.xp,expeditionReward(real).xp);
 const repeat=settleAdventure(award.state,real,"session-123");
 assert.equal(repeat.awarded,false);
-assert.equal(repeat.state.xp,real.xp);
+assert.equal(repeat.state.xp,expeditionReward(real).xp);
 assert.equal(settleAdventure(newGame(),{...real,distanceM:0},"gps-less").awarded,false);
 assert.equal(settleAdventure(newGame(),{...real,elapsedSec:90},"short").awarded,false);
 assert.equal(settleAdventure(newGame(),{...real,mode:"demo"},"fake").awarded,false);
