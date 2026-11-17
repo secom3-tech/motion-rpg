@@ -246,6 +246,29 @@
  .gearQuick{grid-template-columns:repeat(3,1fr)}.gearScreenHead h1{font-size:20px}.gearScreenHead button{padding:8px;font-size:11px}
  .craftWindow .craft-list{grid-template-columns:1fr}
 }
+
+/* v0.42 silhouette equipment board */
+.mannequinPortrait{background:radial-gradient(ellipse at 52% 39%,#325c50,#142b29 68%,#0c2323);isolation:isolate;min-height:500px}
+.mannequinPortrait:before{content:"";position:absolute;inset:6%;border:1px solid #a7bfa352;border-radius:25px;pointer-events:none}
+.bodySilhouette{position:absolute;height:92%;width:94%;top:0;left:3%;filter:drop-shadow(0 10px 14px #051a18)}
+.classPortrait{position:absolute;left:14px;top:15px;z-index:3;display:flex;gap:8px;align-items:center;padding:8px 10px;border-radius:11px;background:#092522d9;border:1px solid #99b59867}
+.classPortrait b{display:block;font-size:13px;color:#e8e2be}.classPortrait small{font-size:10px;color:#a6cdbd}.classMark{color:#e8d9a4;font-size:27px}
+.figureGear{position:absolute;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;width:70px;min-height:80px;z-index:2;background:#123d37e8;color:#e8f3dd;border:1px solid #b7c9a785;border-radius:15px;padding:5px;box-shadow:0 8px 23px #0619179f;cursor:pointer}
+.figureGear:focus-visible{outline:3px solid #e3c97a}.figureGear>span{width:54px;height:54px}.figureGear small{font-size:10px}
+.figHead{left:50%;top:14%;transform:translateX(-50%)}.figArmor{left:50%;top:41%;transform:translateX(-50%)}
+.figMelee{left:9%;top:35%}.figRanged{right:8%;top:35%}.figOffhand{right:10%;top:69%}
+.mannequinPortrait .heroPortraitInfo{z-index:3;background:linear-gradient(0deg,#061b1af5,#061b1a00);max-height:125px}
+.mannequinPortrait .heroPortraitInfo span{font-size:10px;line-height:1.55}
+.craftFilters{display:flex;gap:7px;flex-wrap:wrap;margin:13px 0}.craftFilters button{border-radius:9px;border:1px solid #8bb49f80;background:#193e35;color:#e3ebdc;padding:8px 14px;font-size:12px;font-weight:750;cursor:pointer}.craftFilters button.active{background:#a5d9b7;color:#16382e}
+.craftMissing{color:#ff9a98!important;font-weight:800}.craftReady{color:#abe4b6!important;font-weight:800}
+.craftHidden{font-size:11px;color:#a4c9b4;margin:5px 0}
+.materialSymbol{font-size:24px;margin-right:8px;min-width:28px;text-align:center}
+.craftWindow .mat{display:flex;align-items:center;gap:4px}
+.craftWindow .craft-list{max-height:min(52vh,500px);overflow-y:auto;scrollbar-width:thin}
+.craftWindow .craft-row{min-height:155px;grid-template-columns:65px minmax(0,1fr) auto}
+.craftWindow .craft-row p{font-size:11px;color:#c4d4ba}
+.craftWindow .craft-row small{white-space:normal;overflow-wrap:anywhere}
+@media(max-width:750px){.mannequinPortrait{height:350px;min-height:350px}.bodySilhouette{height:100%;width:70%;left:15%}.figureGear{width:56px;min-height:64px}.figureGear>span{width:40px;height:40px}.figHead{top:11%}.figArmor{top:41%}.figMelee{left:9%;top:32%}.figRanged{right:9%;top:32%}.figOffhand{right:9%;top:65%}.classPortrait{padding:4px;top:6px;left:6px}.classPortrait small{font-size:8px}.classPortrait b{font-size:10px}}
 </style></head>
 <body><div class="app">
 <header class="top"><div class="mark">MOTION RPG <em> / 경계의 숲</em></div><div class="version">모험 허브 · 0.41</div></header>
@@ -344,7 +367,23 @@
  <div class="gearScreen">
   <div class="gearScreenHead"><button type="button" class="runBack" data-go="village">← 마을</button><div><small>CHARACTER / INVENTORY</small><h1>장비 · 성장</h1></div><button id="openCraft" class="gearCraftOpen">⚒ 대장간 · 제작</button></div>
   <div class="gearStage">
-   <div class="heroPortrait"><img class="avatar-concept" src="./assets/hero-concept.webp" loading="lazy" decoding="async" alt="숲의 모험가 기본 일러스트"><div class="heroPortraitInfo"><b>나의 모험가</b><span id="avatarCaption">장착 중인 장비</span></div></div>
+   <div class="heroPortrait mannequinPortrait" aria-label="현재 장착 장비를 표시하는 모험가 실루엣">
+ <div class="classPortrait"><span class="classMark">✦</span><div><small>현재 직업</small><b>초보 탐색자</b></div></div>
+ <svg class="bodySilhouette" viewBox="0 0 380 610" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
+ <defs><linearGradient id="figure" x1=".2" y1="0" x2=".9" y2="1"><stop stop-color="#557e73"/><stop offset="1" stop-color="#25483e"/></linearGradient><linearGradient id="frame" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#d5d1ae"/><stop offset="1" stop-color="#587c67"/></linearGradient></defs>
+ <circle cx="189" cy="270" r="178" fill="none" stroke="#acbaa67a" stroke-width="2"/><circle cx="189" cy="270" r="155" fill="none" stroke="#d2c9a24a" stroke-dasharray="3 12" stroke-width="2"/><path d="M188 45V560M16 284H362" stroke="#89aa9b40" stroke-width="1.6"/>
+ <path d="M161 133Q154 92 190 82Q224 92 217 134L212 154L167 154Z" fill="url(#figure)" stroke="#a7bb9e" stroke-width="4"/>
+ <path d="M167 153Q143 165 116 188L95 295 62 398 98 413 148 304 144 385 142 538 179 546 188 392 200 392 219 544 258 536 250 371 230 299 278 404 315 392 286 296 260 188Q241 164 211 153Z" fill="url(#figure)" stroke="#a7bb9e" stroke-width="5"/>
+ <path d="M143 190L188 221 235 190M188 221v157M148 382l85 0M155 475l22 0M218 475l22 0" fill="none" stroke="#c8d2af" stroke-width="3" opacity=".5"/>
+ <path d="M118 195Q189 246 260 195" fill="none" stroke="#6c947f" stroke-width="2"/><path d="M104 301L142 308M254 309l39-7" stroke="#b4c8b0" stroke-width="2"/>
+ </svg>
+ <button type="button" class="figureGear figHead" data-figure-slot="head" aria-label="머리 장비"><span id="figureArt-head"></span><small>머리</small></button>
+ <button type="button" class="figureGear figArmor" data-figure-slot="armor" aria-label="갑옷"><span id="figureArt-armor"></span><small>갑옷</small></button>
+ <button type="button" class="figureGear figMelee" data-figure-slot="meleeWeapon" aria-label="근접 무기"><span id="figureArt-meleeWeapon"></span><small>근접</small></button>
+ <button type="button" class="figureGear figRanged" data-figure-slot="rangedWeapon" aria-label="원거리 무기"><span id="figureArt-rangedWeapon"></span><small>원거리</small></button>
+ <button type="button" class="figureGear figOffhand" data-figure-slot="offhand" aria-label="보조장비"><span id="figureArt-offhand"></span><small>보조</small></button>
+ <div class="heroPortraitInfo"><b>현재 장착한 장비</b><span id="avatarCaption">획득한 장비가 부위별로 표시돼.</span></div>
+</div>
    <div class="gearEquipment">
     <div class="section-title"><h2>모험가 장비실</h2><span class="badge">보유 장비만 장착</span></div>
     <div class="gearSlots">
@@ -370,8 +409,8 @@
    <div class="craftHeader"><div><small>BLACKSMITH / CRAFTING</small><h2>대장간 · 장비 제작</h2><p>재료로 만들고, 보유한 장비만 장착할 수 있어.</p></div><button id="closeCraft" type="button" aria-label="제작 창 닫기">✕</button></div>
    <div class="material-grid" id="craftMaterials"></div>
    <div id="craftStatus" role="status" aria-live="polite">제작 재료를 확인하는 중...</div>
-   <div class="controls"><button id="claimCombat" class="primary">전투 결과 정산</button></div>
-   <div class="craft-list" id="craftList"></div>
+   <div class="controls"><button id="claimCombat" class="primary">지난 사냥 보상 확인</button></div>
+   <div class="craftFilters" id="craftFilters"><button type="button" data-craft-filter="all" class="active">전체</button><button type="button" data-craft-filter="weapon">무기</button><button type="button" data-craft-filter="armor">방어구</button><button type="button" data-craft-filter="offhand">보조</button></div><p class="craftHidden" id="craftHidden"></p><div class="craft-list" id="craftList"></div>
   </div>
  </section>
 </section>
@@ -381,6 +420,7 @@
 import {createAdventure,startAdventure,advanceAdventure,endAdventure,summarizeAdventure,settleAdventure} from "./src/expedition.mjs?v=0.41";
 import {GEAR} from "./src/avatar.mjs?v=0.41";
 import {itemIllustration} from "./src/item-art.mjs?v=0.41";
+import {gearBenefits,craftingDeficits,MATERIAL_SYMBOLS} from "./src/gear-details.mjs?v=0.42";
 
 import {QUESTS,REGIONS,newGame} from "./src/engine.mjs?v=0.37";
 import {experienceProgress} from "./src/progression.mjs?v=0.37";
@@ -470,18 +510,30 @@ function drawEquipment(){
   }));
   elSelect.value=selected;
   $("slotArt-"+slot).innerHTML=itemIllustration(selected,slot==="meleeWeapon"||slot==="rangedWeapon"?"weapon":slot);
+  $("figureArt-"+slot).innerHTML=itemIllustration(selected,slot==="meleeWeapon"||slot==="rangedWeapon"?"weapon":slot);
  }
  document.querySelectorAll("[data-active-weapon]").forEach(btn=>btn.classList.toggle("active",btn.dataset.activeWeapon===data.activeWeapon));
- $("gearStatus").textContent="실제 장착 장비만 표시 중 · 숲 사냥에는 검과 활을 함께 가져가며 전투 중 S21에서 전환할 수 있어.";
+ $("gearStatus").textContent="실제 장착 중인 장비만 표시 · 검과 활은 전투 중 S21에서 전환할 수 있어.";
 }
 const SAVE_KEY="motion-rpg-save-v1",INDOOR_KEY="motion-rpg-indoor-result-v1";
 function saveCharacter(s){localStorage.setItem(SAVE_KEY,JSON.stringify(s));}
 function updateEquippedVisual(s){drawEquipment();}
 function showCraftMessage(str){$("craftStatus").textContent=str;}
+let craftFilter="all";
+document.querySelectorAll("[data-craft-filter]").forEach(b=>b.addEventListener("click",()=>{
+ craftFilter=b.dataset.craftFilter;
+ document.querySelectorAll("[data-craft-filter]").forEach(x=>x.classList.toggle("active",x===b));
+ renderCrafting();
+}));
+document.querySelectorAll("[data-figure-slot]").forEach(b=>b.addEventListener("click",()=>{
+ const select=$("gear-"+b.dataset.figureSlot);select?.focus();select?.scrollIntoView({behavior:"smooth",block:"nearest"});
+}));
 function renderCrafting(){
  const state=sharedCharacter(),gear=normalizeRpgGear(state),stats=combatStats(state);
  $("craftMaterials").replaceChildren(...Object.entries(MATERIALS).map(([id,mat])=>{
-  const div=document.createElement("div");div.className="mat";const b=document.createElement("b");b.textContent=gear.materials[id];div.append(b,document.createTextNode(mat.name));return div;
+  const div=document.createElement("div");div.className="mat";
+  const art=document.createElement("span");art.className="materialSymbol";art.textContent=MATERIAL_SYMBOLS[id]||"✦";
+  const b=document.createElement("b");b.textContent=gear.materials[id];div.append(art,b,document.createTextNode(mat.name));return div;
  }));
  const info=[
   "근접 공격 ×"+stats.slash.toFixed(2),
@@ -490,10 +542,13 @@ function renderCrafting(){
   "피해 감소 "+Math.round(stats.defence*100)+"%"
  ];
  $("combatStats").replaceChildren(...info.map(t=>{const x=document.createElement("span");x.textContent=t;return x;}));
- const all=Object.entries(GEAR).flatMap(([slot,items])=>items.map(item=>({...item,slot}))).filter(item=>{
+ const entireCatalog=Object.entries(GEAR).flatMap(([slot,items])=>items.map(item=>({...item,slot})));
+ const unlocked=entireCatalog.filter(item=>{
   const recipe=RECIPES.find(r=>r.id===item.id);
   return gear.owned.includes(item.id)||(recipe&&recipe.minLevel<=Math.max(1,state.level||1)&&(!recipe.boss||state.quests?.forest?.bossDefeated));
  });
+ $("craftHidden").textContent="발견한 도안 "+unlocked.length+"종 · 새로운 레벨과 지역에서 추가로 발견할 수 있어.";
+ const all=unlocked.filter(item=>craftFilter==="all"||item.slot===craftFilter||(craftFilter==="armor"&&item.slot==="head"));
  $("craftList").replaceChildren(...all.map(item=>{
   const owned=gear.owned.includes(item.id);
   const targetSlot=item.slot==="weapon"?weaponSlotFor(item.id):item.slot;
@@ -503,7 +558,7 @@ function renderCrafting(){
   const row=document.createElement("div");row.className="craft-row";
   const art=document.createElement("div");art.className="craftArt";art.innerHTML=itemIllustration(item.id,item.slot);
   const name=document.createElement("strong");name.textContent=item.name;
-  const desc=document.createElement("p");desc.textContent=recipe?.description||"기본 지급 장비";
+  const desc=document.createElement("p");desc.textContent=(recipe?.description||"기본 지급 장비")+" · "+gearBenefits(item.id);
   const req=document.createElement("small");req.textContent=recipe?
    "골드 "+recipe.price+" · "+Object.entries(recipe.materials).filter(([,n])=>n>0).map(([id,n])=>MATERIALS[id].name+" "+n).join(" / ")+(recipe.minLevel>1?" · Lv."+recipe.minLevel:"")+(recipe.boss?" · 보스 격파":""):
    "초기 장비 · 지급 완료";
@@ -511,7 +566,10 @@ function renderCrafting(){
   button.textContent=equipped?"장착 중":owned?"장착":"제작";
   button.disabled=equipped||(!owned&&!test.ok);
   button.setAttribute("aria-label",item.name+" "+button.textContent);
-  const hint=document.createElement("small");hint.textContent=owned?(equipped?"현재 실전 장비":"보유 중"):test.reason;
+  const hint=document.createElement("small");
+  const problems=recipe&&!owned?craftingDeficits(state,item.id):[];
+  hint.className=problems.length?"craftMissing":"craftReady";
+  hint.textContent=owned?(equipped?"현재 실전 장비":"보유 중"):(problems.length?problems.join(" · "):"제작 가능");
   button.onclick=()=>{
    try{
     const current=sharedCharacter();
