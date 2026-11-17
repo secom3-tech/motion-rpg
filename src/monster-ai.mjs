@@ -11,7 +11,7 @@ const configs=[
  {name:"slime",aggro:9.0,space:2.8,strafe:.38,walk:.96,hop:true},
  {name:"slime",aggro:9.5,space:3.0,strafe:.35,walk:1.08,hop:true},
  {name:"wolf",aggro:13,space:3.6,strafe:1.12,walk:1.1},
- {name:"golem",aggro:17,space:8.0,strafe:.22,walk:1.14},
+ {name:"golem",aggro:18.5,space:8.0,strafe:.22,walk:1.14},
  {name:"boar",aggro:12,space:3.8,strafe:.58,walk:1.13},
  {name:"wisp",aggro:16,space:7.2,strafe:1.34,walk:1.18},
  {name:"treant",aggro:10.5,space:4.1,strafe:.32,walk:.68}
