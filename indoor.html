@@ -221,7 +221,7 @@ function perspective(fov,asp,near,far){let f=1/Math.tan(fov/2),o=new Float32Arra
 function viewMatrix(){let fy=Math.sin(pitch),fx=Math.sin(yaw)*Math.cos(pitch),fz=-Math.cos(yaw)*Math.cos(pitch);let right=[Math.cos(yaw),0,Math.sin(yaw)],up=[-Math.sin(yaw)*Math.sin(pitch),Math.cos(pitch),Math.cos(yaw)*Math.sin(pitch)];let dot=(a,b)=>a[0]*b.x+a[1]*b.y+a[2]*b.z;return new Float32Array([right[0],up[0],-fx,0,right[1],up[1],-fy,0,right[2],up[2],-fz,0,-dot(right,camera),-dot(up,camera),fx*camera.x+fy*camera.y+fz*camera.z,1])}
 function draw(asset,model=identity,tint=[1,1,1],glow=0,alpha=1,fog=1){gl.bindBuffer(gl.ARRAY_BUFFER,asset.buf);gl.vertexAttribPointer(loc.pos,3,gl.FLOAT,false,36,0);gl.vertexAttribPointer(loc.nor,3,gl.FLOAT,false,36,12);gl.vertexAttribPointer(loc.col,3,gl.FLOAT,false,36,24);gl.enableVertexAttribArray(loc.pos);gl.enableVertexAttribArray(loc.nor);gl.enableVertexAttribArray(loc.col);gl.uniformMatrix4fv(loc.model,false,model);gl.uniform3fv(loc.tint,tint);gl.uniform1f(loc.glow,glow);gl.uniform1f(loc.alpha,alpha);gl.uniform1f(loc.fog,fog);if(alpha<1){gl.enable(gl.BLEND);gl.blendFunc(gl.SRC_ALPHA,gl.ONE_MINUS_SRC_ALPHA);gl.depthMask(false)}else{gl.disable(gl.BLEND);gl.depthMask(true)}gl.drawArrays(gl.TRIANGLES,0,asset.n);if(alpha<1){gl.depthMask(true)}}
 function terrainHeight(x,z){return .11*Math.sin(x*.17+z*.07)+.07*Math.sin(z*.25-x*.24)+.07*Math.cos(x*.36)}
-const world=builder();let N=65,step=2;for(let i=0;i<N;i++)for(let j=0;j<N;j++){let x=(i-N/2)*step,z=(j-N/2)*step-19;let v=(a,b)=>[a,terrainHeight(a,b)-.11,b];let a=v(x,z),b=v(x+step,z),c=v(x+step,z+step),d=v(x,z+step);let path=Math.abs(x-.26*Math.sin(z*.095))<2.12&&z<9;let noise=rand();let col=path?[.47+noise*.09,.48+noise*.07,.35+noise*.04]:[.19+noise*.12,.38+noise*.13,.24+noise*.07];pushT(world,a,b,d,col);pushT(world,b,c,d,col)}
+const world=builder();let N=65,step=2;for(let i=0;i<N;i++)for(let j=0;j<N;j++){let x=(i-N/2)*step,z=(j-N/2)*step-19;let v=(a,b)=>[a,terrainHeight(a,b)-.11,b];let a=v(x,z),b=v(x+step,z),c=v(x+step,z+step),d=v(x,z+step);let path=Math.abs(x-.26*Math.sin(z*.095))<2.12&&z<9;let noise=rand();const bio=forestZoneAt(x,z).id;let col=path?[.47+noise*.09,.48+noise*.07,.35+noise*.04]:bio==="marsh"?[.12+noise*.08,.30+noise*.11,.30+noise*.10]:bio==="ruins"?[.28+noise*.08,.36+noise*.10,.30+noise*.07]:bio==="grove"?[.24+noise*.11,.37+noise*.12,.23+noise*.09]:[.19+noise*.12,.38+noise*.13,.24+noise*.07];pushT(world,a,b,d,col);pushT(world,b,c,d,col)}
 // Embedded rocks and broken ancient pathway.
 for(let i=0;i<44;i++){let z=5-rand()*68,x=(rand()-.5)*3.3;vertAsset(sphLow,world,x,terrainHeight(x,z)+.02,z,.35+rand()*.38,.04+rand()*.035,.35+rand()*.36,[.42+rand()*.11,.48+rand()*.08,.4+rand()*.08],rand()*3.14)}
 // Large stylised forest trees with multiple foliage layers.
@@ -232,6 +232,67 @@ for(let i=0;i<125;i++){let x=(rand()-.5)*53,z=(rand()-.5)*78-15,y=terrainHeight(
 // Fallen stone and mystical rune altar behind the enemy.
 for(let side of [-1,1]){let x=side*3.45,z=-18.8;let y=terrainHeight(x,z);vertAsset(cylSrc,world,x,y,z,.83,2.4,.83,[.42,.52,.5],side*.13);vertAsset(sphLow,world,x,y+2.4,z,.87,.25,.87,[.52,.63,.59])}
 vertAsset(sphLow,world,0,terrainHeight(0,-19)-.12,-19,2.8,.23,1.3,[.42,.56,.50]);
+
+// Distinct connected forest landmarks: ruined gate, glowing marsh, boar clearing.
+// Each landmark is built into the *same* walkable world mesh, not a loading screen.
+const stone=[.43,.51,.45],lichen=[.40,.60,.47],blue=[.28,.66,.72],gold=[.87,.74,.43];
+// Old rune gate and toppled columns to the west.
+for(const x of [-19,-11]){
+ for(const z of [-25,-18,-11]){
+  const y=terrainHeight(x,z);
+  vertAsset(cylSrc,world,x,y,z,.6,1.4+(rand()*.8),.6,stone,rand()*.5);
+  vertAsset(sphLow,world,x,y+2.0,z,.85,.28,.83,lichen);
+  for(let k=0;k<2;k++){
+   let theta=k*2.8+rand(),bx=x+Math.sin(theta)*1.2,bz=z+Math.cos(theta)*1.2;
+   vertAsset(sphLow,world,bx,terrainHeight(bx,bz),bz,.43,.23,.60,[.36,.47,.45],theta);
+  }
+ }
+}
+for(let z of [-24,-18,-12]){
+ const x=-15,y=terrainHeight(x,z);
+ vertAsset(cylSrc,world,x-1.9,y,z,.38,3.0,.38,[.50,.59,.55]);
+ vertAsset(cylSrc,world,x+1.9,y,z,.38,3.0,.38,[.49,.57,.56]);
+ vertAsset(sphLow,world,x,y+3,z,2.45,.40,.48,[.49,.59,.52]);
+ vertAsset(sphLow,world,x,y+.1,z,2.25,.11,1.7,[.26,.45,.40]);
+ for(let t=0;t<4;t++)vertAsset(sphLow,world,x-1.1+t*.74,y+.23,z-2,.15,.08,.18,[.62,.77,.66]);
+}
+// Eastern spore marsh: pools, tiered oversized mushrooms and blue crystals.
+for(let i=0;i<38;i++){
+ const x=9+rand()*13,z=-28+rand()*23,y=terrainHeight(x,z);
+ const ring=.35+rand()*.85,kind=rand();
+ if(kind<.24){
+  vertAsset(sphLow,world,x,y-.075,z,ring*1.7,.055,ring*1.25,[.18,.56,.58],rand()*Math.PI);
+  vertAsset(sphLow,world,x,y-.042,z,ring*.62,.035,ring*.54,[.37,.75,.76]);
+ }else if(kind<.80){
+  const height=.4+rand()*1.4;
+  vertAsset(cylSrc,world,x,y,z,.09+height*.06,height,.09+height*.06,[.70,.79,.63]);
+  vertAsset(sphLow,world,x,y+height,z,ring,.25+.17*rand(),ring,[.39,.63,.75]);
+  vertAsset(sphLow,world,x,y+height+.06,z,ring*.62,.13,ring*.6,[.68,.83,.93]);
+  vertAsset(sphLow,world,x,y+height+.25,z,.14,.15,.13,blue);
+ }else{
+  for(let k=0;k<3;k++)vertAsset(coneSrc,world,x+(k-1)*.33,y+.06,z+.24*k,.23,.62+rand()*.6,.24,[.43,.85,.94],rand()*Math.PI);
+ }
+}
+// Sunlit boar clearing, old hunter camp, and scattered flowers at the east gate.
+for(let i=0;i<40;i++){
+ const x=-5+rand()*17,z=-3+rand()*9,y=terrainHeight(x,z);
+ if(i<9)vertAsset(sphLow,world,x,y-.01,z,.40+rand()*.65,.17,.48+rand()*.50,[.46,.44,.35],rand()*6);
+ else if(i<22)vertAsset(coneSrc,world,x,y+.04,z,.19,.38+rand()*.29,.18,[.80,.58,.33],rand()*6);
+ else{
+  vertAsset(cylSrc,world,x,y,z,.045,.3,.04,[.35,.72,.38]);
+  vertAsset(sphLow,world,x,y+.36,z,.13,.10,.13,rand()<.5?[.98,.73,.43]:[.79,.57,.80]);
+ }
+}
+const campX=-7,campZ=3,campY=terrainHeight(campX,campZ);
+for(let side of [-1,1]){
+ vertAsset(cylSrc,world,campX+side*1.3,campY,campZ,.13,2.3,.13,[.46,.33,.19]);
+}
+vertAsset(coneSrc,world,campX,campY+2.16,campZ,2.15,.86,1.45,[.49,.43,.25]);
+for(let i=0;i<5;i++){
+ const ang=i*Math.PI*2/5;
+ vertAsset(sphLow,world,campX+Math.cos(ang)*.7,campY+.12,campZ+Math.sin(ang)*.7,.36,.24,.35,[.36,.38,.33]);
+}
+vertAsset(coneSrc,world,campX,campY+.1,campZ,.34,.76,.34,[.98,.67,.33]);
 const staticMesh=upload(world);world.pos=[];world.nor=[];world.col=[];
 function enemyColor(){return [[.39,.93,.56],[.63,.67,.98],[.97,.61,.51],[.39,.45,.42],[.59,.69,.65],[.65,.37,.30],[.38,.85,1],[.55,.65,.35]][enemy.kind]||[.39,.93,.56]}
 function part(mesh,x,y,z,sx,sy,sz,col,rot=0,glow=0,alpha=1){draw(mesh,matModel(x,y,z,sx,sy,sz,rot),col,glow,alpha)}
