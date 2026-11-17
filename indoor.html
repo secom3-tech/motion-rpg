@@ -1239,7 +1239,7 @@ const motionHost=createWirelessHost({
    const queued=accepted&&reason==="스킬 예약";
    motionHost.send({type:"gesture-ack",seq:packet.seq,accepted,skill:accepted&&skillRequested&&!queued,queued,reason,time:Date.now()});
    el("remoteStatus").textContent="S21 "+(skillRequested?"스킬 + ":"")+action+
-     " 감지됨 · "+(accepted?(skillRequested?"스킬 공격 발동":"일반 공격 실행"):reason)+" · 강도 "+packet.strength;
+     " 감지됨 · "+(queued?"스킬 예약 · 잠시 뒤 발동":accepted?(skillRequested?"스킬 공격 발동":"일반 공격 실행"):reason)+" · 강도 "+packet.strength;
   };
   if(!active||worldMode){
    respond(false,heroHp<=0?"기력 0 · 다시 싸우기 눌러":"전투 시작 버튼을 먼저 눌러");
