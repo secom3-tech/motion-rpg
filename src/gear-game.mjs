@@ -165,12 +165,14 @@ export function claimIndoorBattle(state,result){
 }
 /** GPS expedition must already have passed settleAdventure's claim checks. */
 export function addExpeditionMaterials(state,session,claimId){
- if(!validGame(state)||session?.mode!=="gps"||session.phase!=="complete"||!claimId||session.elapsedSec<180||session.distanceM<200)
+ if(!validGame(state)||!["gps","walk"].includes(session?.mode)||session.phase!=="complete"||!claimId||session.elapsedSec<180||session.distanceM<200)
    return {state,awarded:false};
  const p=normalizeRpgGear(state);
  if(p.expeditionClaims.includes(claimId))return {state,awarded:false};
  const successes=clamp(int(session.success),0,20);
- const bonus={wood:Math.min(8,successes),fang:Math.floor(successes/3),essence:Math.floor(successes/4),ore:0};
+ const bonus=session.mode==="walk"?
+  {wood:Math.min(8,Math.floor(session.distanceM/400)+Math.floor(successes/2)),fang:0,essence:Math.min(2,Math.floor(successes/5)),ore:0}:
+  {wood:Math.min(8,successes),fang:Math.floor(successes/3),essence:Math.floor(successes/4),ore:0};
  const next=withRpgGear(state);
  for(const [key,n] of Object.entries(bonus))next.rpgGear.materials[key]+=n;
  next.rpgGear.expeditionClaims=[...p.expeditionClaims,claimId].slice(-100);
