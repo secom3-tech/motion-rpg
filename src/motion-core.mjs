@@ -3,7 +3,7 @@
  * Uses orientation + translational acceleration but never integrates position.
  * A cooldown and a low-motion re-arm gate reduce false duplicate attacks.
  */
-export const SENSOR_MODES=Object.freeze(["throw","melee"]);
+export const SENSOR_MODES=Object.freeze(["throw","melee","auto"]);
 export const SENSOR_AXES=Object.freeze(["alpha","beta","gamma"]);
 const num=n=>Number.isFinite(n)?n:0;
 const clamp=(n,a,b)=>Math.max(a,Math.min(b,n));
@@ -22,35 +22,53 @@ export function gestureThreshold(mode="throw",sensitivity=3){
  const level=clamp(Math.round(num(sensitivity)||3),1,5);
  return (mode==="melee"?38:50)+(3-level)*20;
 }
+/**
+ * One physical action => one event. A throw can briefly settle while the arm
+ * starts its recovery: require BOTH a long refractory period and continuous
+ * low-motion neutral. Auto mode extends the refractory window after a throw.
+ */
 export function createGestureDetector({
- mode="throw",sensitivity=3,axis="",cooldownMs=700,quietMs=350
+ mode="throw",sensitivity=3,axis="",cooldownMs=700,quietMs=350,
+ throwCooldownMs=1900,throwQuietMs=750
 }={}){
- let last=-Infinity,lowFrom=null,armed=true,previous=0,count=0;
+ let last=-Infinity,nextReady=-Infinity,lowFrom=null,armed=true,previous=0,count=0,rearmQuiet=quietMs;
  let current={mode:SENSOR_MODES.includes(mode)?mode:"throw",sensitivity,axis};
  function configure(next){
   current={...current,...next};
   if(!SENSOR_MODES.includes(current.mode))current.mode="throw";
   if(!SENSOR_AXES.includes(current.axis))current.axis="";
-  armed=false;lowFrom=null;previous=0; // require neutral after changing config
+  armed=false;lowFrom=null;previous=0;nextReady=-Infinity;
+  rearmQuiet=current.mode==="throw"?throwQuietMs:current.mode==="auto"?600:quietMs;
  }
- function reset(){last=-Infinity;lowFrom=null;armed=true;previous=0;count=0;}
+ function reset(){last=-Infinity;nextReady=-Infinity;lowFrom=null;armed=true;previous=0;count=0;rearmQuiet=current.mode==="throw"?throwQuietMs:current.mode==="auto"?600:quietMs;}
+ function protectThrow(startTime=last){
+  if(!Number.isFinite(startTime))return;
+  nextReady=Math.max(nextReady,startTime+throwCooldownMs);
+  rearmQuiet=throwQuietMs;
+  lowFrom=null;
+  armed=false;
+ }
  function feed(event,now=Date.now()){
   const data=motionSample(event,current.axis),threshold=gestureThreshold(current.mode,current.sensitivity);
-  if(!data.valid)return {...data,gesture:null,armed,count,threshold};
+  if(!data.valid)return {...data,gesture:null,armed,count,threshold,cooldownRemainingMs:Math.max(0,nextReady-now)};
   const score=data.score;
-  if(score<=threshold*.34){
+  if(score<=threshold*.28){
    if(lowFrom===null)lowFrom=now;
-   if(now-lowFrom>=quietMs)armed=true;
+   if(now-lowFrom>=rearmQuiet)armed=true;
   }else lowFrom=null;
   let gesture=null;
-  if(armed&&score>=threshold&&score>=previous*.92&&now-last>=cooldownMs){
+  if(armed&&score>=threshold&&score>=previous*.92&&now>=nextReady){
    gesture={type:current.mode,strength:Math.round(score),time:now};
    armed=false;last=now;count++;
+   nextReady=now+(current.mode==="throw"?throwCooldownMs:current.mode==="auto"?950:cooldownMs);
+   rearmQuiet=current.mode==="throw"?throwQuietMs:current.mode==="auto"?600:quietMs;
   }
   previous=score;
-  return {...data,gesture,armed,count,threshold};
+  return {...data,gesture,armed,count,threshold,cooldownRemainingMs:Math.max(0,nextReady-now)};
  }
- return {feed,reset,configure,get count(){return count},get mode(){return current.mode}};
+ configure({mode,sensitivity,axis});
+ reset();
+ return {feed,reset,configure,protectThrow,get count(){return count},get mode(){return current.mode}};
 }
 export function dominantAxis(samples){
  const peak={alpha:0,beta:0,gamma:0};
