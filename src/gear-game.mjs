@@ -18,22 +18,22 @@ const I=(slot,id,price,wood,fang,essence,ore,minLevel=1,boss=false,description="
  id,slot,price,materials:{wood,fang,essence,ore},minLevel,boss,description
 });
 export const RECIPES=Object.freeze([
- I("head","bare",4,1,0,0,0,1,false,"바람이 통하는 가벼운 모험 머리"),
- I("armor","traveler",8,2,0,0,0,1,false,"가볍고 유연한 여행 복장"),
- I("weapon","sword",12,1,2,0,0,1,false,"정확한 근거리 검격에 유리"),
+ I("head","bare",10,1,0,0,0,1,false,"바람이 통하는 가벼운 모험 머리"),
+ I("armor","traveler",24,2,0,0,0,1,false,"가볍고 유연한 여행 복장"),
+ I("weapon","sword",36,1,2,0,0,1,false,"정확한 근거리 검격에 유리"),
  I("offhand","none",0,0,0,0,0,1,false,"보조 장비를 내려놓는다"),
- I("head","hood",15,3,1,0,0,1,false,"숲속에 익숙한 정찰병의 후드"),
- I("armor","leather",25,4,3,0,0,1,false,"방어력을 높이는 정찰용 가죽"),
- I("offhand","lantern",18,3,2,0,0,1,false,"어두운 숲에서 빛을 밝히는 랜턴"),
- I("weapon","axe",30,4,4,0,0,2,false,"한 번에 강한 근거리 공격"),
- I("weapon","staff",45,3,2,3,0,2,false,"마법탄의 위력을 높이는 지팡이"),
- I("offhand","orb",48,2,1,4,0,2,false,"마법 피해를 높이는 정령구"),
- I("head","circlet",35,2,1,3,0,2,false,"마법을 보조하는 나뭇잎 장식"),
- I("armor","forest",55,5,2,3,0,2,false,"안정된 생존을 돕는 숲의 갑옷"),
- I("offhand","shield",60,4,5,0,2,3,true,"보스 승리의 증표를 요구하는 목제 방패"),
- I("head","ironHelm",85,3,4,1,3,3,true,"강한 적을 상대하기 위한 투구"),
- I("armor","iron",125,5,7,2,5,3,true,"무겁지만 높은 방어력을 제공"),
- I("weapon","greatsword",140,4,9,3,5,3,true,"묵직한 한 방에 집중하는 장검")
+ I("head","hood",42,3,1,0,0,1,false,"숲속에 익숙한 정찰병의 후드"),
+ I("armor","leather",75,4,3,0,0,1,false,"방어력을 높이는 정찰용 가죽"),
+ I("offhand","lantern",54,3,2,0,0,1,false,"어두운 숲에서 빛을 밝히는 랜턴"),
+ I("weapon","axe",150,4,4,0,0,2,false,"한 번에 강한 근거리 공격"),
+ I("weapon","staff",225,3,2,3,0,2,false,"마법탄의 위력을 높이는 지팡이"),
+ I("offhand","orb",240,2,1,4,0,2,false,"마법 피해를 높이는 정령구"),
+ I("head","circlet",175,2,1,3,0,2,false,"마법을 보조하는 나뭇잎 장식"),
+ I("armor","forest",275,5,2,3,0,2,false,"안정된 생존을 돕는 숲의 갑옷"),
+ I("offhand","shield",480,4,5,0,2,3,true,"보스 승리의 증표를 요구하는 목제 방패"),
+ I("head","ironHelm",680,3,4,1,3,3,true,"강한 적을 상대하기 위한 투구"),
+ I("armor","iron",1000,5,7,2,5,3,true,"무겁지만 높은 방어력을 제공"),
+ I("weapon","greatsword",1400,4,9,3,5,3,true,"묵직한 한 방에 집중하는 장검")
 ]);
 const ALL_IDS=new Set(Object.values(GEAR).flatMap(items=>items.map(item=>item.id)));
 const VALID_SLOTS=Object.freeze(Object.fromEntries(Object.entries(GEAR).map(([slot,items])=>[slot,new Set(items.map(item=>item.id))])));
