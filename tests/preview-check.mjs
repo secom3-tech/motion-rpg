@@ -24,7 +24,7 @@ assert.ok(html.includes("./indoor.html"));
 assert.ok(!html.includes('id="village3d"'),"Static village must not mount a game canvas");
 assert.ok(!html.includes('id="townMovePad"'),"Village cannot require joystick movement");
 assert.ok(html.includes('id="townEncounter"')&&html.includes('id="townProgress"'),"Guild needs a quest detail panel");
-assert.ok(html.includes('class="village-art"')&&html.includes('./assets/village-hub.svg'),"Static village illustration must load");
+assert.ok(html.includes('class="village-art"')&&html.includes('./assets/village-hub.webp'),"Static village illustration must load");
 for(const name of ["guild","trader"])assert.ok(html.includes('data-town="'+name+'"'),"Village needs "+name);
 for(const mode of ["indoor","run","character"])assert.ok(html.includes('data-go="'+mode+'"'),"Village needs direct "+mode+" navigation");
 assert.ok(html.includes('id="avatarPortrait"')&&html.includes('./src/hero-illustration.mjs'),"Illustrated equipment preview is required");
