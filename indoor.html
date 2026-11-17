@@ -240,6 +240,21 @@
  #motionCooldownTrack{height:5px}
 }
 @media(prefers-reduced-motion:reduce){#motionCooldownFill{transition:none}}
+
+/* v0.47 large combat signals for players standing several metres from Fold6. */
+#attackBanner{top:18%;width:min(500px,76vw);padding:14px 19px 17px;border-width:3px}
+#attackBanner b,#attackBanner.dodgeNow b{font-size:clamp(24px,5.2vw,40px);line-height:1.12}
+#attackBanner small{font-size:clamp(15px,2.7vw,22px);margin-top:9px}
+#attackBanner .attackMeter{height:11px;margin-top:12px}
+#reactionFx{font-size:clamp(27px,5vw,49px);min-width:min(450px,74vw);padding:16px 24px}
+#reactionFx.reaction{animation-duration:1.5s}
+#poseGuide{display:block;width:100%;margin:13px 0;padding:14px;border:3px solid #b7cca181;border-radius:15px;
+ background:#122e33;color:#fff3bd;font-size:clamp(23px,4vw,36px);font-weight:950;line-height:1.3;text-align:center;letter-spacing:-.03em}
+#poseGuide[data-kind="good"]{border-color:#b0e8bb;color:#c3ffcc;background:#13503d}
+#poseGuide[data-kind="far"],#poseGuide[data-kind="near"],#poseGuide[data-kind="center"]{border-color:#e7b96c;color:#ffe4a3}
+#poseGuide[data-kind="lost"]{border-color:#eb8888;color:#ffc3c3}
+#poseStatus{font-size:14px}
+@media(max-width:650px){#attackBanner{top:20%;width:min(480px,78vw)}#attackBanner b,#attackBanner.dodgeNow b{font-size:clamp(22px,5.6vw,35px)}#reactionFx{top:41%}}
 </style></head><body>
 <div id="sky"></div><canvas id="game"></canvas><div id="vignette"></div><div id="bottomShade"></div><div id="screenFx"></div><canvas id="weaponCanvas" aria-hidden="true"></canvas>
 <div class="ui" id="brand"><div id="sigil">✦</div><div><h1>Motion RPG</h1><p>BORDERWOOD · HUNT</p></div></div>
@@ -267,7 +282,7 @@
 <div id="err"></div><div id="retryWrap" hidden><strong>기력이 소진됐어</strong><p>S21 연결은 유지돼. 바로 재도전하면 새 연결 코드를 입력할 필요 없어.</p><button id="retryCombat">기력 회복 · 다시 싸우기</button></div>
 <div id="motionPanel" hidden role="dialog" aria-modal="true" aria-label="실전 모션 입력 설정">
  <div class="motionDialog">
-  <div class="motionTop"><div><small>MOTION RPG / v0.45</small><h2>실전 모션 전투 설정</h2></div><button id="motionClose" class="subtle">게임으로 돌아가기</button></div>
+  <div class="motionTop"><div><small>MOTION RPG / v0.47</small><h2>실전 모션 전투 설정</h2></div><button id="motionClose" class="subtle">게임으로 돌아가기</button></div>
   <p class="motionLead">폴드6에서는 3D 전투와 전면 카메라 회피를 사용하고, S21에서는 실제 휘두르기·투척 동작을 전송해. 둘 다 선택 기능이야.</p>
   <section class="motionSection">
    <h3>① S21 무기 컨트롤러 연결 · 숫자 6자리</h3>
@@ -285,6 +300,7 @@
    <p>휴대폰을 세로로 고정하고 약 1.5~2.5m 앞에서 상반신과 허리가 모두 보이게 서 있어. 처음 2초는 가만히 서서 기준 자세를 잡고, <b>좌우로 몸을 피하거나 앉는 동작</b>으로 회피해.</p>
    <div class="motionRow"><button id="cameraStart">카메라 자세 인식 켜기</button><button id="cameraStop" class="subtle" disabled>카메라 끄기</button><button id="cameraReset" class="subtle" disabled>자세 기준 재설정</button></div>
    <video id="posePreview" muted autoplay playsinline title="폴드6 전면 카메라 미리보기"></video>
+   <div id="poseGuide" data-kind="lost" role="status" aria-live="polite">카메라 연결을 기다리는 중</div>
    <div class="motionInfo" id="poseStatus" role="status" aria-live="polite">카메라 대기 · 기기 밖으로 영상이 전송되지 않아.</div>
   </section>
   <p class="motionLead">모션 인식이 불안정하면 <b>터치 버튼으로 계속 전투</b>할 수 있어. 폰을 실제로 던지지 말고 주변에 사람·물건이 없는지 확인해. GitHub Pages 외에 무료 WebRTC 연결 서버와 카메라 인식 모델 다운로드가 필요하므로 인터넷 연결이 필요해.</p>
@@ -410,21 +426,39 @@ function showDodgeResult(message,duration=1.4){
 }
 function dodge(direction="button"){
  if(!active)return false;
- if(clock<dodgeCooldown){el("poseStatus").textContent="회피 입력 인식 · 재사용 대기 "+Math.ceil(dodgeCooldown-clock)+"초";return false;}
- lastDodgeKind=["left","right","duck"].includes(direction)?direction:"button";
- dodgeUntil=clock+1.05;dodgeCooldown=clock+2.2;dodgeVisualUntil=clock+1.0;weaponKick=.3;
- if(lastDodgeKind==="left"||lastDodgeKind==="right"){
-  const side=lastDodgeKind==="left"?-1:1;
-  camera.x=Math.max(-22,Math.min(22,camera.x+side*Math.cos(yaw)*.72));
-  camera.z=Math.max(-31,Math.min(7,camera.z+side*Math.sin(yaw)*.72));
+ const kind=["left","right","duck"].includes(direction)?direction:"button";
+ const ranged=isRangedStyle(enemy.attackStyle);
+ // Prevent a premature camera movement from consuming the attack's only dodge.
+ if(kind!=="button"&&enemy.windup>0&&!ranged&&enemy.windup>DODGE_PROMPT_WINDOW_SEC+.08){
+  showDodgeResult("아직 빨라 · 지금 회피 신호를 기다려",1.1);
+  showReaction("detect","조금 기다려");return false;
  }
- showDodgeResult("회피 동작 인식 · 타격 순간 판정 대기",1.25);
+ if(kind!=="button"&&enemy.windup<=0&&enemyShots.length===0){
+  showDodgeResult("공격 경고를 기다려",1.0);return false;
+ }
+ if(clock<dodgeCooldown){
+  showDodgeResult("회피 재사용 대기 "+Math.ceil(dodgeCooldown-clock)+"초",1.2);
+  return false;
+ }
+ lastDodgeKind=kind;dodgeVisualStart=clock;
+ dodgeUntil=clock+1.05;dodgeCooldown=clock+2.2;dodgeVisualUntil=clock+1.0;weaponKick=.3;
+ if(kind==="left"||kind==="right"){
+  const side=kind==="left"?-1:1;
+  camera.x=Math.max(-22,Math.min(22,camera.x+side*Math.cos(yaw)*DODGE_SIDE_STEP_M));
+  camera.z=Math.max(-31,Math.min(7,camera.z+side*Math.sin(yaw)*DODGE_SIDE_STEP_M));
+ }
+ const reserved=canReserveTimedDodge({windup:enemy.windup,remaining:enemy.windup,
+  promptSeconds:DODGE_PROMPT_WINDOW_SEC,cooldownRemaining:0,ranged});
+ if(reserved)dodgeProtectedAttack=enemyAttackSeq;
+ const label=kind==="duck"?"숙이기":kind==="left"?"왼쪽 회피":kind==="right"?"오른쪽 회피":"회피";
+ showDodgeResult(reserved?"✓ "+label+" 인식 · 이 공격 회피 확보":label+" 인식 · 타격 순간 판정",1.5);
  huntDodgeInputs++;
- showReaction("detect","회피 입력 · 타이밍 판정 대기");toast("회피 동작 인식");beep(420,.10,"sine",.07);return true;
+ showReaction("detect",label+" 인식");beep(420,.10,"sine",.07);return true;
 }
 function evadeMatchesAttack(){
  // Any recognized side-step or crouch counts when it overlaps actual impact.
- return clock<=dodgeUntil&&["button","left","right","duck"].includes(lastDodgeKind);
+ return shouldDodgeMeleeHit({protectedAttack:dodgeProtectedAttack,attackId:enemyAttackSeq,
+ withinActiveWindow:clock<=dodgeUntil&&["button","left","right","duck"].includes(lastDodgeKind)});
 }
 function flashHit(amount){
  const elements=["hitFx","damageNumber","game","heroHpWrap"];
@@ -908,14 +942,18 @@ function updateEnemy(dt){
     showEnemyStrike();
     const area=attackArea(attack,enemy.attackStyle);
     const outcome=strikeInfo(enemy,camera,area.range,area.arc);
-    if(outcome.canHit&&!evadeMatchesAttack()){
+    const reserved=dodgeProtectedAttack===enemyAttackSeq&&enemyAttackSeq>0;
+    const dodged=reserved||(outcome.canHit&&evadeMatchesAttack());
+    if(outcome.canHit&&!dodged){
      applyEnemyHit();
-     if(active){el("status").textContent="공격을 맞았다. 적의 방향과 타이밍을 살펴보세요.";}
+     if(active)el("status").textContent="공격을 맞았다. 적의 방향과 타이밍을 살펴보세요.";
     }else{
-     const dodged=outcome.canHit&&evadeMatchesAttack();
      const msg=dodged?"회피 성공!":outcome.reason==="outside-arc"?"적의 뒤·측면에서 공격을 피했다!":"사거리 밖으로 벗어나 공격을 피했다!";
-     toast(msg);el("status").textContent=msg;if(dodged){huntDodgeSuccess++;showDodgeResult("✓ 회피 성공!",1.7);showReaction("success","회피 성공!");}beep(dodged?760:455,.13,"sine",.06);
+     toast(msg);el("status").textContent=msg;
+     if(dodged){huntDodgeSuccess++;showDodgeResult("✓ 회피 성공!",1.7);showReaction("success","회피 성공!");}
+     beep(dodged?760:455,.13,"sine",.06);
     }
+    dodgeProtectedAttack=0;
     }
    enemy.attackTimer=(isRangedStyle(enemy.attackStyle)?3.2:2.1)+Math.max(0,1-kills*.025);
    cue.className="missed";cue.textContent="적의 공격 종료 · 빈틈이 생겼다";
