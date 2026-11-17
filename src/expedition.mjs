@@ -2,6 +2,7 @@
  * Motion RPG: audio-first running expedition engine.
  * Pure rules, shared between GPS and desk simulation.
  */
+import {applyExperienceCurve} from "./progression.mjs";
 export const SCENARIOS=Object.freeze([
  {id:"wolf",name:"회색 늑대의 추격",kind:"surge",line:"늑대 울음소리가 들린다. 무리가 길을 좁히고 있다.",win:"추격을 따돌렸다.",lose:"늑대를 피해 우회했다."},
  {id:"bandit",name:"도적의 기습",kind:"surge",line:"수풀에서 도적이 나타났다. 빈틈을 노려 자리를 벗어나자.",win:"포위망을 빠져나왔다.",lose:"도적을 피해 먼 길로 돌아갔다."},
@@ -111,7 +112,8 @@ export function settleAdventure(shared,session,claimId){
  const claimed=Array.isArray(shared.runnerClaims)?shared.runnerClaims:[];
  if(claimed.includes(claimId))return {state:shared,awarded:false};
  const s={...shared,inventory:{...(shared.inventory||{})},runnerClaims:[...claimed,claimId].slice(-40)};
- s.xp=(Number(s.xp)||0)+session.xp;s.gold=(Number(s.gold)||0)+session.gold;s.level=1+Math.floor(s.xp/100);
+ s.xp=(Number(s.xp)||0)+session.xp;s.gold=(Number(s.gold)||0)+session.gold;
+ Object.assign(s,applyExperienceCurve(shared,s));
  for(const id of itemIds)s.inventory[id]=(Number(s.inventory[id])||0)+session.loot[id];
  return {state:s,awarded:true};
 }
