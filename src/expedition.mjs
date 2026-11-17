@@ -59,8 +59,8 @@ export function paceQualifies(type,pace,base){
 export function createAdventure({mode="demo",basePace=8.5,style="scout",durationMin=20,seed=17,level=1}={}){
  if(!["gps","demo","treadmill"].includes(mode)||!STYLES[style])throw Error("Invalid mode/style");
  if(!Number.isFinite(basePace)||basePace<5||basePace>15)throw Error("Invalid baseline pace");
- if(![12,20,30].includes(durationMin))throw Error("Invalid duration");
- return {version:1,mode,basePace,style,durationSec:durationMin*60,seed:(seed>>>0)||17,level:Math.max(1,Math.floor(level)),
+ if(![0,12,20,30,45,60].includes(durationMin))throw Error("Invalid duration");
+ return {version:2,mode,basePace,style,freeRoam:durationMin===0,durationSec:durationMin===0?120*60:durationMin*60,seed:(seed>>>0)||17,level:Math.max(1,Math.floor(level)),
  phase:"ready",elapsedSec:0,phaseSeconds:0,event:null,events:[],success:0,fail:0,xp:0,gold:0,loot:{torch:0,map:0,bandage:0},
  hp:100,distanceM:0,announcements:[],lastAnnouncement:"탐험 준비 완료",battleRank:Math.max(1,Math.floor((level-1)/4)+1),endReason:null};
 }
