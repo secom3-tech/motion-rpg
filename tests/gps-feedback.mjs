@@ -20,7 +20,7 @@ const html=fs.readFileSync(new URL("../preview.html",import.meta.url),"utf8");
 for(const marker of ['id="gpsStatus"','id="gpsStatusLabel"','id="gpsStatusDetail"',
  'import {gpsFeedback,GPS_ACCURACY_LIMIT_METERS}', 'voice=true',
  'setGpsStatus("waiting");startGeo()','setGpsStatus("connected",p.accuracy,false)',
- 'setGpsStatus("recording",p.accuracy)','setGpsStatus("lost")','setGpsStatus("denied"',
+ 'setGpsStatus("recording",p.accuracy)','setGpsStatus("lost")','denied?"denied":"error"',
  'setGpsStatus("weak",p.accuracy)','gpsGeneration++',
  'startLine.head+". "+startLine.detail','lastGps=now;\n  const measured='])
  assert.ok(html.includes(marker),"GPS UI behavior missing: "+marker);
