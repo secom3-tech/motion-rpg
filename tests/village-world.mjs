@@ -60,9 +60,11 @@ assert.ok(avatarDraws===1,"Shared avatar appears once in playable village");
 assert.ok(labels.some(label=>label.id==="guild"));
 assert.ok(labels.some(label=>label.id==="forest"));
 assert.ok(labels.every(label=>label.w>0&&label.h>0));
+labels=renderVillageWorld(ctx,scene,360,640,{drawHero(){avatarDraws++},loadout:DEFAULT_LOADOUT});
+assert.ok(labels.length>=3,"Small Fold screen retains tappable site labels");
 for(let i=0;i<300;i++)advanceVillageExplorer(scene,.033,{x:0,y:-1});
 labels=renderVillageWorld(ctx,scene,360,640,{drawHero(){avatarDraws++},loadout:DEFAULT_LOADOUT});
-assert.ok(labels.length>=2,"Small Fold screen retains tappable site labels");
+assert.ok(labels.some(label=>label.id==="forest"),"Forest gate stays selectable after long walks");
 assert.equal(villageSiteAtScreen(scene,360,640,NaN,NaN),null);
 const html=fs.readFileSync(new URL("../preview.html",import.meta.url),"utf8");
 for(const id of ["villageStage","village3d","townMovePad","townMoveKnob","townEncounter","townHudLevel","townHudGold","townQuest","closeTownTalk"]){
