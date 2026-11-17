@@ -214,6 +214,27 @@
 .huntExitActions button{flex:1;padding:12px 8px;border-radius:10px;background:#19473d;border:1px solid #b6d1b3;color:#e5f1e1;font-weight:850;cursor:pointer}
 #confirmHuntReturn{background:#a7ddbd;color:#14382b}
 @media(max-width:600px){.huntExitSheet{padding:13px}.huntExitSheet h2{font-size:19px}.huntExitStats b{font-size:17px}.huntExitActions button{font-size:12px}}
+
+/* S21 readiness belongs in the arena HUD, not the handheld controller. */
+#motionCooldown[hidden]{display:none!important}
+#motionCooldown{display:block;min-width:162px;max-width:210px;margin-top:9px;padding-top:8px;border-top:1px solid #c6dfb049}
+.motionCooldownLabel{display:flex;justify-content:space-between;align-items:center;gap:7px}
+#motionCooldown .motionCooldownLabel b{display:block;margin:0;font-size:11px;color:#f3d9a5;white-space:nowrap}
+#motionCooldownTime{font-variant-numeric:tabular-nums;font-size:12px;color:#fbe5b9;white-space:nowrap}
+.motionCooldownTrack{height:6px;background:#0c2228;border-radius:100px;overflow:hidden;margin-top:6px;border:1px solid #8fb6ab66}
+#motionCooldownFill{display:block;height:100%;width:0;background:#ddb677;transition:width .1s linear}
+#motionCooldown.ready .motionCooldownLabel b,#motionCooldown.ready #motionCooldownTime{color:#b7ffc8}
+#motionCooldown.ready #motionCooldownFill{background:#83ecaf}
+#motionCooldown.neutral .motionCooldownLabel b,#motionCooldown.neutral #motionCooldownTime{color:#a6e5ef}
+#motionCooldown.neutral #motionCooldownFill{background:#8bcedd}
+#motionCooldown.off .motionCooldownLabel b,#motionCooldown.off #motionCooldownTime{color:#b5cbd0}
+@media(max-width:640px){
+ #motionCooldown{min-width:130px;max-width:168px;margin-top:6px;padding-top:6px}
+ #motionCooldown .motionCooldownLabel b{font-size:10px}
+ #motionCooldownTime{font-size:10px}
+ #motionCooldownTrack{height:5px}
+}
+@media(prefers-reduced-motion:reduce){#motionCooldownFill{transition:none}}
 </style></head><body>
 <div id="sky"></div><canvas id="game"></canvas><div id="vignette"></div><div id="bottomShade"></div><div id="screenFx"></div><canvas id="weaponCanvas" aria-hidden="true"></canvas>
 <div class="ui" id="brand"><div id="sigil">✦</div><div><h1>Motion RPG</h1><p>BORDERWOOD · HUNT</p></div></div>
@@ -225,7 +246,11 @@
 <div id="enemyArrow" hidden><div id="enemyArrowIcon">▲</div><span id="enemyArrowText">적 발견</span></div>
 <div id="spawnNotice" hidden role="status" aria-live="polite"></div>
 <div id="attackBanner" hidden aria-live="off"><b id="attackBannerText">공격 준비</b><div class="attackMeter"><i id="attackBannerMeter"></i></div><small id="attackBannerHint"></small></div>
-<div class="ui glass" id="playerHud"><b id="gearHud">숲 사냥꾼</b><div id="heroHpText">기력 100 / 100</div><div id="heroHpWrap"><div id="heroHp"></div></div><small id="dodgeInfo">적의 경고에 맞춰 회피</small></div><div id="forestZoneHud" aria-live="off">사냥꾼의 숲길</div><div id="lockHud" aria-live="off" hidden>◎ 락온 · 가까운 적 조준 보조</div><div id="cross"><div class="ring"></div></div><div class="ui" id="instruction">화면을 드래그하면 시야가 움직입니다</div><div id="weaponStatus">무기 준비 중</div><div id="attackFeedback"></div><div id="reactionFx" role="status" aria-live="polite"></div><div id="skillBurst" aria-hidden="true"><i></i><i></i><i></i></div><div id="toast"></div><div id="hitFx" aria-hidden="true"></div><div id="damageNumber" aria-hidden="true"></div>
+<div class="ui glass" id="playerHud"><b id="gearHud">숲 사냥꾼</b><div id="heroHpText">기력 100 / 100</div><div id="heroHpWrap"><div id="heroHp"></div></div><small id="dodgeInfo">적의 경고에 맞춰 회피</small>
+<div id="motionCooldown" class="motionCooldown" hidden aria-label="S21 공격 준비 상태">
+ <div class="motionCooldownLabel"><b id="motionCooldownState">S21 상태 확인 중</b><strong id="motionCooldownTime">—</strong></div>
+ <div id="motionCooldownTrack" class="motionCooldownTrack" role="progressbar" aria-label="S21 공격 재준비 진행도" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><i id="motionCooldownFill"></i></div>
+</div></div><div id="forestZoneHud" aria-live="off">사냥꾼의 숲길</div><div id="lockHud" aria-live="off" hidden>◎ 락온 · 가까운 적 조준 보조</div><div id="cross"><div class="ring"></div></div><div class="ui" id="instruction">화면을 드래그하면 시야가 움직입니다</div><div id="weaponStatus">무기 준비 중</div><div id="attackFeedback"></div><div id="reactionFx" role="status" aria-live="polite"></div><div id="skillBurst" aria-hidden="true"><i></i><i></i><i></i></div><div id="toast"></div><div id="hitFx" aria-hidden="true"></div><div id="damageNumber" aria-hidden="true"></div>
 <div class="ui" id="controls"><div id="moveArea"><div id="joy"><div id="stick">✦</div></div><span>이동 · 키보드 WASD</span></div><div id="actions"><button class="action weaponSwitch" id="weaponToggle" aria-label="무기 전환">무기 전환</button><button class="action bandageAction" id="bandage" aria-label="붕대 사용"><span class="icon">✚</span><b>붕대 <span id="bandageCount">0</span></b></button><button class="action skillTrigger" id="skillAttack" aria-label="스킬 발동"><span class="icon">✦</span><b>스킬</b></button><button class="action" id="dodge" aria-label="회피"><span class="icon">↪</span><b>회피</b></button><button class="action" id="sword" aria-label="근접 휘두르기"><span class="icon">⚔️</span><b>근접 휘두르기</b></button><button class="action" id="fire" aria-label="마법 투척"><span class="icon">✨</span><b>마법 투척</b></button></div></div><div id="footerNote">근접 버튼: 좌우 드래그 = 가로 베기 · 아래 = 내려찍기 · 위 = 찌르기</div>
 <div id="intro"><div id="introCard"><div class="emblem">✦ 🧙 ✦</div><h2>경계의 숲</h2><p>숲을 탐색하고 몬스터의 움직임을 살펴봐.<br><b>S21로 무기를 휘두르고</b> 실제 몸으로 공격을 피해.<br>골렘의 투석과 몬스터의 돌진은 움직여서 벗어날 수 있어.</p><button id="begin">사냥 시작하기</button><small>드래그: 시야 이동 · 근접 버튼 방향 드래그: 가로/세로/찌르기<br>오른쪽 상단 [모션 설정]에서 S21 무선 무기와 전면 카메라 회피를 연결할 수 있어</small></div></div>
 <div id="huntExit" hidden role="dialog" aria-modal="true" aria-labelledby="huntExitTitle">
@@ -1092,15 +1117,31 @@ const motionHost=createWirelessHost({
  onStatus:state=>{
   el("linkStatus").textContent=state.message+(state.connected&&state.latencyMs?" · 연결 지연 "+state.latencyMs+"ms":"");
   if(state.connected&&!wasLinked){
+   sensorReport=null;sensorReportAt=0;lastSensorSeq=-1;
    motionHost.send({type:"weapon-state",mode:activeWeaponMode,label:equippedWeapon()});
    lastMotionSequence=-1;lastMotionAt=-Infinity;remoteInput.reset();
    targetLocked=false;motionHost.send({type:"target-state",enabled:false});
   }
-  if(!state.connected&&wasLinked)remoteInput.reset();
+  if(!state.connected&&wasLinked){remoteInput.reset();sensorReport=null;sensorReportAt=0;lastSensorSeq=-1;}
   wasLinked=state.connected;
   refreshMotionIndicator();
  },
  onMessage:packet=>{
+  if(packet.type==="sensor-state"){
+   if(!motionHost.connected||packet.session!==motionHost.room||
+    !Number.isSafeInteger(packet.seq)||packet.seq<=lastSensorSeq||
+    !Number.isFinite(packet.time)||
+    typeof packet.sensorActive!=="boolean"||
+    typeof packet.sensorReceiving!=="boolean"||
+    !["melee","throw","auto"].includes(packet.mode)||
+    !Number.isInteger(packet.cooldownRemainingMs)||packet.cooldownRemainingMs<0||packet.cooldownRemainingMs>3000||
+    !Number.isInteger(packet.cooldownDurationMs)||packet.cooldownDurationMs<0||packet.cooldownDurationMs>3000||
+    typeof packet.ready!=="boolean"||typeof packet.waitingForNeutral!=="boolean")return;
+   lastSensorSeq=packet.seq;
+   sensorReport=packet;sensorReportAt=Date.now();
+   renderMotionCooldown();
+   return;
+  }
   if(packet.type==="diagnostic"){
    motionHost.send({type:"diagnostic-ack",time:Date.now()});
    el("remoteStatus").textContent="통신 시험 수신 · 공격은 실행되지 않음";
@@ -1160,6 +1201,49 @@ const motionHost=createWirelessHost({
 });
 const remoteInput=createRemoteInput();let targetLocked=false;
 let lastMotionSequence=-1,lastMotionAt=-Infinity,poseEvents=0,wasLinked=false;
+let sensorReport=null,sensorReportAt=0,lastSensorSeq=-1;
+function renderMotionCooldown(){
+ const panel=el("motionCooldown");
+ panel.hidden=!motionHost.connected||worldMode;
+ if(panel.hidden)return;
+ const label=el("motionCooldownState"),timer=el("motionCooldownTime"),fill=el("motionCooldownFill"),track=el("motionCooldownTrack");
+ let phase="off",title="S21 센서 확인 중",duration="—",progress=0;
+ const age=Date.now()-sensorReportAt;
+ if(!sensorReport||age>1600){
+  title="S21 신호 확인 중";
+ }else if(!sensorReport.sensorActive){
+  title="S21 센서 꺼짐";
+ }else if(!sensorReport.sensorReceiving){
+  title="센서 신호 대기";
+ }else if(!active||!el("motionPanel").hidden){
+  title="전투 준비 중";
+ }else{
+  const sensorMs=Math.max(0,sensorReport.cooldownRemainingMs-age);
+  const hostPacketMs=Math.max(0,620-(performance.now()-lastMotionAt));
+  const gameMs=Math.max(0,
+   (activeWeaponMode==="melee"?.48:.60)*1000+stats.attackDelay*1000-(clock-lastFire)*1000);
+  const actionMs=Math.max(0,((meleeAction?.endsAt||rangedAction?.endsAt||-1)-clock)*1000);
+  const remainingMs=Math.max(sensorMs,hostPacketMs,gameMs,actionMs);
+  if(remainingMs>0){
+   phase="cooldown";title="공격 대기";
+   duration=(remainingMs/1000).toFixed(1)+"초";
+   progress=100*(1-remainingMs/Math.max(sensorReport.cooldownDurationMs,620,
+    (activeWeaponMode==="melee"?.48:.60)*1000+stats.attackDelay*1000,1));
+  }else if(sensorReport.ready){
+   phase="ready";title="공격 가능";duration="READY";progress=100;
+  }else{
+   phase="neutral";title="팔을 잠시 멈춰";duration="준비 중";progress=100;
+  }
+ }
+ panel.className="motionCooldown "+phase;
+ if(label.textContent!==title)label.textContent=title;
+ if(timer.textContent!==duration)timer.textContent=duration;
+ const pct=Math.round(Math.max(0,Math.min(100,progress)));
+ fill.style.width=pct+"%";track.setAttribute("aria-valuenow",String(pct));
+}
+// Low-cost HUD refresh between 5Hz S21 reports; no extra 3D rendering.
+setInterval(renderMotionCooldown,100);
+
 const poseCamera=createPoseCamera({
  video:el("posePreview"),
  onStatus:state=>{el("poseStatus").textContent=state.message;refreshMotionIndicator();},
