@@ -106,7 +106,7 @@ assert.ok(arena.includes('swordHit(packet.style)'),"Live S21 attack style must b
 assert.ok(arena.includes('swordHit("sweep")')&&arena.includes('swordHit("overhead")')&&arena.includes('swordHit("thrust")'));
 assert.ok(!arena.includes("el('slashFx').classList"),"Old static slash effect must be replaced");
 assert.ok(controller.includes('data-mode="auto"')&&controller.includes('id="cutStyle"'),"Automatic and manual combat modes");
-assert.ok(controller.includes('id="cutStyle"')&&controller.includes("classifyMeleeGesture(e,cutStyle)"));
+assert.ok(controller.includes('id="cutStyle"')&&controller.includes("classifyAttackIntent(pending.samples,pending.mode"),"S21 deferred classification includes movement window");
 const script=arena.match(/<script type="module">([\s\S]*?)<\/script>/)?.[1];
 assert.ok(script);
 const tmp=path.join(os.tmpdir(),"motion-player-combat-"+process.pid+".mjs");
