@@ -49,5 +49,5 @@ for(const needle of [
 ].slice(0,-1))assert.ok(pad.includes(needle),"Controller must follow host weapon without rearming: "+needle);
 assert.ok(pad.includes('const action=pending.mode==="auto"?')&&pad.includes('classifyAttackIntent(pending.samples,pending.mode,trained,cutStyle);'),'Auto uses host distance, manual retains gesture classifier');
 assert.ok(arena.includes('clock-lastFire<.48+stats.attackDelay')&&arena.includes('clock-lastFire<.60+stats.attackDelay'),"Existing attack cooldown preserved");
-assert.ok(p.includes('indoor.html?v=0.48'),"Hub opens updated arena");
+assert.ok(p.includes('indoor.html?v=0.53'),"Hub opens current arena");
 console.log("AUTO WEAPON PASS: initial distance, close/retreat, hysteresis, attack dispatch, preserved cooldown, controller sync");
