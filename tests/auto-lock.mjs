@@ -35,7 +35,7 @@ const better=meleeHitInfo(sword,player,grazing,assistedAimYaw(player,rawYaw,graz
 assert.ok(better.canHit||normal.canHit,"Bounded assist helps a small aim error but never invents range");
 
 const profile=monsterMovementProfile(3);
-assert.ok(profile.space>=4,"Melee enemy keeps a readable gap");
+assert.ok(profile.space>=3&&profile.space<4.15,"Wolf should stay within its 4.15m attack radius without overlapping the player");
 assert.ok(profile.strafe<.8,"Wolf should not rapidly orbit point blank");
 assert.ok(monsterMovementProfile(6).strafe<1,"Wisp still circles, but at a manageable pace");
 const mon={x:2,z:0,speed:2.5,kind:3};
@@ -55,8 +55,8 @@ for(const marker of ["canAutoAcquire(camera,yaw,enemy)","followTargetYaw(yaw,dir
  assert.ok(arena.includes(marker),"Missing v0.44 arena behavior: "+marker);
 assert.ok(pad.includes("자동 락온 끄기")&&pad.includes("data.autoEnabled"),
  "S21 must expose the automatic target mode and reflect host state");
-assert.ok(motion.includes("throwCooldownMs")&&motion.includes("rearmQuiet"),
- "Previously tuned gesture rearm/cooldown must be left intact");
+assert.ok(motion.includes("throwCooldownMs")&&motion.includes("releaseFrom"),
+ "Motion rearm must depend on a stroke release while keeping throw cooldown protection");
 assert.equal(DODGE_PROMPT_WINDOW_SEC,.90,"Prompt must be inside the 1.05s dodge protection");
 assert.equal(dodgePrompt("slam",1.3),null,"Do not warn too early");
 assert.equal(dodgePrompt("slam",.8)?.text,"지금 회피!");
