@@ -394,6 +394,7 @@ import {FOREST_MONSTERS,forestZoneAt,chooseForestMonster,monsterBehaviour} from 
 import {createMonsterMind,monsterMotionStep,retainTarget} from "./src/monster-ai.mjs?v=0.49";
 import {canAutoAcquire,followTargetYaw,assistedAimYaw,AUTO_LOCK_MANUAL_PAUSE} from "./src/target-assist.mjs?v=0.44";
 import {automaticWeaponMode,autoMotionAttackMode} from "./src/auto-weapon.mjs?v=0.45";
+import {exerciseAttackMode,exerciseApproachState,exerciseCameraClearance,separateExerciseCamera} from "./src/dumbbell-combat.mjs?v=0.52";
 import {rangedProfile,isRangedStyle,canStartRanged,fireRangedProjectile,projectileStep} from "./src/enemy-ranged.mjs?v=0.38";
 import {dodgePrompt,DODGE_PROMPT_WINDOW_SEC} from "./src/dodge-cue.mjs?v=0.46";
 import {dodgeCameraPose,DODGE_SIDE_STEP_M,canReserveTimedDodge,shouldDodgeMeleeHit} from "./src/dodge-feedback.mjs?v=0.47";
@@ -409,11 +410,12 @@ const shared=(()=>{try{return JSON.parse(localStorage.getItem("motion-rpg-save-v
 const battleGear=normalizeRpgGear(shared);
 const equipped=battleGear.equipped,stats=combatStats(shared);
 let activeWeaponMode=battleGear.activeWeapon||"melee",autoSwitchEnabled=true,skillCooldownUntil=-1,skillPrimed=false;
-if(dumbbellMode){activeWeaponMode="melee";autoSwitchEnabled=false;
+if(dumbbellMode){activeWeaponMode="melee";autoSwitchEnabled=true;
  el("introCard").querySelector("p").textContent=watchInputMode?
-  "갤럭시 워치4에서 컬을 끝까지 1회 반복하면 게임 공격 1회로 인식돼. 자동으로 숲을 탐색하며, 폴드6 카메라로 적의 공격을 피할 수 있어.":
-  "S21을 팔 암밴드에 고정하고 아령을 천천히 들었다 내리면 검격 1회로 인식돼. 이동과 적 추적은 자동이야. 적의 공격은 폴드6 카메라 회피로 피할 수 있어.";
+  "갤럭시 워치4에서 컬을 1회 완료하면 거리 안에서는 검격, 거리 밖에서는 활 공격이 나가. 적을 발견하면 접근 후 교전 중에는 멈추고, 폴드6 카메라로 회피해.":
+  "S21을 팔 암밴드에 고정하고 아령을 천천히 들었다 내리면, 가까운 적은 검격하고 먼 적은 활로 공격해. 교전 거리에 도착하면 이동을 멈추고 회피를 기다려.";
  el("begin").textContent="아령 사냥 시작";
+ el("weaponToggle").hidden=true; // Exercise reps choose melee/ranged automatically; no manual weapon lock.
  el("controllerLink").textContent="S21 암밴드 컬 센서";el("controllerLink").href="./dumbbell.html";
  el("location").textContent=watchInputMode?"워치4 컬 · 자동 숲 탐색":"아령 실험 · 자동 숲 탐색";
  if(watchInputMode){
@@ -425,7 +427,7 @@ if(dumbbellMode){activeWeaponMode="melee";autoSwitchEnabled=false;
   el("hostStart").parentElement.hidden=true;
   el("motionRoom").hidden=true;el("controllerLink").hidden=true;
   el("linkStatus").textContent="워치4에서 보정 완료 후 컬을 천천히 반복해. 이 화면의 전투를 시작하고 설정 창을 닫아야 실제 공격이 인정돼.";
-  el("footerNote").textContent="워치4 컬 = 공격 · 미연결 시 검격 버튼으로 계속 공격 가능";
+  el("footerNote").textContent="워치4 컬 = 거리별 검격/활 공격 · 미연결 시 화면 공격 버튼";
  }
 }
 const currentWeapon=()=>activeWeaponMode==="melee"?equipped.meleeWeapon:equipped.rangedWeapon;
@@ -453,9 +455,8 @@ function syncWeaponHud(){
  el("fire").querySelector("b").textContent=n.ranged;
  el("fire").querySelector(".icon").innerHTML=itemIllustration(weapon,"weapon");
  el("sword").hidden=!melee;el("fire").hidden=melee;
- el("weaponStatus").textContent=watchInputMode?
-  "검 준비 · 워치4 아령 컬 또는 터치 검격":
-  dumbbellMode?"검 준비 · S21 암밴드 컬 또는 터치 검격":
+ el("weaponStatus").textContent=watchInputMode?"워치4 아령 컬 · 거리 자동 검/활":
+  dumbbellMode?"S21 아령 컬 · 거리 자동 검/활":
   (melee?"검 준비 · S21 휘두르기 / F·E·R":"활 준비 · S21 투척 / Space")+(autoSwitchEnabled?" · 자동 선택":"");
  el("weaponToggle").innerHTML='<span class="toggleIcon">'+itemIllustration(melee?equipped.rangedWeapon:equipped.meleeWeapon,"weapon")+"</span><small>"+(melee?"활로 전환":"검으로 전환")+"</small>";
 }
@@ -480,13 +481,15 @@ function switchWeapon(mode,notice=true){
 }
 function updateAutoWeaponMode(){
  if(!autoSwitchEnabled||worldMode||enemy.dead||meleeAction||rangedAction)return;
- const next=automaticWeaponMode(camera,enemy,activeWeaponMode,weaponProfile(equipped.meleeWeapon).reach);
+ const next=dumbbellMode?
+  exerciseAttackMode(distance2d(camera,enemy),weaponProfile(equipped.meleeWeapon).reach):
+  automaticWeaponMode(camera,enemy,activeWeaponMode,weaponProfile(equipped.meleeWeapon).reach);
  if(next!==activeWeaponMode&&switchWeapon(next,false)){
   attackFeedback(next==="melee"?"가까운 적 · 검 자동 장착":"먼 적 · 활 자동 장착");
  }
 }
 function setAutoSwitchEnabled(enabled){
- autoSwitchEnabled=Boolean(enabled);
+ autoSwitchEnabled=dumbbellMode?true:Boolean(enabled);
  if(autoSwitchEnabled)updateAutoWeaponMode();
  syncWeaponHud();syncWeaponState();
 }
@@ -927,10 +930,13 @@ function launchPlayerProjectile(action){
  const d=Math.hypot(enemy.x-camera.x,enemy.z-camera.z),kind=projectileProfile(action.weapon);
  // Only a tiny correction when the player is already aiming close to target.
  // An off-screen monster, wrong elevation or out-of-range arrow cannot auto-hit.
- const attackYaw=targetLocked&&autoLockEnabled&&Math.abs(pitch)<.24?
+ const exerciseAim=dumbbellMode&&!enemy.dead&&d<=13;
+ const attackYaw=exerciseAim?(lockOnYaw(camera,enemy)??yaw):
+  targetLocked&&autoLockEnabled&&Math.abs(pitch)<.24?
   assistedAimYaw(camera,yaw,enemy,.13,13):yaw;
- const f=[Math.sin(attackYaw)*Math.cos(pitch),Math.sin(pitch),-Math.cos(attackYaw)*Math.cos(pitch)];
- const on=radiusAiming()||(targetLocked&&autoLockEnabled&&attackYaw!==yaw&&d<=13&&Math.abs(pitch)<.24);
+ const firedPitch=exerciseAim?0:pitch;
+ const f=[Math.sin(attackYaw)*Math.cos(firedPitch),Math.sin(firedPitch),-Math.cos(attackYaw)*Math.cos(firedPitch)];
+ const on=exerciseAim||radiusAiming()||(targetLocked&&autoLockEnabled&&attackYaw!==yaw&&d<=13&&Math.abs(pitch)<.24);
  const px=camera.x+Math.cos(attackYaw)*.34,py=camera.y-.21,pz=camera.z+Math.sin(attackYaw)*.34;
  projectiles.push({x:px,y:py,z:pz,vx:f[0]*kind.speed,vy:f[1]*kind.speed,vz:f[2]*kind.speed,
   kind:kind.kind,heading:Math.atan2(f[0],f[2]),speed:kind.speed,
@@ -997,6 +1003,7 @@ function damage(n,weapon="sword"){if(enemy.dead)return;enemyMind.aggro=true;enem
 const tint=weapon==="axe"||weapon==="ember"?[1,.58,.26]:weapon==="staff"||weapon==="orb"?[.38,.82,1]:weapon==="greatsword"||weapon==="aura"?[.50,.76,1]:weapon==="bow"||weapon==="arrow"?[.74,.94,.58]:[.80,1,.69];
 for(let i=0;i<16;i++){let p=(rand()-.5)*6,t=rand()*6.28,s=.65+rand()*2.6;sparks.push({x,y,z,vx:Math.cos(t)*s,vy:rand()*3.7,vz:Math.sin(t)*s,r:.04+rand()*.07,life:.4+rand()*.5,t:0,col:[tint[0],Math.min(1,tint[1]+rand()*.16),Math.min(1,tint[2]+rand()*.10)]})}toast('✦ '+n+' 데미지');beep(165,.12,'triangle',.11);if(enemy.hp<=0){enemy.dead=true;targetLocked=false;syncTargetUi();enemy.windup=0;enemy.impactUntil=0;enemyShots=[];el('attackBanner').hidden=true;el('enemyTag').hidden=true;el('enemyArrow').hidden=true;enemy.respawn=3.0;score+=80+enemy.kind*20;kills++;huntLog.push({name:enemy.name||"몬스터",at:huntElapsedSec});if(huntLog.length>25)huntLog.shift();heroHp=Math.min(stats.maxHp,heroHp+5);showHero();bankProgress();el('score').textContent=String(score).padStart(3,'0');el('enemyHud').style.opacity='0';el('stage').textContent=String(kills).padStart(2,'0');el('status').textContent='마력체 격파! 마을로 돌아가면 보상을 수령한다';setTimeout(()=>toast('마력체 격파 · 마을 보상 저장!'),350);beep(830,.25,'sine',.1)}}
 function spawnEnemy(){
+ exerciseEngaged=false; // New monster => a new single approach/engagement cycle.
  const oldKind=enemy.kind,area=forestZoneAt(camera.x,camera.z);
  dodgeProtectedAttack=0;
  enemy.kind=chooseForestMonster(area.id,rand,oldKind);
@@ -1125,20 +1132,28 @@ function updateEnemy(dt){
  * Pause automatic steps during telegraphs and attack follow-through; leave
  * dodge movement/camera recognition to the player.
  */
-// Keep large monsters' noses out of the camera without pushing the target
-// outside the reach of the currently equipped melee weapon.
+// One approach per encounter. During engagement the hero stands still and
+// fires ranged attacks if the target backs out of sword reach.
+let exerciseEngaged=false;
 function dumbbellCombatSpacing(){
- const creatureSpace=enemy.kind===5?4.15:enemy.kind===4||enemy.kind===7?3.95:
-  enemy.kind===3?3.45:3.2;
- return Math.min(creatureSpace,Math.max(2.45,weaponProfile(equipped.meleeWeapon).reach-.25));
+ const reach=weaponProfile(equipped.meleeWeapon).reach;
+ // Giant monsters need more space. Out of melee range means a ranged shot.
+ return Math.max(exerciseCameraClearance(enemy.kind)+.12,Math.min(4.2,reach-.3));
+}
+function guardExerciseCamera(){
+ if(!dumbbellMode||enemy.dead)return;
+ const fixed=separateExerciseCamera(camera,enemy,exerciseCameraClearance(enemy.kind));
+ if(fixed.moved){camera.x=fixed.x;camera.z=fixed.z;}
 }
 function autoExploreDumbbell(dt){
  if(!dumbbellMode||enemy.dead)return;
  const target=lockOnYaw(camera,enemy);
  if(target!==null)yaw=followTargetYaw(yaw,target,dt*2.0);
- if(enemy.windup>0||clock<enemy.impactUntil||meleeAction||rangedAction)return;
  const dist=distance2d(camera,enemy),spacing=dumbbellCombatSpacing();
- if(dist<=spacing||dist>100)return;
+ const intent=exerciseApproachState(exerciseEngaged,dist,spacing);
+ exerciseEngaged=intent.engaged;
+ if(!intent.move||dist>100||enemy.windup>0||
+    clock<enemy.impactUntil||meleeAction||rangedAction)return;
  const step=Math.min(dist-spacing,dt*2.7);
  camera.x=Math.max(-22,Math.min(22,camera.x+(enemy.x-camera.x)/dist*step));
  camera.z=Math.max(-31,Math.min(7,camera.z+(enemy.z-camera.z)/dist*step));
@@ -1160,13 +1175,15 @@ const remote=motionHost.connected?remoteInput.current(Date.now()):{x:0,y:0};
 let f=forward(),forwardX=Math.sin(yaw),forwardZ=-Math.cos(yaw),rightX=Math.cos(yaw),rightZ=Math.sin(yaw),mx=stick.x+(dumbbellMode?0:remote.x)+(keys.KeyD||keys.ArrowRight?1:0)-(keys.KeyA||keys.ArrowLeft?1:0),my=stick.y+(dumbbellMode?0:remote.y)+(keys.KeyS||keys.ArrowDown?1:0)-(keys.KeyW||keys.ArrowUp?1:0);let len=Math.hypot(mx,my);if(len>1){mx/=len;my/=len}let speed=4.0;camera.x+=(forwardX*-my+rightX*mx)*speed*dt;camera.z+=(forwardZ*-my+rightZ*mx)*speed*dt;camera.x=Math.max(-22,Math.min(22,camera.x));camera.z=Math.max(-31,Math.min(7,camera.z));
 autoExploreDumbbell(dt);
 if(!enemy.dead){
- const dx=camera.x-enemy.x,dz=camera.z-enemy.z;
- const dist=Math.hypot(dx,dz),minDist=dumbbellMode?dumbbellCombatSpacing():
-  enemy.kind===4||enemy.kind===7?2.12:enemy.kind===5?1.8:enemy.kind===3?1.5:1.48;
- if(dist<minDist){
-  const ax=dist>.001?dx/dist:Math.sin(yaw),az=dist>.001?dz/dist:-Math.cos(yaw);
-  camera.x=Math.max(-22,Math.min(22,enemy.x+ax*minDist));
-  camera.z=Math.max(-31,Math.min(7,enemy.z+az*minDist));
+ if(dumbbellMode)guardExerciseCamera();
+ else{
+  const dx=camera.x-enemy.x,dz=camera.z-enemy.z;
+  const dist=Math.hypot(dx,dz),minDist=enemy.kind===4||enemy.kind===7?2.12:enemy.kind===5?1.8:enemy.kind===3?1.5:1.48;
+  if(dist<minDist){
+   const ax=dist>.001?dx/dist:Math.sin(yaw),az=dist>.001?dz/dist:-Math.cos(yaw);
+   camera.x=Math.max(-22,Math.min(22,enemy.x+ax*minDist));
+   camera.z=Math.max(-31,Math.min(7,enemy.z+az*minDist));
+  }
  }
 }
 updateAutoWeaponMode();
@@ -1176,6 +1193,9 @@ camera.y=1.7+(len>.02?Math.sin(clock*10)*.045:Math.sin(clock*1.5)*.015)-dodgeCam
  syncBandage();
  el("skillAttack").querySelector("b").textContent=clock<skillCooldownUntil?"스킬 "+Math.ceil(skillCooldownUntil-clock)+"초":"스킬";el("dodgeInfo").textContent=clock<dodgeMessageUntil?dodgeMessage:clock<dodgeCooldown?"회피 재사용 "+(dodgeCooldown-clock).toFixed(1)+"초":"경고 시 좌우 이동·숙이기 / Q";
 updatePlayerActions();updateAutoWeaponMode();updateQueuedSkill();updateEnemy(dt);
+// The enemy can move closer on this frame; resolve visual-body clearance
+// after its own movement, before rendering or projectile collision.
+if(dumbbellMode&&!enemy.dead){guardExerciseCamera();updateAutoWeaponMode();}
 // Enemy projectiles travel in world coordinates; the player has time to
 // change position or actually sidestep instead of taking instant damage.
 for(let i=enemyShots.length-1;i>=0;i--){
@@ -1422,6 +1442,7 @@ const motionHost=createWirelessHost({
    const remote=remoteInput.ingest(packet,motionHost.room,Date.now());
    if(!remote.accepted)return;
    if(remote.type==="weapon-switch"){
+    if(dumbbellMode)return; // An armband/Watch4 curl is always distance-routed.
     if(remote.mode==="auto")setAutoSwitchEnabled(true);
     else{
      setAutoSwitchEnabled(false);
@@ -1573,8 +1594,10 @@ window.motionRpgWatchInput=packet=>{
     !Number.isInteger(packet.reps)||packet.reps<1)return false;
  watchMuscleBurstUntil=Date.now()+650;
  if(!active||worldMode||!el("motionPanel").hidden||heroHp<=0)return false;
- const accepted=swordHit("overhead");
- el("remoteStatus").textContent="워치4 컬 "+packet.reps+"회 · "+(accepted?"검격 실행":"전투 공격 쿨타임/준비 중");
+ updateAutoWeaponMode();
+ const accepted=activeWeaponMode==="ranged"?magic():swordHit("overhead");
+ el("remoteStatus").textContent="워치4 컬 "+packet.reps+"회 · "+(accepted?
+   (activeWeaponMode==="ranged"?"활 공격 실행":"검격 실행"):"전투 공격 쿨타임/준비 중");
  if(accepted)huntMotionActions++;
  renderMotionCooldown();return accepted;
 };
@@ -1800,7 +1823,11 @@ const begin=el('begin');if(begin)begin.addEventListener('click',()=>{
   });
  }
 });
-el("weaponToggle").addEventListener("click",()=>{setAutoSwitchEnabled(false);switchWeapon(activeWeaponMode==="melee"?"ranged":"melee");});
+el("weaponToggle").addEventListener("click",()=>{
+ if(dumbbellMode)return; // In exercise mode attack distance is authoritative.
+ setAutoSwitchEnabled(false);
+ switchWeapon(activeWeaponMode==="melee"?"ranged":"melee");
+});
 el("skillAttack").addEventListener("click",activateSkill);
 el("bandage").addEventListener("click",useBestRecovery);
 el('dodge').addEventListener('pointerdown',e=>{e.preventDefault();dodge()});el('fire').addEventListener('pointerdown',e=>{e.preventDefault();magic()});const meleeButton=el("sword");let meleePointer=null;
