@@ -257,6 +257,8 @@
 @media(max-width:650px){#attackBanner{top:20%;width:min(480px,78vw)}#attackBanner b,#attackBanner.dodgeNow b{font-size:clamp(22px,5.6vw,35px)}#reactionFx{top:41%}}
 
 /* v0.48 clear combat cadence from two metres away. */
+#frameError[hidden]{display:none!important}
+#frameError{position:fixed;z-index:21;left:50%;top:35%;transform:translate(-50%,-50%);width:max-content;max-width:min(570px,90vw);pointer-events:none;padding:12px 17px;border:2px solid #ffba8d;border-radius:15px;background:#49241def;color:#fff4df;font-size:clamp(13px,2.4vw,19px);font-weight:850;text-align:center;line-height:1.45;text-shadow:0 2px 4px #1b1010;box-shadow:0 12px 30px #170907ad;overflow-wrap:anywhere}
 #attackReadySignal[hidden]{display:none!important}
 #attackReadySignal{position:fixed;z-index:18;left:50%;bottom:19%;transform:translateX(-50%);pointer-events:none;
   min-width:min(280px,68vw);max-width:86vw;text-align:center;border-radius:20px;padding:12px 24px;
@@ -352,7 +354,7 @@
  <p id="huntExitRewards" class="huntExitRewards"></p><p id="huntExitActivity" class="huntExitActivity"></p>
  <ol id="huntExitLog"></ol><div class="huntExitActions"><button id="resumeHunt" type="button">계속 사냥</button><button id="confirmHuntReturn" type="button">마을로 돌아가기</button></div>
  </div></div>
-<div id="err"></div><div id="retryWrap" hidden><strong>기력이 소진됐어</strong><p>S21 연결은 유지돼. 바로 재도전하면 새 연결 코드를 입력할 필요 없어.</p><button id="retryCombat">기력 회복 · 다시 싸우기</button></div>
+<div id="frameError" hidden role="status" aria-live="polite"></div><div id="err"></div><div id="retryWrap" hidden><strong>기력이 소진됐어</strong><p>S21 연결은 유지돼. 바로 재도전하면 새 연결 코드를 입력할 필요 없어.</p><button id="retryCombat">기력 회복 · 다시 싸우기</button></div>
 <div id="motionPanel" hidden role="dialog" aria-modal="true" aria-label="실전 모션 입력 설정">
  <div class="motionDialog">
   <div class="motionTop"><div><small>MOTION RPG / v0.47</small><h2>실전 모션 전투 설정</h2></div><button id="motionClose" class="subtle">게임으로 돌아가기</button></div>
@@ -400,6 +402,7 @@ import {dodgePrompt,DODGE_PROMPT_WINDOW_SEC} from "./src/dodge-cue.mjs?v=0.46";
 import {dodgeCameraPose,DODGE_SIDE_STEP_M,canReserveTimedDodge,shouldDodgeMeleeHit} from "./src/dodge-feedback.mjs?v=0.47";
 import {relativeTarget,radarTarget,projectEnemyHead,enemyEdgePointer,monsterHeadHeight,compassDirection,RADAR_RANGE} from "./src/combat-navigation.mjs?v=0.36";
 import {validMotionPacket} from "./src/motion-core.mjs?v=0.49";
+import {runFrameSafely} from "./src/frame-loop.mjs?v=0.53";
 import {createPoseCamera} from "./src/pose-camera.mjs?v=0.47";
 import {ATTACKS,angleToTarget,turnToTarget,strikeInfo,spawnAroundPlayer,distance2d,dodgeMatches} from "./src/combat-spatial.mjs?v=0.35";
 (()=>{'use strict';
@@ -1368,6 +1371,32 @@ function renderEnemyProjectile(shot){
    shot.kind==="rock"?[.64,.55,.4]:[.23,.64,1],0,.55,.28);
  }
 }
+// Keep one graphics exception from killing the only requestAnimationFrame chain.
+// Store the last diagnostic locally so a later screenshot/report can identify it.
+let frameErrorSignature="",frameErrorLoggedAt=0,frameErrorLastAt=0,attackFxDisabled=false;
+function reportFrameError(phase,error){
+ const message=String(error?.message||error||"Unknown error"),signature=phase+"|"+message,now=Date.now();
+ if(signature===frameErrorSignature&&now-frameErrorLoggedAt<2500)return;
+ frameErrorSignature=signature;frameErrorLoggedAt=now;frameErrorLastAt=now;
+ const detail={at:new Date(now).toISOString(),phase,message,stack:String(error?.stack||"").slice(0,1500),
+  enemy:enemy.name,enemyKind:enemy.kind,attackStyle:enemy.attackStyle,
+  windup:Number(enemy.windup?.toFixed(2)||0),clock:Number(clock.toFixed(2))};
+ try{localStorage.setItem("motion-rpg-last-frame-error-v1",JSON.stringify(detail));}catch{}
+ console.error("[Motion RPG] recoverable frame error",detail,error);
+ const banner=el("frameError");
+ banner.hidden=false;
+ banner.textContent="전투 처리 오류 · 자동 복구 시도 ("+phase+") · "+message.slice(0,115);
+}
+function renderAttackFxSafely(phase,visual){
+ if(attackFxDisabled)return;
+ try{
+  if(phase==="warning")renderAttackFootprint(visual);
+  else{renderEnemyRangedCharge(visual);renderEnemyAttack(visual);}
+ }catch(error){
+  attackFxDisabled=true;
+  reportFrameError("attack-vfx-"+phase,error);
+ }
+}
 function render(){
  resize();
  gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);
@@ -1375,10 +1404,9 @@ function render(){
  gl.useProgram(program);gl.uniformMatrix4fv(loc.vp,false,vp);gl.uniform3fv(loc.cam,[camera.x,camera.y,camera.z]);
  draw(staticMesh);
  const enemyVisual=attackVisualState(enemy,clock);
- renderAttackFootprint(enemyVisual);
+ renderAttackFxSafely("warning",enemyVisual);
  renderEnemy(enemyVisual);
- renderEnemyRangedCharge(enemyVisual);
- renderEnemyAttack(enemyVisual);
+ renderAttackFxSafely("impact",enemyVisual);
  for(const p of projectiles)renderPlayerProjectile(p);
  for(const shot of enemyShots)renderEnemyProjectile(shot);
  for(const sp of sparks){
@@ -1393,9 +1421,13 @@ function render(){
   drawCombatEffects(weaponCtx,W,H,currentWeapon(),meleeAction,rangedAction,clock);
  }
  updateEnemyNavigation();
- requestAnimationFrame(loop);
 }
-function loop(t){let dt=Math.min(.05,Math.max(.001,(t-last)/1000||.016));last=t;update(dt);render()}
+function loop(t){
+ const dt=Math.min(.05,Math.max(.001,(t-last)/1000||.016));
+ last=t;
+ runFrameSafely(()=>requestAnimationFrame(loop),()=>update(dt),render,reportFrameError);
+ if(frameErrorLastAt&&Date.now()-frameErrorLastAt>7000)el("frameError").hidden=true;
+}
 function dragCamera(){let pId=null,lx=0,ly=0;const target=cvs;target.addEventListener('pointerdown',e=>{if(!active)return;pId=e.pointerId;lx=e.clientX;ly=e.clientY;target.setPointerCapture(pId)});target.addEventListener('pointermove',e=>{if(e.pointerId!==pId)return;let dx=e.clientX-lx,dy=e.clientY-ly;lx=e.clientX;ly=e.clientY;if(Math.abs(dx)+Math.abs(dy)>0)pauseAutoAim();yaw+=dx*.0042;pitch=Math.max(-.72,Math.min(.57,pitch-dy*.0038))});const stop=e=>{if(e.pointerId===pId)pId=null};target.addEventListener('pointerup',stop);target.addEventListener('pointercancel',stop)}
 function joystick(){const area=el('joy'),stickEl=el('stick');let pid=null;function redraw(e){let r=area.getBoundingClientRect(),dx=(e.clientX-(r.left+r.width/2)),dy=e.clientY-(r.top+r.height/2),m=Math.hypot(dx,dy),lim=r.width*.34;if(m>lim){dx*=lim/m;dy*=lim/m}stick.x=dx/lim;stick.y=dy/lim;stickEl.style.transform=`translate(${dx}px,${dy}px)`}area.addEventListener('pointerdown',e=>{if(!active)return;pid=e.pointerId;area.setPointerCapture(pid);redraw(e)});area.addEventListener('pointermove',e=>{if(e.pointerId===pid)redraw(e)});function end(e){if(e.pointerId!==pid)return;pid=null;stick.x=0;stick.y=0;stickEl.style.transform='translate(0,0)'}area.addEventListener('pointerup',end);area.addEventListener('pointercancel',end)}
 
