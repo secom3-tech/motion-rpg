@@ -270,6 +270,32 @@
 #spawnNotice{font-size:clamp(17px,3vw,24px);max-width:90vw;white-space:normal;padding:12px 15px}
 #enemyArrowText{font-size:clamp(13px,2.5vw,18px);max-width:190px;padding:5px 10px}
 @media(max-width:640px){#spawnNotice{font-size:clamp(15px,4.5vw,22px)}#enemyArrowText{font-size:clamp(12px,3.5vw,18px)}}
+
+/* Compact live exercise feedback: watch-only, never covers the 3D crosshair. */
+#watchBodyHud[hidden]{display:none!important}
+#watchBodyHud{position:fixed;z-index:8;right:max(12px,env(safe-area-inset-right));top:84px;
+ width:118px;padding:9px 7px 7px;border-radius:15px;pointer-events:none;text-align:center;
+ color:#e9f8e8;background:linear-gradient(160deg,rgba(7,26,36,.77),rgba(14,46,46,.67));
+ border:1px solid rgba(191,236,219,.28);box-shadow:0 5px 25px #07171bcc;
+ backdrop-filter:blur(10px);font-size:10px}
+#watchBodyHud .hrRow{display:flex;align-items:center;justify-content:center;gap:4px;font-variant-numeric:tabular-nums}
+#watchBodyHud #watchBpm{font-size:19px;font-weight:900;letter-spacing:-.03em;color:#ffbfab}
+#watchBodyHud .hrText{font-size:9px;color:#c6d6ce}
+#watchBodyHud .hrIcon{color:#fc8d99;font-size:14px}
+#watchBodyHud svg{width:73px;height:112px;overflow:visible;display:block;margin:3px auto 0}
+#watchBodyHud .bodyBase{fill:#8badaa;stroke:#cae6d9;stroke-width:1.1;opacity:.38}
+#watchBodyHud .armZone,#watchBodyHud .legZone{fill:#a8c4b8;stroke:#bce5d2;stroke-width:1;opacity:.28;transition:fill .2s,opacity .2s,filter .2s}
+#watchBodyHud[data-focus="arms"] .armZone{fill:#a7ffa8;opacity:1;filter:drop-shadow(0 0 5px #9bff98)}
+#watchBodyHud[data-focus="legs"] .legZone{fill:#9beff6;opacity:1;filter:drop-shadow(0 0 5px #7de9f8)}
+#watchBodyHud[data-burst="yes"] .armZone{filter:drop-shadow(0 0 10px #d8ffab);fill:#e6ffa2}
+#watchBodyHud .workoutName{font-size:10px;font-weight:850;color:#b0f3cc;letter-spacing:-.02em}
+#watchBodyHud .watchCount{font-size:11px;color:#f5ffe8;font-weight:900}
+#watchBodyHud .watchConn{font-size:8px;color:#adccc6;margin-top:3px}
+#watchBodyHud[data-connected="yes"] .watchConn{color:#bcf6d1}
+@media(max-height:540px){#watchBodyHud{width:98px;top:67px;padding:6px 5px}
+ #watchBodyHud svg{width:53px;height:79px;margin:0 auto}
+ #watchBodyHud #watchBpm{font-size:16px}#watchBodyHud .workoutName{font-size:9px}}
+@media(max-width:500px){#watchBodyHud{top:80px;width:93px}#watchBodyHud svg{width:57px;height:81px}}
 </style></head><body>
 <div id="sky"></div><canvas id="game"></canvas><div id="vignette"></div><div id="bottomShade"></div><div id="screenFx"></div><canvas id="weaponCanvas" aria-hidden="true"></canvas>
 <div class="ui" id="brand"><div id="sigil">✦</div><div><h1>Motion RPG</h1><p>BORDERWOOD · HUNT</p></div></div>
@@ -281,6 +307,22 @@
 <div id="enemyArrow" hidden><div id="enemyArrowIcon">▲</div><span id="enemyArrowText">적 발견</span></div>
 <div id="spawnNotice" hidden role="status" aria-live="polite"></div>
 <div id="attackBanner" hidden aria-live="off"><b id="attackBannerText">공격 준비</b><div class="attackMeter"><i id="attackBannerMeter"></i></div><small id="attackBannerHint"></small></div>
+
+<div id="watchBodyHud" hidden aria-label="워치4 실시간 심박수와 운동 근육 표시" data-focus="none" data-connected="no">
+ <div class="hrRow"><span class="hrIcon">♥</span><strong id="watchBpm">--</strong><span class="hrText">BPM</span></div>
+ <svg viewBox="0 0 100 152" xmlns="http://www.w3.org/2000/svg" aria-label="운동 부위 실루엣" role="img">
+  <circle class="bodyBase" cx="50" cy="13" r="9"/>
+  <path class="bodyBase" d="M42 23 L58 23 L67 36 L63 79 L58 86 L42 86 L37 79 L33 36 Z"/>
+  <path class="armZone" d="M36 29 Q28 30 24 41 L16 69 Q14 76 19 78 Q25 80 27 73 L37 46 Z"/>
+  <path class="armZone" d="M64 29 Q72 30 76 41 L84 69 Q86 76 81 78 Q75 80 73 73 L63 46 Z"/>
+  <path class="bodyBase" d="M39 79 L61 79 L61 92 L39 92 Z"/>
+  <path class="legZone" d="M40 89 L49 89 L47 120 L44 144 Q40 150 35 144 L34 135 L37 108 Z"/>
+  <path class="legZone" d="M51 89 L60 89 L63 108 L66 135 L65 144 Q60 150 56 144 L53 120 Z"/>
+ </svg>
+ <div class="workoutName" id="watchWorkoutType">워치 운동</div>
+ <div class="watchCount" id="watchCount">0회</div>
+ <div class="watchConn" id="watchConnection">워치 연결 대기</div>
+</div>
 <div class="ui glass" id="playerHud"><b id="gearHud">숲 사냥꾼</b><div id="heroHpText">기력 100 / 100</div><div id="heroHpWrap"><div id="heroHp"></div></div><small id="dodgeInfo">적의 경고에 맞춰 회피</small>
 <div id="motionCooldown" class="motionCooldown" hidden aria-label="S21 공격 준비 상태">
  <div class="motionCooldownLabel"><b id="motionCooldownState">S21 상태 확인 중</b><strong id="motionCooldownTime">—</strong></div>
@@ -359,6 +401,7 @@ if(dumbbellMode){activeWeaponMode="melee";autoSwitchEnabled=false;
  el("controllerLink").textContent="S21 암밴드 컬 센서";el("controllerLink").href="./dumbbell.html";
  el("location").textContent=watchInputMode?"워치4 컬 · 자동 숲 탐색":"아령 실험 · 자동 숲 탐색";
  if(watchInputMode){
+  el("watchBodyHud").hidden=false;
   el("introCard").querySelector("small").textContent="워치 앱에서 센서와 아래/위 자세를 먼저 보정해. 이 모드는 폴드6 전용 연결 앱에서 실행해야 워치 신호를 받을 수 있어.";
   el("motionOpen").textContent="워치 설정";
   el("motionPanel").querySelector(".motionSection h3").textContent="① 갤럭시 워치4 센서 연결";
@@ -1450,24 +1493,57 @@ el("autoHealSetting").addEventListener("click",()=>setAutoHeal(!autoHealEnabled)
 syncAutoHealSetting();syncTargetUi();
 let lastMotionSequence=-1,lastMotionAt=-Infinity,poseEvents=0,wasLinked=false;
 let sensorReport=null,sensorReportAt=0,lastSensorSeq=-1,previousAttackReadyPhase="off";
-let lastWatchRepSeq=-1,watchSeenAt=0,watchCalibrated=false,watchRepCount=0;
+let lastWatchRepSeq=-1,watchSessionToken="",watchSeenAt=0,watchCalibrated=false,watchRepCount=0;
+let watchHeartBpm=null,watchHeartAt=0,watchBattery=null,watchSensorActive=false;
+let watchMuscleBurstUntil=0,watchLegFocusUntil=0;
+function applyWatchTelemetry(packet){
+ if(!watchInputMode||!packet||!Number.isSafeInteger(packet.seq)||
+    typeof packet.session!=="string"||packet.session.length!==36)return false;
+ if(watchSessionToken!==packet.session){
+  watchSessionToken=packet.session;lastWatchRepSeq=-1;watchRepCount=0;
+ }
+ watchSeenAt=Date.now();
+ watchCalibrated=packet.calibrated===true;
+ watchSensorActive=packet.sensorActive===true;
+ if(Number.isInteger(packet.reps)&&packet.reps>=0)watchRepCount=packet.reps;
+ if(Number.isFinite(packet.bpm)&&packet.bpm>=35&&packet.bpm<=230){
+  watchHeartBpm=Math.round(packet.bpm);watchHeartAt=Date.now();
+ }
+ if(Number.isInteger(packet.battery)&&packet.battery>=0&&packet.battery<=100)
+  watchBattery=packet.battery;
+ updateWatchBodyHud();return true;
+}
+function updateWatchBodyHud(){
+ if(!watchInputMode)return;
+ const hud=el("watchBodyHud"),now=Date.now(),connected=watchSeenAt&&now-watchSeenAt<12000;
+ hud.dataset.connected=connected?"yes":"no";
+ hud.dataset.focus=now<watchLegFocusUntil?"legs":connected&&watchCalibrated?"arms":"none";
+ hud.dataset.burst=now<watchMuscleBurstUntil?"yes":"no";
+ el("watchBpm").textContent=watchHeartBpm!==null&&now-watchHeartAt<14000&&connected?
+  String(watchHeartBpm):"--";
+ el("watchWorkoutType").textContent=hud.dataset.focus==="legs"?"하체 · 앉기":"팔 · 아령 컬";
+ el("watchCount").textContent=watchRepCount+"회";
+ el("watchConnection").textContent=!connected?"워치 연결 대기":
+    !watchSensorActive?"센서 꺼짐":!watchCalibrated?"자세 보정 필요":"● 워치 연결"+(watchBattery===null?"":" · "+watchBattery+"%");
+}
 window.motionRpgWatchStatus=packet=>{
- if(!watchInputMode||!packet||!Number.isInteger(packet.seq))return false;
- watchSeenAt=Date.now();watchCalibrated=packet.calibrated===true;
- watchRepCount=Math.max(watchRepCount,Math.max(0,Number(packet.reps)||0));
+ if(!applyWatchTelemetry(packet))return false;
  renderMotionCooldown();return true;
 };
 window.motionRpgWatchInput=packet=>{
- if(!watchInputMode||!packet||!Number.isSafeInteger(packet.seq)||packet.seq<=lastWatchRepSeq||
-    packet.calibrated!==true||!Number.isInteger(packet.reps)||packet.reps<1)return false;
- lastWatchRepSeq=packet.seq;watchSeenAt=Date.now();
- watchCalibrated=true;watchRepCount=packet.reps;
+ if(!watchInputMode||!packet||!Number.isSafeInteger(packet.seq)||
+    typeof packet.session!=="string"||packet.session.length!==36)return false;
+ if(watchSessionToken!==packet.session){watchSessionToken=packet.session;lastWatchRepSeq=-1;}
+ if(packet.seq<=lastWatchRepSeq)return false;
+ lastWatchRepSeq=packet.seq;
+ if(!applyWatchTelemetry(packet)||!watchCalibrated||!watchSensorActive||
+    !Number.isInteger(packet.reps)||packet.reps<1)return false;
+ watchMuscleBurstUntil=Date.now()+650;
  if(!active||worldMode||!el("motionPanel").hidden||heroHp<=0)return false;
  const accepted=swordHit("overhead");
  el("remoteStatus").textContent="워치4 컬 "+packet.reps+"회 · "+(accepted?"검격 실행":"전투 공격 쿨타임/준비 중");
  if(accepted)huntMotionActions++;
- renderMotionCooldown();
- return accepted;
+ renderMotionCooldown();return accepted;
 };
 function renderWatchHud(){
  const panel=el("motionCooldown"),large=el("attackReadySignal");
@@ -1477,10 +1553,12 @@ function renderWatchHud(){
  const gameMs=Math.max(0,(.48+stats.attackDelay-clock+lastFire)*1000);
  let title="워치4 연결 대기",phase="off",duration="—",progress=0;
  if(watchSeenAt&&age<12000){
-  if(!watchCalibrated){title="워치 자세 보정";phase="neutral";duration="대기";progress=0;}
-  else if(!active){title="사냥 시작 대기";duration="시작";progress=0;}
+  if(!watchSensorActive){title="워치 센서 꺼짐";}
+  else if(!watchCalibrated){title="워치 자세 보정";phase="neutral";duration="대기";}
+  else if(!active){title="사냥 시작 대기";duration="시작";}
   else if(gameMs>0||meleeAction){
-   phase="cooldown";title="공격 진행 중";duration=(gameMs/1000).toFixed(1)+"초";progress=Math.max(0,100*(1-gameMs/1000));
+   phase="cooldown";title="공격 진행 중";duration=(gameMs/1000).toFixed(1)+"초";
+   progress=Math.max(0,100*(1-gameMs/1000));
   }else{phase="ready";title="컬 준비 완료";duration="READY";progress=100;}
  }
  panel.className="motionCooldown "+phase;
@@ -1488,9 +1566,9 @@ function renderWatchHud(){
  fill.style.width=Math.round(progress)+"%";track.setAttribute("aria-valuenow",String(Math.round(progress)));
  if(!large.hidden){
   large.className=phase;
-  const text=phase==="ready"?"아령 컬!":phase==="cooldown"?"공격 중":title;
-  large.textContent=text+" · "+watchRepCount+"회";
+  large.textContent=(phase==="ready"?"아령 컬!":phase==="cooldown"?"공격 중":title)+" · "+watchRepCount+"회";
  }
+ updateWatchBodyHud();
 }
 
 function renderMotionCooldown(){
@@ -1574,6 +1652,10 @@ const poseCamera=createPoseCamera({
  },
  onDodge:event=>{
   poseEvents++;
+  if(watchInputMode&&event.direction==="duck"){
+   watchLegFocusUntil=Date.now()+1800;
+   updateWatchBodyHud();
+  }
   const description=event.direction==="duck"?"앉기":event.direction==="left"?"왼쪽 이동":"오른쪽 이동";
   poseFeedbackUntil=performance.now()+1500;
   if(dodge(event.direction)){
@@ -1584,6 +1666,13 @@ const poseCamera=createPoseCamera({
  }
 });
 function refreshMotionIndicator(){
+ if(watchInputMode){
+  const camera=poseCamera.active,connected=watchSeenAt&&Date.now()-watchSeenAt<12000;
+  const button=el("motionOpen");
+  button.classList.toggle("connected",Boolean(camera||connected));
+  button.textContent=camera&&connected?"워치+카메라":camera?"카메라 켜짐":connected?"워치 연결됨":"워치 설정";
+  return;
+ }
  const camera=poseCamera.active,connected=motionHost.connected;
  const button=el("motionOpen");
  button.classList.toggle("connected",camera||connected);
