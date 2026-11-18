@@ -53,5 +53,5 @@ for(const marker of [
  'pending.mode==="auto"?',
  'data.queued?"폴드6 스킬 예약 확인'
 ])assert.ok(pad.includes(marker),"S21 charged joystick skill missing: "+marker);
-assert.ok(hub.includes("indoor.html?v=0.48"),"Hub must open new arena");
+assert.ok(hub.includes("indoor.html?v=0.53"),"Hub must open current stable arena");
 console.log("V0.46 PASS: actual dodge success feedback, 1s center-hold skill, wisp melee distance, 700ms auto melee and safe ranged protection");

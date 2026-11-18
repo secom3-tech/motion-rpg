@@ -58,7 +58,7 @@ try{
  assert.equal(check.status,0,"Arena JS syntax: "+check.stderr);
 }finally{if(fs.existsSync(file))fs.unlinkSync(file);}
 for(const str of [
- "renderAttackFootprint(enemyVisual)","renderEnemyAttack(enemyVisual)",
+ 'renderAttackFxSafely("warning",enemyVisual)','renderAttackFxSafely("impact",enemyVisual)',
  "showEnemyStrike()","attackArea(attack,enemy.attackStyle)",
  "enemy.windupTotal=attackWindup","enemy.impactUntil=clock+enemy.impactDuration",
  "function renderBeast(ex,ey,ez,visual)",'id="attackBanner"','id="attackBannerMeter"'
