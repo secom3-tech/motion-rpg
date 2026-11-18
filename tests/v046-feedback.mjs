@@ -28,7 +28,7 @@ const arena=fs.readFileSync(new URL("../indoor.html",import.meta.url),"utf8");
 const pad=fs.readFileSync(new URL("../controller.html",import.meta.url),"utf8");
 const hub=fs.readFileSync(new URL("../preview.html",import.meta.url),"utf8");
 for(const marker of [
- 'return clock<=dodgeUntil&&["button","left","right","duck"].includes(lastDodgeKind)',
+ 'return shouldDodgeMeleeHit({protectedAttack:dodgeProtectedAttack,attackId:enemyAttackSeq,',
  'if(clock<=dodgeUntil&&["button","left","right","duck"].includes(lastDodgeKind))',
  'showDodgeResult("✓ 회피 성공!",1.7)',
  'showDodgeResult("✓ 발사체 회피 성공!",1.7)',
@@ -53,5 +53,5 @@ for(const marker of [
  'pending.mode==="auto"?',
  'data.queued?"폴드6 스킬 예약 확인'
 ])assert.ok(pad.includes(marker),"S21 charged joystick skill missing: "+marker);
-assert.ok(hub.includes("indoor.html?v=0.46"),"Hub must open new arena");
+assert.ok(hub.includes("indoor.html?v=0.47"),"Hub must open new arena");
 console.log("V0.46 PASS: actual dodge success feedback, 1s center-hold skill, wisp melee distance, 700ms auto melee and safe ranged protection");
