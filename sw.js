@@ -1,7 +1,7 @@
 // Network-first for live gameplay prevents old installed PWA caches from serving
 // obsolete weapon, controller or UI code after the next release.
-const CACHE = "motion-rpg-v0.46";
-const ASSETS = ["./", "./preview.html?v=0.46", "./indoor.html?v=0.46", "./controller.html?v=0.46", "./manifest.webmanifest", "./icons/icon.svg"];
+const CACHE = "motion-rpg-v0.47";
+const ASSETS = ["./", "./preview.html?v=0.47", "./indoor.html?v=0.47", "./controller.html?v=0.47", "./manifest.webmanifest", "./icons/icon.svg"];
 self.addEventListener("install", event => event.waitUntil(
  caches.open(CACHE).then(cache => cache.addAll(ASSETS)).then(() => self.skipWaiting())
 ));
