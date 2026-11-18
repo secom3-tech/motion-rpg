@@ -47,22 +47,21 @@ const insideBounds=(p,b)=>p.x>=b.minX&&p.x<=b.maxX&&p.z>=b.minZ&&p.z<=b.maxZ;
  * Min range prevents materializing on top of the hero.
  * Caller should pass deterministic/seeded random for unit tests.
  */
-export function spawnAroundPlayer(player,heading,random=Math.random,bounds={minX:-20,maxX:20,minZ:-29,maxZ:5}){
+export function spawnAroundPlayer(player,heading,random=Math.random,bounds={minX:-20,maxX:20,minZ:-29,maxZ:5},options={}){
  if(!player||![player.x,player.z,heading].every(finite))throw Error("Invalid player location");
  if(!bounds||![bounds.minX,bounds.maxX,bounds.minZ,bounds.maxZ].every(finite)||bounds.minX>=bounds.maxX||bounds.minZ>=bounds.maxZ)
   throw Error("Invalid world bounds");
- const samples=[];
- for(let i=0;i<64;i++){
-  // First 24 attempts try ahead and sides. Later allow hidden forest ambush
-  // near the edge of the map, never an immediate zero-distance hit.
+ const explore=options?.exploration===true;
+ const minRadius=explore?19:10,maxRadius=explore?27:18;
+ for(let i=0;i<(explore?110:64);i++){
+  // The next encounter is farther away; finding it requires moving in the forest.
   const spread=i<24?1.25:i<44?Math.PI*.8:Math.PI;
   const angle=heading+(random()*2-1)*spread;
-  const radius=11+random()*7;
+  const radius=explore?minRadius+random()*(maxRadius-minRadius):11+random()*7;
   const point={x:player.x+Math.sin(angle)*radius,z:player.z+Math.cos(angle)*radius};
-  if(insideBounds(point,bounds)&&distance2d(player,point)>=10){
+  if(insideBounds(point,bounds)&&distance2d(player,point)>=minRadius){
    return {x:point.x,z:point.z,heading:angle,distance:distance2d(player,point),ambush:i>=24};
   }
-  samples.push(point);
  }
  // Fallback for pathological map-edge/corner positioning: select the farthest
  // legal arena landmark. Never spawn inside the player's melee range.
@@ -73,8 +72,9 @@ export function spawnAroundPlayer(player,heading,random=Math.random,bounds={minX
   {x:(b.minX+b.maxX)/2,z:b.minZ+2},{x:(b.minX+b.maxX)/2,z:b.maxZ-2},
   {x:b.minX+2,z:(b.minZ+b.maxZ)/2},{x:b.maxX-2,z:(b.minZ+b.maxZ)/2}
  ];
- landmarks.sort((a,c)=>Math.abs(distance2d(player,a)-15)-Math.abs(distance2d(player,c)-15));
- const p=landmarks.find(p=>distance2d(player,p)>=10)||landmarks[landmarks.length-1];
+ landmarks.sort((a,c)=>explore?Math.abs(distance2d(player,a)-23)-Math.abs(distance2d(player,c)-23):
+  Math.abs(distance2d(player,a)-15)-Math.abs(distance2d(player,c)-15));
+ const p=landmarks.find(p=>distance2d(player,p)>=minRadius)||landmarks[landmarks.length-1];
  return {x:p.x,z:p.z,heading:angleToTarget(player,p),distance:distance2d(player,p),ambush:true};
 }
 
