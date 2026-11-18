@@ -1,0 +1,40 @@
+<!doctype html><html lang="ko"><head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Motion RPG · 갤럭시 워치4 연결 안내</title>
+<style>body{font:16px/1.65 system-ui,-apple-system,"Malgun Gothic",sans-serif;background:#142426;color:#e7f2e8;margin:0}
+main{max-width:760px;margin:auto;padding:24px}h1{font-size:29px;line-height:1.2}h2{font-size:20px;margin-top:26px}
+a{color:#a3ebcc}code{color:#ffe7aa}section{border:1px solid #4a716c;border-radius:14px;background:#1e3435;padding:14px 18px;margin:18px 0}
+li{margin:6px 0}small{color:#c3d4d0}.warn{border-color:#bc9760}
+</style></head><body><main>
+<small>MOTION RPG · v0.50 · 네이티브 워치 입력 실험</small>
+<h1>갤럭시 워치4로 아령 사냥</h1>
+<p>워치4에서 팔 움직임을 인식하고 폴드6의 Motion RPG 3D 숲 사냥을 조작하는 실험 버전입니다. 기존 S21 조작과 암밴드 웹앱은 그대로 사용할 수 있습니다.</p>
+<section>
+<h2>① APK 설치</h2>
+<p><a href="https://github.com/secom3-tech/motion-rpg/actions/workflows/watch-apk.yml">GitHub Actions · 워치/폰 설치 파일</a>에서 최신 성공 실행을 열고 <b>watch4-fold6-debug-apks</b> 압축파일을 받습니다.</p>
+<ol>
+<li><b>mobile-debug.apk</b> : 폴드6에 설치</li>
+<li><b>wear-debug.apk</b> : 워치4에 설치 (워치 무선 디버깅/ADB 필요)</li>
+</ol>
+<p>두 APK는 <b>한 번의 동일 빌드에서 생성한 한 쌍</b>을 설치해야 합니다. 이미 다른 빌드의 실험 앱이 설치되어 있으면 두 기기에서 이전 앱을 제거한 후 다시 설치하세요.</p>
+</section>
+<section>
+<h2>② 앱 실행·연결</h2>
+<ol>
+<li>워치4를 폴드6의 Galaxy Wearable 앱에 연결합니다.</li>
+<li>폴드6에서 <b>Motion RPG 워치 연결</b> 앱을 엽니다. 3D 전투가 앱 내부에서 열립니다.</li>
+<li>워치4에서 <b>Motion RPG 컬</b> 앱을 켜고 <b>센서 켜기</b>를 누릅니다.</li>
+<li>팔을 아래로 내린 자세에서 1초 가만히 유지 후 <b>① 아래 자세 보정</b>을 누릅니다.</li>
+<li>팔꿈치를 굽혀 위로 올린 자세에서 1초 유지 후 <b>② 위 자세 보정</b>을 누릅니다.</li>
+<li>다시 팔을 아래로 내립니다. 폴드6에서 <b>아령 사냥 시작</b>을 누른 뒤 컬을 5회 천천히 반복합니다.</li>
+</ol>
+<p>워치는 한쪽 팔만 감지합니다. 반복 기록은 전체 자세의 정확성을 판정하지 않으며, 게임 전투 상태 때문에 수신 공격이 거절될 수 있습니다.</p>
+</section>
+<section class="warn">
+<h2>주의</h2>
+<p><b>기존 크롬 웹앱을 폴드6에서 직접 여는 것으로는 워치 신호를 받을 수 없습니다.</b> 워치 Data Layer를 받는 폴드6 전용 연결 앱이 필요합니다. 이 앱 안에 뜨는 웹게임은 Chrome/Samsung Internet과 로컬 저장 공간이 달라 기존 게임 진행이 자동 이전되지 않습니다.</p>
+<p>워치 APK는 일반 휴대폰 APK 설치처럼 바로 열리지 않습니다. 워치4에서 개발자 옵션과 무선 디버깅을 켜고 PC의 ADB 또는 호환된 워치 APK 설치 도구를 사용해야 합니다.</p>
+<p>무게는 가볍게 시작하고 손목을 중립으로 유지하며 빠른 반동을 피하세요. 워치 운동은 화면에 앱이 열려 있는 상태에서만 측정합니다.</p>
+</section>
+<p><a href="https://github.com/secom3-tech/motion-rpg/tree/main/android-watch-bridge">소스 코드 / 자세한 설치 설명</a></p>
+</main></body></html>
