@@ -299,8 +299,8 @@
    <h3>② 폴드6 카메라 회피</h3>
    <p>휴대폰을 세로로 고정하고 약 1.5~2.5m 앞에서 상반신과 허리가 모두 보이게 서 있어. 처음 2초는 가만히 서서 기준 자세를 잡고, <b>좌우로 몸을 피하거나 앉는 동작</b>으로 회피해.</p>
    <div class="motionRow"><button id="cameraStart">카메라 자세 인식 켜기</button><button id="cameraStop" class="subtle" disabled>카메라 끄기</button><button id="cameraReset" class="subtle" disabled>자세 기준 재설정</button></div>
-   <video id="posePreview" muted autoplay playsinline title="폴드6 전면 카메라 미리보기"></video>
    <div id="poseGuide" data-kind="lost" role="status" aria-live="polite">카메라 연결을 기다리는 중</div>
+   <video id="posePreview" muted autoplay playsinline title="폴드6 전면 카메라 미리보기"></video>
    <div class="motionInfo" id="poseStatus" role="status" aria-live="polite">카메라 대기 · 기기 밖으로 영상이 전송되지 않아.</div>
   </section>
   <p class="motionLead">모션 인식이 불안정하면 <b>터치 버튼으로 계속 전투</b>할 수 있어. 폰을 실제로 던지지 말고 주변에 사람·물건이 없는지 확인해. GitHub Pages 외에 무료 WebRTC 연결 서버와 카메라 인식 모델 다운로드가 필요하므로 인터넷 연결이 필요해.</p>
@@ -1490,7 +1490,7 @@ el("hostStart").onclick=async()=>{
   const room=await motionHost.start();
   lastMotionSequence=-1;lastMotionAt=-Infinity;
   const url=new URL("./controller.html",location.href);
-  url.searchParams.set("v","0.46");url.searchParams.set("room",room);
+  url.searchParams.set("v","0.47");url.searchParams.set("room",room);
   el("controllerLink").href=url.href;
   el("motionRoom").textContent=room.replace(/^mrpg-/,"");
   el("hostStop").disabled=false;
