@@ -54,7 +54,13 @@ public final class GameActivity extends Activity {
             runOnUiThread(()->{
                 status.setText(!calibrated?"워치4 수신 · 아래/위 자세를 보정해":
                     ("rep".equals(kind)?"워치 컬 "+count+"회 감지 · 게임 판정 중":"워치4 연결 · 운동 준비"));
-                if(!"rep".equals(kind)||!calibrated)return;
+                if(!"rep".equals(kind)){
+                    if(pageLoaded)game.evaluateJavascript(
+                        "!!(window.motionRpgWatchStatus && window.motionRpgWatchStatus("+payload+"))",
+                        value->{});
+                    return;
+                }
+                if(!calibrated){ack(sourceNode,seq,false);return;}
                 if(!pageLoaded){ack(sourceNode,seq,false);return;}
                 // JSONObject is serialized JSON, not concatenated untrusted JS.
                 String script="!!(window.motionRpgWatchInput && window.motionRpgWatchInput("+payload+"))";
