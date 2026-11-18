@@ -30,7 +30,7 @@ public final class CurlCounter {
         if (down == null || !valid(direction)) return false;
         float separation = 0;
         for (int i=0;i<3;i++) separation += (direction[i]-down[i])*(direction[i]-down[i]);
-        if (separation < .38f*.38f) return false;
+        if (separation < .20f*.20f) return false;
         up = direction.clone();
         reset();
         return true;

@@ -16,6 +16,7 @@ import android.graphics.Color;
 import android.view.Gravity;
 import android.view.WindowManager;
 import android.widget.Button;
+import android.widget.ProgressBar;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
@@ -54,8 +55,13 @@ public final class WatchActivity extends Activity implements SensorEventListener
     private boolean hasFilter=false;
     private final CurlCounter counter=new CurlCounter();
     private final ArrayDeque<Sample> recent=new ArrayDeque<>();
-    private TextView countView,phaseView,statusView,linkView;
+    private TextView countView,phaseView,statusView,linkView,motionView;
+    private ProgressBar motionBar;
     private Button startButton,downButton,upButton;
+    private float[] downDirection,firstDirection;
+    private long lastMotionFrame=0,lastAutoCheck=0;
+    private int sensorSamples=0;
+    private float maxAngle=0f;
     private long lastDisplay=0,lastSend=0,lastHeartbeat=0;
     private int seq=0;
     private final MessageClient.OnMessageReceivedListener acknowledgements=event->{
@@ -94,40 +100,41 @@ public final class WatchActivity extends Activity implements SensorEventListener
         layout.addView(title);
         countView=text("0",72,Color.rgb(187,254,195));layout.addView(countView);
         phaseView=text(counter.getPhaseText(),17,Color.WHITE);layout.addView(phaseView);
+        motionView=text("동작 센서 대기 · 시작 후 움직임이 표시돼",13,0xffb9f4db);layout.addView(motionView);
+        motionBar=new ProgressBar(this,null,android.R.attr.progressBarStyleHorizontal);
+        motionBar.setMax(90);motionBar.setProgress(0);layout.addView(motionBar);
         heartView=text("♥ -- BPM",21,0xffffb1a6);layout.addView(heartView);
         startButton=button("센서 켜기");
-        downButton=button("① 아래 자세 보정");
-        upButton=button("② 위 자세 보정");
+        downButton=button("아래 자세 수동 보정");
+        upButton=button("위 자세 수동 보정");
         downButton.setEnabled(false);upButton.setEnabled(false);
         layout.addView(startButton);layout.addView(downButton);layout.addView(upButton);
         Button reset=button("횟수 초기화");layout.addView(reset);
         Button ping=button("휴대폰 연결 확인");layout.addView(ping);
         statusView=text(counter.isCalibrated()?
             "이전 운동 보정 적용 · 착용 방향이 달라졌다면 아래/위 자세를 다시 보정해.":
-            "워치를 착용한 상태에서 아래·위 자세를 각각 1초간 유지하고 눌러.",12,0xffc3d7d0);
+            "센서를 켜면 아래 자세 → 위 자세를 차례로 1초간 멈춰 자동 보정해. 실패할 때만 수동 보정을 사용해.",12,0xffc3d7d0);
         layout.addView(statusView);
         linkView=text("폴드6 연결 앱 실행 필요",12,0xffe7c891);layout.addView(linkView);
         setContentView(scroll);
         startButton.setOnClickListener(v->{
             if(running){stopSensor();return;}
             if(gravity==null){statusView.setText("중력·가속도 센서를 찾을 수 없어.");return;}
-            hasFilter=false;recent.clear();
+            hasFilter=false;recent.clear();firstDirection=null;lastAutoCheck=0;lastMotionFrame=0;sensorSamples=0;maxAngle=0;
             running=manager.registerListener(this,gravity,SensorManager.SENSOR_DELAY_GAME);
             if(!running){statusView.setText("센서 등록 실패");return;}
             startButton.setText("센서 끄기");
             downButton.setEnabled(true);upButton.setEnabled(true);
             statusView.setText(counter.isCalibrated()?
-                "센서 수신 중 · 팔을 아래로 내리고 천천히 운동해.":"센서 수신 중 · 아래/위 두 자세를 보정해.");
+                "보정 완료 · 팔을 아래로 내리고 천천히 운동해.":
+                "자동 보정 1단계 · 팔을 몸 옆으로 내리고 1초간 멈춰.");
             startHeartRate();
             send("status");
         });
         downButton.setOnClickListener(v->{
             float[] avg=averageStable();
             if(avg==null){statusView.setText("아래 자세가 흔들리고 있어. 1초 유지 후 다시 눌러.");return;}
-            counter.setDown(avg);countView.setText("0");
-            SharedPreferences.Editor edit=getPreferences(MODE_PRIVATE).edit().clear();
-            for(int i=0;i<3;i++)edit.putFloat("down"+i,avg[i]);
-            edit.apply();
+            recordDown(avg);countView.setText("0");
             phaseView.setText("아래 자세 기록됨");
             statusView.setText("이제 팔꿈치를 굽혀 위 자세를 1초 유지하고 기록해.");
             send("status");
@@ -135,7 +142,7 @@ public final class WatchActivity extends Activity implements SensorEventListener
         upButton.setOnClickListener(v->{
             float[] avg=averageStable();
             if(avg==null){statusView.setText("위 자세 센서값 부족 · 잠시 고정해.");return;}
-            if(!counter.setUp(avg)){statusView.setText("각도 차이가 부족해. 더 충분히 굽히거나 착용 방향을 확인해.");return;}
+            if(!counter.setUp(avg)){statusView.setText("아래/위 차이 "+Math.round(angleDeg(downDirection,avg))+"° · 워치가 움직였는지 실시간 각도를 확인해.");return;}
             saveCalibration(avg);
             countView.setText("0");
             phaseView.setText("팔을 아래로 내리고 시작");
@@ -167,6 +174,7 @@ public final class WatchActivity extends Activity implements SensorEventListener
         manager.unregisterListener(this);running=false;heartRegistered=false;
         heartBpm=0;lastHeartAt=0;heartView.setText("♥ -- BPM");
         recent.clear();startButton.setText("센서 켜기");
+        motionView.setText("센서 중지됨 · 센서 켜기를 눌러");motionBar.setProgress(0);
         downButton.setEnabled(false);upButton.setEnabled(false);
         statusView.setText("센서 중지 · 다시 켠 뒤 운동할 수 있어.");
         send("status");
@@ -184,6 +192,38 @@ public final class WatchActivity extends Activity implements SensorEventListener
         double variance=0;
         for(float[] v:samples)for(int i=0;i<3;i++)variance+=(v[i]-avg[i])*(v[i]-avg[i]);
         return variance/samples.size()<=.075?avg:null;
+    }
+    /** Angle of gravity vectors, not a measurement of anatomical elbow flexion. */
+    private static float angleDeg(float[] a,float[] b){
+        if(a==null||b==null)return 0;
+        double dot=0,aa=0,bb=0;
+        for(int i=0;i<3;i++){dot+=a[i]*b[i];aa+=a[i]*a[i];bb+=b[i]*b[i];}
+        return (float)Math.toDegrees(Math.acos(Math.max(-1,Math.min(1,dot/Math.sqrt(Math.max(.0001,aa*bb))))));
+    }
+    private void recordDown(float[] avg){
+        counter.setDown(avg);
+        downDirection=avg.clone();maxAngle=0f;
+        SharedPreferences.Editor edit=getPreferences(MODE_PRIVATE).edit().clear();
+        for(int i=0;i<3;i++)edit.putFloat("down"+i,avg[i]);
+        edit.apply();
+    }
+    private void tryAutoCalibration(){
+        if(counter.isCalibrated())return;
+        float[] avg=averageStable();
+        if(avg==null)return;
+        if(downDirection==null){
+            recordDown(avg);
+            phaseView.setText("아래 자세 자동 기록");
+            statusView.setText("자동 보정 2단계 · 아령을 들어 올려 위 자세에서 1초간 멈춰.");
+            send("status");return;
+        }
+        float angle=angleDeg(downDirection,avg);
+        if(angle<12f||!counter.setUp(avg))return;
+        saveCalibration(avg);
+        countView.setText("0");
+        phaseView.setText("팔을 아래로 내리고 시작");
+        statusView.setText("자동 보정 완료 ("+Math.round(angle)+"°) · 팔을 내리고 컬을 천천히 반복해.");
+        send("status");
     }
     @Override public void onSensorChanged(SensorEvent e){
         if(!running)return;
@@ -213,6 +253,16 @@ public final class WatchActivity extends Activity implements SensorEventListener
         long now=SystemClock.elapsedRealtime();
         recent.addLast(new Sample(now,v));
         while(!recent.isEmpty()&&now-recent.peekFirst().at>1200)recent.removeFirst();
+        sensorSamples++;
+        if(firstDirection==null)firstDirection=v.clone();
+        if(now-lastAutoCheck>250){lastAutoCheck=now;tryAutoCalibration();}
+        float angle=angleDeg(downDirection!=null?downDirection:firstDirection,v);
+        maxAngle=Math.max(maxAngle,angle);
+        if(now-lastMotionFrame>150){
+            motionView.setText("센서 수신 "+sensorSamples+" · 현재 "+Math.round(angle)+"° / 최대 "+Math.round(maxAngle)+"°");
+            motionBar.setProgress(Math.min(90,Math.round(angle)));
+            lastMotionFrame=now;
+        }
         boolean rep=counter.feed(v,now);
         if(rep){
             countView.setText(String.valueOf(counter.getRepetitions()));
@@ -240,6 +290,7 @@ public final class WatchActivity extends Activity implements SensorEventListener
         float[] down=new float[3],up=new float[3];
         for(int i=0;i<3;i++){down[i]=prefs.getFloat("down"+i,0);up[i]=prefs.getFloat("up"+i,0);}
         if(!counter.setDown(down)||!counter.setUp(up))prefs.edit().clear().apply();
+        else downDirection=down.clone();
     }
     private void startHeartRate(){
         if(heartSensor==null){heartView.setText("♥ 센서 지원 안 함");return;}

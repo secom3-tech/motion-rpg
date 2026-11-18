@@ -51,3 +51,9 @@ gradle -p android-watch-bridge :wear:testDebugUnitTest :wear:assembleDebug :mobi
 ```
 
 Google 공식 API: `SensorManager` / Wear OS `Wearable.getMessageClient()`, `Wearable.getNodeClient()`. 네트워크는 웹게임에만 필요합니다.
+
+## v0.55 (2026-11-18)
+- 워치 중력 센서 수신 횟수·실시간 상대 각도·최대 변화·진행 바 표시. 심박 센서 정상과 팔 운동 센서 정상은 별개임을 확인할 수 있음.
+- 센서 켜기 뒤 팔을 내리고 1초 유지 → 올리고 1초 유지하면 두 자세를 자동 보정. 기존 수동 보정도 유지. 12° 이하 차이는 센서 구분이 불확실하므로 보정하지 않음.
+- 워치 전용 게임 UI에서 S21 연결 코드/주소/구형 설명을 숨김. 일반 S21 모드는 그대로 유지.
+- 실기기에서 실제 각도 변화와 컬 횟수의 정확도는 별도로 검증해야 함. 스마트워치는 손목 방향을 측정하며 팔꿈치 각도 자체를 직접 측정하지 않음.

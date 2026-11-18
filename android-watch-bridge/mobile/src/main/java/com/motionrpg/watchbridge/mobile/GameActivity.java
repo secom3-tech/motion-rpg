@@ -33,7 +33,7 @@ import java.nio.charset.StandardCharsets;
  */
 public final class GameActivity extends Activity {
     private static final String GAME_URL =
-        "https://secom3-tech.github.io/motion-rpg/indoor.html?v=0.51&mode=dumbbell&input=watch";
+        "https://secom3-tech.github.io/motion-rpg/indoor.html?v=0.55&mode=dumbbell&input=watch";
     private static final String PATH="/motion-rpg/curl";
     private static final String ACK_PATH="/motion-rpg/ack";
     private static final int CAMERA_REQUEST=381;

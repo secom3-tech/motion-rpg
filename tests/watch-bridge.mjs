@@ -32,6 +32,11 @@ assert.ok(arena.includes('watchHeartBpm'),"Heart-rate telemetry must be displaye
 assert.ok(wearable.includes("Sensor.TYPE_HEART_RATE"),"Wear OS must listen for actual heart-rate samples");
 assert.ok(wearable.includes("Manifest.permission.BODY_SENSORS"),"Heart rate requires runtime permission");
 assert.ok(wearable.includes("restoreCalibration()"),"Past curl calibration should be reusable");
+assert.ok(wearable.includes("tryAutoCalibration()"),"Watch must automatically learn down/up positions");
+assert.ok(wearable.includes("motionView.setText"),"Live movement angle must be visible before calibration");
+assert.ok(arena.includes("body.watchNative #hostStart"),"S21 pairing must disappear in native watch mode");
+assert.ok(arena.includes('document.body.classList.add("watchNative")'),"Native watch mode must activate UI cleanup");
+assert.ok(companion.includes("indoor.html?v=0.55"),"Phone bridge should load latest watch UI");
 assert.ok(wearable.includes('data.put("session",sessionId)'),"Phone must reconnect after watch restart");
 assert.ok(companion.includes("currentWatchSession"),"Fold6 must reset its deduplication on restart");
 assert.ok(get("android-watch-bridge/wear/src/main/AndroidManifest.xml").includes("android.permission.health.READ_HEART_RATE"));

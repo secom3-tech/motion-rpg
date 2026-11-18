@@ -47,6 +47,10 @@
 .motionSection h3{font-size:16px;color:#d4efc9;margin:0 0 8px}
 .motionSection p{font-size:12px;line-height:1.7;color:#c1d7c7;margin:0 0 12px}
 .motionRow{display:flex;gap:6px;flex-wrap:wrap}
+/* Native Watch4 play never shows the legacy S21 pairing controls. */
+body.watchNative #hostStart,body.watchNative #hostStop,body.watchNative #copyController,
+body.watchNative #motionRoom,body.watchNative #controllerLink,body.watchNative #remoteStatus,
+body.watchNative .motionSection .motionRow:has(#hostStart){display:none!important}
 .motionRow button,.motionTop button{pointer-events:auto;min-height:38px;padding:9px 12px;font-size:12px;font-weight:800;background:#b8e9b4;border:1px solid #c6e8bc;color:#133026;border-radius:11px}
 .motionRow button.subtle,.motionTop button.subtle{background:#1d4542;color:#d8f3e9;border-color:#729c90}
 .motionRow button:disabled{opacity:.40}
@@ -423,14 +427,21 @@ if(dumbbellMode){activeWeaponMode="melee";autoSwitchEnabled=true;
  el("controllerLink").textContent="S21 암밴드 컬 센서";el("controllerLink").href="./dumbbell.html";
  el("location").querySelector("span").textContent=watchInputMode?"워치4 컬 · 자동 숲 탐색":"아령 실험 · 자동 숲 탐색";
  if(watchInputMode){
+  document.body.classList.add("watchNative");
   el("watchBodyHud").hidden=false;
   el("introCard").querySelector("small").textContent="워치 앱에서 센서와 아래/위 자세를 먼저 보정해. 이 모드는 폴드6 전용 연결 앱에서 실행해야 워치 신호를 받을 수 있어.";
   el("motionOpen").textContent="워치 설정";
+  el("motionOpen").title="워치4·폴드6 카메라 상태 및 설정";
+  el("motionPanel").querySelector(".motionTop small").textContent="MOTION RPG / WATCH4";
+  el("motionPanel").querySelector(".motionTop h2").textContent="워치4 · 카메라 설정";
+  el("motionPanel").querySelector(".motionLead").textContent="워치4에서 센서 켜기만 누르면 연결 상태가 표시돼. 팔 아래 자세를 유지한 뒤 위에서 잠시 멈추면 자동 보정돼. 폴드6는 카메라로 회피를 인식해.";
   el("motionPanel").querySelector(".motionSection h3").textContent="① 갤럭시 워치4 센서 연결";
   el("motionPanel").querySelector(".motionSection p").textContent="폴드6 전용 연결 앱과 워치4 전용 앱을 모두 설치한 뒤 워치에서 센서 켜기 → 아래 자세 → 위 자세 순서로 보정해. 연결 코드는 필요 없어.";
   el("hostStart").parentElement.hidden=true;
   el("motionRoom").hidden=true;el("controllerLink").hidden=true;
-  el("linkStatus").textContent="워치4에서 보정 완료 후 컬을 천천히 반복해. 이 화면의 전투를 시작하고 설정 창을 닫아야 실제 공격이 인정돼.";
+  el("linkStatus").textContent="워치4에서 센서 켜기 → 팔 내리고 1초 유지 → 팔 올리고 1초 유지. 자동 보정 후 컬 횟수가 올라가면 연결 확인 완료."; 
+  el("motionPanel").querySelector(".motionSection p:last-of-type").textContent="자동 락온과 자동 회복을 여기서 설정할 수 있어. S21 연결 코드는 필요하지 않아.";
+  el("retryWrap").querySelector("p").textContent="워치4 연결은 유지돼. 기력을 회복하고 다시 싸울 수 있어.";
   el("footerNote").textContent="워치4 컬 = 거리별 검격/활 공격 · 미연결 시 화면 공격 버튼";
  }
 }
@@ -1633,7 +1644,12 @@ function applyWatchTelemetry(packet){
  }
  if(Number.isInteger(packet.battery)&&packet.battery>=0&&packet.battery<=100)
   watchBattery=packet.battery;
- updateWatchBodyHud();return true;
+ updateWatchBodyHud();
+ if(watchInputMode&&el("motionPanel")&&!el("motionPanel").hidden){
+  el("linkStatus").textContent=!watchSensorActive?"워치 연결됨 · 워치에서 센서 켜기를 눌러":
+    !watchCalibrated?"센서 수신 중 · 워치에서 아래/위 동작을 보정해":"워치4 연결·보정 완료 · 이제 아령 컬을 시작해";
+ }
+ return true;
 }
 function updateWatchBodyHud(){
  if(!watchInputMode)return;
@@ -1807,7 +1823,7 @@ el("retryCombat").onclick=()=>{
  heroHp=stats.maxHp;showHero();camera.x=0;camera.z=5.5;camera.y=1.7;
  yaw=0;pitch=-.032;lastFire=-999;dodgeCooldown=0;dodgeUntil=0;dodgeMessageUntil=0;dodgeProtectedAttack=0;dodgeVisualStart=-99;queuedSkillUntil=-1;projectiles=[];enemyShots=[];sparks=[];meleeAction=null;rangedAction=null;
  el("retryWrap").hidden=true;active=true;spawnEnemy();
- el("status").textContent="전투 재개 · S21 연결은 그대로 유지 중";
+ el("status").textContent=watchInputMode?"전투 재개 · 워치4 연결 유지 중":"전투 재개 · S21 연결은 그대로 유지 중";
 };
 el("motionOpen").onclick=()=>{el("motionPanel").hidden=false;};
 el("motionClose").onclick=()=>{el("motionPanel").hidden=true;};

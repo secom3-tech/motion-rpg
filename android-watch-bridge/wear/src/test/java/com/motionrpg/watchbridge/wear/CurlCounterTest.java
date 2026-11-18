@@ -29,6 +29,8 @@ public class CurlCounterTest {
         assertFalse(detector.setUp(vector(1)));
         assertTrue(detector.setDown(vector(0)));
         assertFalse(detector.setUp(vector(.05f)));
+        assertTrue(detector.setUp(vector(.16f))); // 14-degree wrist rotation should calibrate
+        assertTrue(detector.setDown(vector(0)));
         assertTrue(detector.setUp(vector(1)));
         detector.feed(vector(0),0);
         sequence(detector,50,true);
