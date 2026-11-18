@@ -571,6 +571,7 @@
 <script type="module">
 import {createAdventure,startAdventure,advanceAdventure,endAdventure,summarizeAdventure,settleAdventure,expeditionReward} from "./src/expedition.mjs?v=0.42.1";
 import {gpsFeedback,GPS_ACCURACY_LIMIT_METERS} from "./src/gps-feedback.mjs?v=0.44.2";
+import {gpsSilenceIsProlonged,gpsAccuracyWarningDue,gpsStatusShouldSpeak} from "./src/gps-stability.mjs?v=0.48";
 import {GEAR} from "./src/avatar.mjs?v=0.42";
 import {itemIllustration} from "./src/item-art.mjs?v=0.47";
 import {gearBenefits,craftingDeficits} from "./src/gear-details.mjs?v=0.42";
@@ -843,7 +844,7 @@ $("craftBench").addEventListener("click",e=>{if(e.target===$("craftBench"))$("cr
 document.addEventListener("keydown",e=>{if(e.key==="Escape"){$("craftBench").hidden=true;$("shopDialog").hidden=true;}});
 syncCharacter();
 let session=null,timer=null,voice=true,paceType="steady",watchId=null,lastGps=null,lastGpsAt=0,seed=Date.now()>>>0,runId="",gpsPaces=[];
-let gpsMonitor=null,gpsGeneration=0,gpsStartedAt=0,gpsLastGoodAt=0,gpsState="idle";
+let gpsMonitor=null,gpsGeneration=0,gpsStartedAt=0,gpsLastGoodAt=0,gpsState="idle",gpsWeakSince=0,gpsHasFix=false;
 const VOICE_KEY="motion-rpg-run-voice-v1";
 try{voice=localStorage.getItem(VOICE_KEY)!=="off";}catch{}
 const PACE_KEY="motion-rpg-gps-comfort-pace-v1";
@@ -868,7 +869,7 @@ function setGpsStatus(state,accuracy=null,announce=true){
  $("gpsStatus").dataset.tone=info.tone;
  $("gpsStatusLabel").textContent=info.label;
  $("gpsStatusDetail").textContent=info.detail;
- if(announce&&prev!==state&&info.voice)speak(info.voice);
+ if(announce&&gpsStatusShouldSpeak(prev,state,{firstFix:!gpsHasFix})&&info.voice)speak(info.voice);
 }
 document.querySelectorAll("[data-pace]").forEach(b=>b.onclick=()=>{paceType=b.dataset.pace;document.querySelectorAll("[data-pace]").forEach(x=>x.classList.toggle("active",x===b));$("paceState").textContent="현재: "+(paceType==="surge"?"조금 빠르게":paceType==="quiet"?"천천히":"기본 페이스");});
 function paceForGame(){const p=session?.basePace||8.5;return paceType==="quiet"?p*1.17:paceType==="surge"?p*.9:p;}
@@ -880,7 +881,7 @@ function resetTimers(){
  if(gpsMonitor)clearInterval(gpsMonitor);gpsMonitor=null;
  gpsGeneration++;
  if(watchId!==null)navigator.geolocation?.clearWatch(watchId);
- watchId=null;lastGps=null;lastGpsAt=0;gpsLastGoodAt=0;gpsStartedAt=0;
+ watchId=null;lastGps=null;lastGpsAt=0;gpsLastGoodAt=0;gpsStartedAt=0;gpsWeakSince=0;gpsHasFix=false;
 }
 function start(mode){
  resetTimers();gpsPaces=[];
@@ -938,20 +939,25 @@ function startGeo(){
  const generation=gpsGeneration;
  gpsMonitor=setInterval(()=>{
   if(generation!==gpsGeneration||!session||session.phase==="complete")return;
-  if(gpsLastGoodAt&&Date.now()-gpsLastGoodAt>18000){
+  if(gpsSilenceIsProlonged(gpsLastGoodAt,Date.now())&&gpsState!=="lost"){
    setGpsStatus("lost");
-   message("GPS 신호 대기","위치가 18초 이상 갱신되지 않아 기록을 멈췄어. 다시 수신되면 이어서 기록해.");
+   message("GPS 신호 대기","위치 신호가 오랫동안 갱신되지 않아 잠시 기록을 보류했어. 돌아오면 이어서 기록해.");
   }
  },4000);
  watchId=navigator.geolocation.watchPosition(pos=>{
   if(generation!==gpsGeneration||!session||session.phase==="complete"||!["gps","walk"].includes(session.mode))return;
   const p=pos.coords,t=pos.timestamp||Date.now();
   if(!Number.isFinite(p.accuracy)||p.accuracy>GPS_ACCURACY_LIMIT_METERS){
-   setGpsStatus("weak",p.accuracy);
-   message("GPS 정확도 낮음","위치 신호가 부정확해 이동 기록을 잠시 보류하고 있어.");
+   const nowMs=Date.now();
+   if(!gpsWeakSince)gpsWeakSince=nowMs;
+   // Do not mistake a dog's sniff stop or a few coarse fixes for disconnects.
+   if(gpsAccuracyWarningDue(gpsWeakSince,nowMs)&&gpsState!=="lost"){
+    setGpsStatus("weak",p.accuracy,false);
+    message("GPS 정확도 낮음","잠시 정확한 위치를 기다리는 중이야. 산책을 계속해도 돼.");
+   }
    return;
   }
-  gpsLastGoodAt=Date.now();
+  gpsWeakSince=0;gpsLastGoodAt=Date.now();
   const now={latitude:p.latitude,longitude:p.longitude,time:t};
   if(!lastGps){
    lastGps=now;
@@ -959,14 +965,15 @@ function startGeo(){
    setGpsStatus("connected",p.accuracy,false);
    message("GPS 연결 완료","위치를 확인했어. 실제 이동이 감지되면 시간과 거리가 기록돼.");
    const startLine=session.announcements[0];
-   speak("GPS 연결 완료. "+(startLine?startLine.head+". "+startLine.detail:"이동을 시작해 주세요."));
+   if(!gpsHasFix)speak("GPS 연결 완료. "+(startLine?startLine.head+". "+startLine.detail:"이동을 시작해 주세요."));
+   gpsHasFix=true;
    return;
   }
   const dt=(t-lastGps.time)/1000,d=dist(lastGps,now);
   if(dt<=0)return;
-  if(dt>35){lastGps=now;setGpsStatus("connected",p.accuracy);return;}
+  if(dt>35){lastGps=now;setGpsStatus("connected",p.accuracy,false);return;}
   if(d>Math.max(20,dt*7.5)){
-   lastGps=now;setGpsStatus("weak",p.accuracy);
+   lastGps=now;setGpsStatus("weak",p.accuracy,false);
    message("GPS 위치 급변","비정상적으로 큰 위치 변화는 이동 거리에서 제외했어.");
    return;
   }
@@ -974,18 +981,18 @@ function startGeo(){
   // to reset the clock repeatedly, leaving the running timer at 00:00.
   if(dt<2)return;
   if(d<3){
-   setGpsStatus(session.elapsedSec>0?"recording":"connected",p.accuracy);
+   setGpsStatus(session.elapsedSec>0?"recording":"connected",p.accuracy,false);
    return;
   }
   lastGps=now;
   const measured=clamp(1000*dt/(d*60),5,session.mode==="walk"?65:30);
   if(session.mode==="gps")learnGpsPace(measured);
   stepGame(Math.min(dt,35),measured);
-  setGpsStatus("recording",p.accuracy);
+  setGpsStatus("recording",p.accuracy,false);
  },err=>{
   if(generation!==gpsGeneration||!session||session.phase==="complete")return;
   if(err.code===3){
-   if(gpsState!=="recording")setGpsStatus("waiting");
+   if(!gpsHasFix&&gpsState!=="recording")setGpsStatus("waiting",null,false);
    message("GPS 신호 재시도","위치 신호 응답이 지연되고 있어. 연결을 계속 기다리는 중이야.");
    return;
   }
