@@ -36,7 +36,7 @@ for(const keyword of ['id="huntExit"','id="confirmHuntReturn"','function showHun
  assert.ok(arena.includes(keyword),"Missing hunt tracking "+keyword);
 assert.ok(hub.includes('object-position:50% 0%!important'),"Job portrait must anchor from top so face is visible");
 assert.ok(hub.includes("hands ends above the hips")||hub.includes("shoulder-to-hand is shorter"),"Mannequin arms must have anatomically improved proportions");
-assert.ok(/\.\/src\/item-art\.mjs\?v=0\.(?:43\.1|47)/.test(hub),"Inventory should load illustrated gear art");
+assert.ok(/\.\/src\/item-art\.mjs\?v=0\.(?:43\.1|47|48)/.test(hub),"Inventory should load illustrated gear art");
 const art=fs.readFileSync(new URL("../src/item-art.mjs",import.meta.url),"utf8");
 assert.ok(art.includes('gear-illustrations.webp?v=0.43.1'),"Painted weapon sprites should replace starter vector pictograms");
 for(const id of ["sword","bow","hunterCap","hunter","satchel","staff"])assert.ok(art.includes(id),"Missing illustrated item: "+id);
