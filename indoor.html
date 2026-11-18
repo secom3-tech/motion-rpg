@@ -255,6 +255,21 @@
 #poseGuide[data-kind="lost"]{border-color:#eb8888;color:#ffc3c3}
 #poseStatus{font-size:14px}
 @media(max-width:650px){#attackBanner{top:20%;width:min(480px,78vw)}#attackBanner b,#attackBanner.dodgeNow b{font-size:clamp(22px,5.6vw,35px)}#reactionFx{top:41%}}
+
+/* v0.48 clear combat cadence from two metres away. */
+#attackReadySignal[hidden]{display:none!important}
+#attackReadySignal{position:fixed;z-index:18;left:50%;bottom:19%;transform:translateX(-50%);pointer-events:none;
+  min-width:min(280px,68vw);max-width:86vw;text-align:center;border-radius:20px;padding:12px 24px;
+  border:3px solid #eac37b;background:#433621e8;box-shadow:0 0 28px #150e0bc0;
+  font-size:clamp(27px,5.6vw,44px);font-weight:950;line-height:1.1;color:#ffebb9;text-shadow:0 3px 5px #201916c9}
+#attackReadySignal.ready{border-color:#a7f6b8;color:#e2ffdc;background:#17674cdd;box-shadow:0 0 34px #84ffaa60}
+#attackReadySignal.neutral{border-color:#f4b76a;color:#fff1bd;background:#72401add}
+#attackReadySignal.off{background:#263f44df;border-color:#7aa6b1;color:#e7f5f7}
+#attackReadySignal .sub{display:block;font-size:clamp(12px,2.6vw,18px);font-weight:800;margin-top:6px}
+@media(max-width:650px){#attackReadySignal{bottom:21%;padding:9px 18px;min-width:min(240px,66vw)}#attackReadySignal{font-size:clamp(24px,6.7vw,37px)}}
+#spawnNotice{font-size:clamp(17px,3vw,24px);max-width:90vw;white-space:normal;padding:12px 15px}
+#enemyArrowText{font-size:clamp(13px,2.5vw,18px);max-width:190px;padding:5px 10px}
+@media(max-width:640px){#spawnNotice{font-size:clamp(15px,4.5vw,22px)}#enemyArrowText{font-size:clamp(12px,3.5vw,18px)}}
 </style></head><body>
 <div id="sky"></div><canvas id="game"></canvas><div id="vignette"></div><div id="bottomShade"></div><div id="screenFx"></div><canvas id="weaponCanvas" aria-hidden="true"></canvas>
 <div class="ui" id="brand"><div id="sigil">✦</div><div><h1>Motion RPG</h1><p>BORDERWOOD · HUNT</p></div></div>
@@ -270,7 +285,7 @@
 <div id="motionCooldown" class="motionCooldown" hidden aria-label="S21 공격 준비 상태">
  <div class="motionCooldownLabel"><b id="motionCooldownState">S21 상태 확인 중</b><strong id="motionCooldownTime">—</strong></div>
  <div id="motionCooldownTrack" class="motionCooldownTrack" role="progressbar" aria-label="S21 공격 재준비 진행도" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><i id="motionCooldownFill"></i></div>
-</div></div><div id="forestZoneHud" aria-live="off">사냥꾼의 숲길</div><div id="lockHud" aria-live="off" hidden>◎ 자동 락온 · 적 추적 중</div><div id="cross"><div class="ring"></div></div><div class="ui" id="instruction">화면을 드래그하면 시야가 움직입니다</div><div id="weaponStatus">무기 준비 중</div><div id="attackFeedback"></div><div id="reactionFx" role="status" aria-live="polite"></div><div id="skillBurst" aria-hidden="true"><i></i><i></i><i></i></div><div id="toast"></div><div id="hitFx" aria-hidden="true"></div><div id="damageNumber" aria-hidden="true"></div>
+</div></div><div id="attackReadySignal" hidden aria-live="off">공격 준비</div><div id="forestZoneHud" aria-live="off">사냥꾼의 숲길</div><div id="lockHud" aria-live="off" hidden>◎ 자동 락온 · 적 추적 중</div><div id="cross"><div class="ring"></div></div><div class="ui" id="instruction">화면을 드래그하면 시야가 움직입니다</div><div id="weaponStatus">무기 준비 중</div><div id="attackFeedback"></div><div id="reactionFx" role="status" aria-live="polite"></div><div id="skillBurst" aria-hidden="true"><i></i><i></i><i></i></div><div id="toast"></div><div id="hitFx" aria-hidden="true"></div><div id="damageNumber" aria-hidden="true"></div>
 <div class="ui" id="controls"><div id="moveArea"><div id="joy"><div id="stick">✦</div></div><span>이동 · 키보드 WASD</span></div><div id="actions"><button class="action weaponSwitch" id="weaponToggle" aria-label="무기 전환">무기 전환</button><button class="action bandageAction" id="bandage" aria-label="붕대 사용"><span class="icon">✚</span><b>회복 <span id="bandageCount">0</span></b></button><button class="action skillTrigger" id="skillAttack" aria-label="스킬 발동"><span class="icon">✦</span><b>스킬</b></button><button class="action" id="dodge" aria-label="회피"><span class="icon">↪</span><b>회피</b></button><button class="action" id="sword" aria-label="근접 휘두르기"><span class="icon">⚔️</span><b>근접 휘두르기</b></button><button class="action" id="fire" aria-label="마법 투척"><span class="icon">✨</span><b>마법 투척</b></button></div></div><div id="footerNote">근접 버튼: 좌우 드래그 = 가로 베기 · 아래 = 내려찍기 · 위 = 찌르기</div>
 <div id="intro"><div id="introCard"><div class="emblem">✦ 🧙 ✦</div><h2>경계의 숲</h2><p>숲을 탐색하고 몬스터의 움직임을 살펴봐.<br><b>S21로 무기를 휘두르고</b> 실제 몸으로 공격을 피해.<br>골렘의 투석과 몬스터의 돌진은 움직여서 벗어날 수 있어.</p><button id="begin">사냥 시작하기</button><small>드래그: 시야 이동 · 근접 버튼 방향 드래그: 가로/세로/찌르기<br>오른쪽 상단 [모션 설정]에서 S21 무선 무기와 전면 카메라 회피를 연결할 수 있어</small></div></div>
 <div id="huntExit" hidden role="dialog" aria-modal="true" aria-labelledby="huntExitTitle">
@@ -899,7 +914,7 @@ function currentHuntRecord(){return {kills,score,sessionId,updatedAt:Date.now(),
 function bankProgress(){try{localStorage.setItem(RESULT_KEY,JSON.stringify(currentHuntRecord()))}catch(e){}}
 function damage(n,weapon="sword"){if(enemy.dead)return;enemyMind.aggro=true;enemy.hp=Math.max(0,enemy.hp-n);el('enemyHP').style.width=(enemy.hp/enemy.max*100)+'%';let x=enemy.x,y=1.4,z=enemy.z;
 const tint=weapon==="axe"||weapon==="ember"?[1,.58,.26]:weapon==="staff"||weapon==="orb"?[.38,.82,1]:weapon==="greatsword"||weapon==="aura"?[.50,.76,1]:weapon==="bow"||weapon==="arrow"?[.74,.94,.58]:[.80,1,.69];
-for(let i=0;i<16;i++){let p=(rand()-.5)*6,t=rand()*6.28,s=.65+rand()*2.6;sparks.push({x,y,z,vx:Math.cos(t)*s,vy:rand()*3.7,vz:Math.sin(t)*s,r:.04+rand()*.07,life:.4+rand()*.5,t:0,col:[tint[0],Math.min(1,tint[1]+rand()*.16),Math.min(1,tint[2]+rand()*.10)]})}toast('✦ '+n+' 데미지');beep(165,.12,'triangle',.11);if(enemy.hp<=0){enemy.dead=true;targetLocked=false;syncTargetUi();enemy.windup=0;enemy.impactUntil=0;enemyShots=[];el('attackBanner').hidden=true;el('enemyTag').hidden=true;el('enemyArrow').hidden=true;enemy.respawn=1.6;score+=80+enemy.kind*20;kills++;huntLog.push({name:enemy.name||"몬스터",at:huntElapsedSec});if(huntLog.length>25)huntLog.shift();heroHp=Math.min(stats.maxHp,heroHp+5);showHero();bankProgress();el('score').textContent=String(score).padStart(3,'0');el('enemyHud').style.opacity='0';el('stage').textContent=String(kills).padStart(2,'0');el('status').textContent='마력체 격파! 마을로 돌아가면 보상을 수령한다';setTimeout(()=>toast('마력체 격파 · 마을 보상 저장!'),350);beep(830,.25,'sine',.1)}}
+for(let i=0;i<16;i++){let p=(rand()-.5)*6,t=rand()*6.28,s=.65+rand()*2.6;sparks.push({x,y,z,vx:Math.cos(t)*s,vy:rand()*3.7,vz:Math.sin(t)*s,r:.04+rand()*.07,life:.4+rand()*.5,t:0,col:[tint[0],Math.min(1,tint[1]+rand()*.16),Math.min(1,tint[2]+rand()*.10)]})}toast('✦ '+n+' 데미지');beep(165,.12,'triangle',.11);if(enemy.hp<=0){enemy.dead=true;targetLocked=false;syncTargetUi();enemy.windup=0;enemy.impactUntil=0;enemyShots=[];el('attackBanner').hidden=true;el('enemyTag').hidden=true;el('enemyArrow').hidden=true;enemy.respawn=3.0;score+=80+enemy.kind*20;kills++;huntLog.push({name:enemy.name||"몬스터",at:huntElapsedSec});if(huntLog.length>25)huntLog.shift();heroHp=Math.min(stats.maxHp,heroHp+5);showHero();bankProgress();el('score').textContent=String(score).padStart(3,'0');el('enemyHud').style.opacity='0';el('stage').textContent=String(kills).padStart(2,'0');el('status').textContent='마력체 격파! 마을로 돌아가면 보상을 수령한다';setTimeout(()=>toast('마력체 격파 · 마을 보상 저장!'),350);beep(830,.25,'sine',.1)}}
 function spawnEnemy(){
  const oldKind=enemy.kind,area=forestZoneAt(camera.x,camera.z);
  dodgeProtectedAttack=0;
@@ -908,7 +923,7 @@ function spawnEnemy(){
  enemy.max=creature.hp+Math.min(340,Math.floor(kills*12));
  enemy.hp=enemy.max;
  const playerHeading=Math.atan2(Math.sin(yaw),-Math.cos(yaw));
- const position=spawnAroundPlayer(camera,playerHeading,rand);
+ const position=spawnAroundPlayer(camera,playerHeading,rand,undefined,{exploration:true});
  enemy.x=position.x;enemy.z=position.z;enemy.facing=angleToTarget(enemy,camera);
  enemyMind=createMonsterMind(enemy.kind,enemy.x,enemy.z,rand());enemy.moveSpeed=0;
  enemy.speed=creature.speed+Math.min(kills*.027,.38);
@@ -918,12 +933,12 @@ function spawnEnemy(){
  targetLocked=false;syncTargetUi();
  el("monName").textContent=creature.icon+" "+enemy.name;
  el("enemyHP").style.width="100%";el("enemyHud").style.opacity="1";
- el("status").textContent=area.name+" · "+enemy.name+" 출현. 움직임을 보고 공격하세요.";
+ el("status").textContent=area.name+" · "+enemy.name+" 흔적 발견. 방향 표시를 따라 숲길을 탐색하세요.";
  el("attackCue").className="";el("attackCue").textContent="적의 방향을 살펴보세요";
  el("attackBanner").hidden=true;
  beep(635,.12,"sine",.060);
  const dir=relativeTarget(camera,yaw,enemy);
- el("spawnNotice").textContent="⚠ "+creature.name+" · "+(dir?compassDirection(dir.angle):"근처")+" "+Math.round(dir?.distance||0)+"m";
+ el("spawnNotice").textContent="탐색 · "+creature.name+" · "+(dir?compassDirection(dir.angle):"근처")+" "+Math.round(dir?.distance||0)+"m 이동";
  el("spawnNotice").hidden=false;
 }
 let ctx=null;function beep(freq,time,type='sine',vol=.065){try{if(!ctx)ctx=new(window.AudioContext||window.webkitAudioContext)();const o=ctx.createOscillator(),g=ctx.createGain();o.type=type;o.frequency.setValueAtTime(freq,ctx.currentTime);o.frequency.exponentialRampToValueAtTime(Math.max(70,freq*.55),ctx.currentTime+time);g.gain.setValueAtTime(.0001,ctx.currentTime);g.gain.exponentialRampToValueAtTime(vol,ctx.currentTime+.02);g.gain.exponentialRampToValueAtTime(.0001,ctx.currentTime+time);o.connect(g);g.connect(ctx.destination);o.start();o.stop(ctx.currentTime+time+.02)}catch(e){}}
@@ -1397,11 +1412,13 @@ el("autoLockSetting").addEventListener("click",()=>setAutoLock(!autoLockEnabled)
 el("autoHealSetting").addEventListener("click",()=>setAutoHeal(!autoHealEnabled));
 syncAutoHealSetting();syncTargetUi();
 let lastMotionSequence=-1,lastMotionAt=-Infinity,poseEvents=0,wasLinked=false;
-let sensorReport=null,sensorReportAt=0,lastSensorSeq=-1;
+let sensorReport=null,sensorReportAt=0,lastSensorSeq=-1,previousAttackReadyPhase="off";
 function renderMotionCooldown(){
  const panel=el("motionCooldown");
  panel.hidden=!motionHost.connected||worldMode;
- if(panel.hidden)return;
+ const large=el("attackReadySignal");
+ large.hidden=panel.hidden||!active||enemy.dead;
+ if(panel.hidden){previousAttackReadyPhase="off";return;}
  const label=el("motionCooldownState"),timer=el("motionCooldownTime"),fill=el("motionCooldownFill"),track=el("motionCooldownTrack");
  let phase="off",title="S21 센서 확인 중",duration="—",progress=0;
  const age=Date.now()-sensorReportAt;
@@ -1432,6 +1449,17 @@ function renderMotionCooldown(){
   }
  }
  panel.className="motionCooldown "+phase;
+ if(!large.hidden){
+  large.className=phase;
+  const main=phase==="ready"?"공격!":phase==="neutral"?"팔 잠시 멈춰":
+   phase==="cooldown"?"공격 대기":title;
+  const sub=phase==="ready"?"이제 팔을 움직여 공격해":phase==="neutral"?"다음 공격을 위해 팔을 쉬어":
+   phase==="cooldown"?duration+" 남음":"S21 상태 확인 중";
+  const composed=main+'<span class="sub">'+sub+'</span>';
+  if(large.innerHTML!==composed)large.innerHTML=composed;
+  if(phase==="ready"&&previousAttackReadyPhase!=="ready")beep(760,.11,"sine",.045);
+ }
+ previousAttackReadyPhase=phase;
  if(label.textContent!==title)label.textContent=title;
  if(timer.textContent!==duration)timer.textContent=duration;
  const pct=Math.round(Math.max(0,Math.min(100,progress)));
@@ -1498,7 +1526,7 @@ el("hostStart").onclick=async()=>{
   const room=await motionHost.start();
   lastMotionSequence=-1;lastMotionAt=-Infinity;
   const url=new URL("./controller.html",location.href);
-  url.searchParams.set("v","0.47");url.searchParams.set("room",room);
+  url.searchParams.set("v","0.48");url.searchParams.set("room",room);
   el("controllerLink").href=url.href;
   el("motionRoom").textContent=room.replace(/^mrpg-/,"");
   el("hostStop").disabled=false;
