@@ -18,6 +18,13 @@ for(const p of ['mobile/build.gradle','wear/build.gradle']){
 }
 assert.ok(get("watch-setup.html").includes("watch4-fold6-debug-apks"));
 assert.ok(arena.includes('id="watchBodyHud"'),"Workout silhouette must exist");
+assert.ok(arena.includes('right:calc(17px + 136px + 11px)'),"Landscape watch HUD must not overlap radar");
+assert.ok(arena.includes('+ 174px'),"Near-square Fold6 layout should stack HUDs");
+assert.ok(arena.includes("function dumbbellCombatSpacing()"),"Oversized monsters need close-camera spacing");
+assert.ok(arena.includes("weaponProfile(equipped.meleeWeapon).reach-.25"),"Spacing must not break melee reach");
+assert.ok(arena.includes("if(watchInputMode||new URLSearchParams(location.search).get(\"return\")==\"preview\")"),"Watch game must return to the proper village to claim rewards");
+assert.ok(arena.includes("다음 몬스터를 찾는 중"),"Respawn must be visible after the first kill");
+assert.ok(arena.includes("검격 준비 중"),"Manual testing must show attack cooldown, not look frozen");
 assert.ok(arena.includes('id="watchBpm"'),"Live heart rate should have a label");
 assert.ok(arena.includes('data-focus="none"'),"Must start with neutral muscle map");
 assert.ok(arena.includes('watchLegFocusUntil'),"Squatting camera dodge should highlight lower-body muscles");

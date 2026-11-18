@@ -296,6 +296,22 @@
  #watchBodyHud svg{width:53px;height:79px;margin:0 auto}
  #watchBodyHud #watchBpm{font-size:16px}#watchBodyHud .workoutName{font-size:9px}}
 @media(max-width:500px){#watchBodyHud{top:80px;width:93px}#watchBodyHud svg{width:57px;height:81px}}
+/* Fold6 unfolds to a near-square portrait viewport: stack the two right HUDs
+   rather than drawing the watch silhouette directly over the combat radar. */
+#watchBodyHud{top:calc(max(86px,calc(env(safe-area-inset-top) + 75px)) + 174px);right:17px}
+@media(max-width:620px){
+ #watchBodyHud{top:calc(max(132px,calc(env(safe-area-inset-top) + 111px)) + 136px);right:7px}
+}
+/* Short landscape viewports cannot stack two panels vertically; align them
+   side by side, preserving the centre aiming area and bottom attack controls. */
+@media(min-aspect-ratio:6/5) and (max-height:600px){
+ #watchBodyHud{top:max(86px,calc(env(safe-area-inset-top) + 75px));
+  right:calc(17px + 136px + 11px)}
+}
+@media(min-aspect-ratio:6/5) and (max-height:600px) and (max-width:620px){
+ #watchBodyHud{top:max(132px,calc(env(safe-area-inset-top) + 111px));
+  right:calc(7px + 103px + 11px)}
+}
 </style></head><body>
 <div id="sky"></div><canvas id="game"></canvas><div id="vignette"></div><div id="bottomShade"></div><div id="screenFx"></div><canvas id="weaponCanvas" aria-hidden="true"></canvas>
 <div class="ui" id="brand"><div id="sigil">✦</div><div><h1>Motion RPG</h1><p>BORDERWOOD · HUNT</p></div></div>
@@ -409,7 +425,7 @@ if(dumbbellMode){activeWeaponMode="melee";autoSwitchEnabled=false;
   el("hostStart").parentElement.hidden=true;
   el("motionRoom").hidden=true;el("controllerLink").hidden=true;
   el("linkStatus").textContent="워치4에서 보정 완료 후 컬을 천천히 반복해. 이 화면의 전투를 시작하고 설정 창을 닫아야 실제 공격이 인정돼.";
-  el("footerNote").textContent="워치4 컬 완료 = 근접 공격 1회 · 폴드6 카메라 회피";
+  el("footerNote").textContent="워치4 컬 = 공격 · 미연결 시 검격 버튼으로 계속 공격 가능";
  }
 }
 const currentWeapon=()=>activeWeaponMode==="melee"?equipped.meleeWeapon:equipped.rangedWeapon;
@@ -893,6 +909,7 @@ function magic(){
 }
 function swordHit(style=null){
  if(activeWeaponMode!=="melee"){toast("활 장착 중 · 근접 공격 불가");return false;}
+ if(dumbbellMode&&enemy.dead){toast("다음 몬스터를 찾는 중 · "+Math.max(1,Math.ceil(enemy.respawn))+"초");return false;}
  if(!active||!el("motionPanel").hidden||worldMode||clock-lastFire<.48+stats.attackDelay
     ||meleeAction||rangedAction)return false;
  meleeAction=createMeleeAction(currentWeapon(),style,clock);
@@ -1105,14 +1122,21 @@ function updateEnemy(dt){
  * Pause automatic steps during telegraphs and attack follow-through; leave
  * dodge movement/camera recognition to the player.
  */
+// Keep large monsters' noses out of the camera without pushing the target
+// outside the reach of the currently equipped melee weapon.
+function dumbbellCombatSpacing(){
+ const creatureSpace=enemy.kind===5?4.15:enemy.kind===4||enemy.kind===7?3.95:
+  enemy.kind===3?3.45:3.2;
+ return Math.min(creatureSpace,Math.max(2.45,weaponProfile(equipped.meleeWeapon).reach-.25));
+}
 function autoExploreDumbbell(dt){
  if(!dumbbellMode||enemy.dead)return;
  const target=lockOnYaw(camera,enemy);
  if(target!==null)yaw=followTargetYaw(yaw,target,dt*2.0);
  if(enemy.windup>0||clock<enemy.impactUntil||meleeAction||rangedAction)return;
- const dist=distance2d(camera,enemy);
- if(dist<=3.15||dist>100)return;
- const step=Math.min(dist-3.15,dt*2.7);
+ const dist=distance2d(camera,enemy),spacing=dumbbellCombatSpacing();
+ if(dist<=spacing||dist>100)return;
+ const step=Math.min(dist-spacing,dt*2.7);
  camera.x=Math.max(-22,Math.min(22,camera.x+(enemy.x-camera.x)/dist*step));
  camera.z=Math.max(-31,Math.min(7,camera.z+(enemy.z-camera.z)/dist*step));
 }
@@ -1134,7 +1158,8 @@ let f=forward(),forwardX=Math.sin(yaw),forwardZ=-Math.cos(yaw),rightX=Math.cos(y
 autoExploreDumbbell(dt);
 if(!enemy.dead){
  const dx=camera.x-enemy.x,dz=camera.z-enemy.z;
- const dist=Math.hypot(dx,dz),minDist=enemy.kind===4||enemy.kind===7?2.12:enemy.kind===5?1.8:enemy.kind===3?1.5:1.48;
+ const dist=Math.hypot(dx,dz),minDist=dumbbellMode?dumbbellCombatSpacing():
+  enemy.kind===4||enemy.kind===7?2.12:enemy.kind===5?1.8:enemy.kind===3?1.5:1.48;
  if(dist<minDist){
   const ax=dist>.001?dx/dist:Math.sin(yaw),az=dist>.001?dz/dist:-Math.cos(yaw);
   camera.x=Math.max(-22,Math.min(22,enemy.x+ax*minDist));
@@ -1277,7 +1302,12 @@ function updateEnemyNavigation(){
   drawCombatRadar();lastRadarClock=clock;
  }
  if(enemy.dead){
-  tag.hidden=true;arrow.hidden=true;notice.hidden=true;return;
+  tag.hidden=true;arrow.hidden=true;
+  if(dumbbellMode){
+   notice.hidden=false;
+   notice.textContent="다음 몬스터를 찾는 중 · "+Math.max(1,Math.ceil(enemy.respawn))+"초";
+  }else notice.hidden=true;
+  return;
  }
  notice.hidden=clock-enemySpawnClock>3.4;
  const projected=projectEnemyHead(camera,yaw,pitch,enemy,W,H,monsterHeadHeight(enemy.kind));
@@ -1779,7 +1809,14 @@ meleeButton.addEventListener("pointerup",e=>{
  if(!meleePointer||e.pointerId!==meleePointer.id)return;
  const dx=e.clientX-meleePointer.x,dy=e.clientY-meleePointer.y;meleePointer=null;
  const cut=Math.abs(dx)>26&&Math.abs(dx)>Math.abs(dy)?"sweep":dy>27?"overhead":dy< -27?"thrust":null;
- swordHit(cut);
+ if(!swordHit(cut)){
+  if(!active){toast("사냥을 먼저 시작해");return;}
+  if(enemy.dead&&dumbbellMode)return; // swordHit already explains the respawn.
+  const actionRemain=Math.max(0,(meleeAction?.endsAt||rangedAction?.endsAt||clock)-clock);
+  const cooldownRemain=Math.max(0,.48+stats.attackDelay-(clock-lastFire));
+  const remaining=Math.max(actionRemain,cooldownRemain);
+  if(remaining>.01)toast("검격 준비 중 · "+remaining.toFixed(1)+"초");
+ }
 });
 meleeButton.addEventListener("pointercancel",()=>{meleePointer=null;});
 let huntWasActive=false;
@@ -1802,9 +1839,9 @@ function showHuntSummary(){
 }
 function returnToVillage(){
  bankProgress();
- if(new URLSearchParams(location.search).get("return")==="preview"){
+ if(watchInputMode||new URLSearchParams(location.search).get("return")==="preview"){
   if(window.parent!==window)window.parent.postMessage({type:"motion-rpg-indoor-return",sessionId},location.origin);
-  else location.href="./preview.html?v=0.45&from=indoor";
+  else location.href="./preview.html?v=0.51.1&from=indoor";
  }else location.href="./index.html?from=indoor";
 }
 el("campReturn").addEventListener("click",showHuntSummary);
