@@ -70,6 +70,6 @@ for(const marker of [
  'autoHealEnabled=false'
 ])assert.ok(arena.includes(marker),"Arena update missing: "+marker);
 for(const marker of ['id="shopDialog"','function renderShop()','buyShopItem(sharedCharacter(),item.id)','id="shopGold"','id="shopList"','function openShop()','import {SHOP_ITEMS,buyShopItem}'])assert.ok(hub.includes(marker),"Shop UI incomplete: "+marker);
-assert.ok(hub.includes("indoor.html?v=0.47"));
+assert.ok(hub.includes("indoor.html?v=0.48"));
 assert.ok(pad.includes('data-mode="auto"'));
 console.log("V0.47 PASS: camera pose placement, protected dodge, actual view animation, affordable shop, craft price tiers and item artwork");
