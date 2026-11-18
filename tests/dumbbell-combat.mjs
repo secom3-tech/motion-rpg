@@ -51,7 +51,7 @@ for(const marker of [
  'const accepted=activeWeaponMode==="ranged"?magic():swordHit("overhead")',
  'accepted=attackMode==="ranged"?magic():swordHit(packet.gesture==="melee"?packet.style:null)',
  'watchInputMode?"워치4 아령 컬 · 거리 자동 검/활"',
- 'if(dumbbellMode&&!enemy.dead&&d<=13)',
+ 'const exerciseAim=dumbbellMode&&!enemy.dead&&d<=13;',
 ])assert.ok(arena.includes(marker),"Distance exercise integration missing: "+marker);
 assert.ok(arena.includes('if(dumbbellMode){activeWeaponMode="melee";autoSwitchEnabled=true;'));
 assert.ok(arena.includes('el("weaponToggle").hidden=true;'));
