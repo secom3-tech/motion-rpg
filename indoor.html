@@ -340,7 +340,7 @@ import {rangedProfile,isRangedStyle,canStartRanged,fireRangedProjectile,projecti
 import {dodgePrompt,DODGE_PROMPT_WINDOW_SEC} from "./src/dodge-cue.mjs?v=0.46";
 import {dodgeCameraPose,DODGE_SIDE_STEP_M,canReserveTimedDodge,shouldDodgeMeleeHit} from "./src/dodge-feedback.mjs?v=0.47";
 import {relativeTarget,radarTarget,projectEnemyHead,enemyEdgePointer,monsterHeadHeight,compassDirection,RADAR_RANGE} from "./src/combat-navigation.mjs?v=0.36";
-import {validMotionPacket} from "./src/motion-core.mjs?v=0.43.6";
+import {validMotionPacket} from "./src/motion-core.mjs?v=0.49";
 import {createPoseCamera} from "./src/pose-camera.mjs?v=0.47";
 import {ATTACKS,angleToTarget,turnToTarget,strikeInfo,spawnAroundPlayer,distance2d,dodgeMatches} from "./src/combat-spatial.mjs?v=0.35";
 (()=>{'use strict';
@@ -1029,7 +1029,8 @@ function updateEnemy(dt){
     toast("공격 예고!");beep(740,.24,"square",.065);
    }
   }else{
-   enemy.attackTimer=Math.max(enemy.attackTimer,.8);
+   // The wolf can briefly lose the angle while circling without resetting its entire attack approach.
+   if(enemy.kind!==3)enemy.attackTimer=Math.max(enemy.attackTimer,.8);
    const cue=el("attackCue");
    if(cue.className!=="missed"){cue.className="";cue.textContent=previousDist>attack.range?"몬스터가 접근 중":"적이 방향을 돌리고 있다";}
   }
@@ -1445,15 +1446,15 @@ function renderMotionCooldown(){
   }else if(sensorReport.ready){
    phase="ready";title="공격 가능";duration="READY";progress=100;
   }else{
-   phase="neutral";title="팔을 잠시 멈춰";duration="준비 중";progress=100;
+   phase="neutral";title="동작 마무리";duration="준비 중";progress=100;
   }
  }
  panel.className="motionCooldown "+phase;
  if(!large.hidden){
   large.className=phase;
-  const main=phase==="ready"?"공격!":phase==="neutral"?"팔 잠시 멈춰":
+  const main=phase==="ready"?"공격!":phase==="neutral"?"동작 마무리":
    phase==="cooldown"?"공격 대기":title;
-  const sub=phase==="ready"?"이제 팔을 움직여 공격해":phase==="neutral"?"다음 공격을 위해 팔을 쉬어":
+  const sub=phase==="ready"?"이제 팔을 움직여 공격해":phase==="neutral"?"이전 동작이 꺾이면 다음 공격 가능":
    phase==="cooldown"?duration+" 남음":"S21 상태 확인 중";
   const composed=main+'<span class="sub">'+sub+'</span>';
   if(large.innerHTML!==composed)large.innerHTML=composed;

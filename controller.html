@@ -104,7 +104,7 @@ button{font-size:13px;padding:10px 11px;margin:4px 4px 0 0}
     <ul><li>투척은 약 1.9초의 중복 방지 시간과 충분히 가만히 있는 시간이 필요해. 팔을 회수할 때 다시 던지는 일을 줄이기 위한 규칙이야.</li><li>감지된 검격·투척 이벤트만 폴드6에 전송해. 원본 센서 수치나 카메라 영상은 보내지 않아.</li><li>주변을 비우고, 휴대폰을 실제로 던지지 마.</li></ul>
 </main>
 <script type="module">
-import {createGestureDetector,motionSample,dominantAxis} from "./src/motion-core.mjs?v=0.43.6";
+import {createGestureDetector,motionSample,dominantAxis} from "./src/motion-core.mjs?v=0.49";
 import {classifyMeleeGesture,classifyAttackIntent,motionFeatures} from "./src/player-combat.mjs?v=0.34";
 import {createWirelessController,cleanRoom} from "./src/peer-bridge.mjs?v=0.43.4";
 import {movementVector} from "./src/remote-control.mjs?v=0.41";
@@ -368,7 +368,7 @@ function onMotion(e){
   $("meter").style.width=Math.round(result.score)+"%";
   if(!result.valid)setStatus("센서 데이터 없음 · 기기 권한/지원 확인");
   else setStatus("센서 수신 중 · "+(wireless.connected?"게임 연결됨":"무선 미연결"));
-  $("sensorDetail").textContent="수신 "+sensorEvents+"회 · 강도 "+Math.round(result.score)+"/100 · 기준 "+Math.round(result.threshold)+" · "+(result.cooldownRemainingMs>0?"쿨타임 "+(result.cooldownRemainingMs/1000).toFixed(1)+"초":result.armed?"공격 준비 완료":"팔을 가만히 두면 공격 준비");
+  $("sensorDetail").textContent="수신 "+sensorEvents+"회 · 강도 "+Math.round(result.score)+"/100 · 기준 "+Math.round(result.threshold)+" · "+(result.cooldownRemainingMs>0?"쿨타임 "+(result.cooldownRemainingMs/1000).toFixed(1)+"초":result.armed?"공격 준비 완료":"이전 동작을 마무리하면 재준비");
   sampleTime=now;
   publishSensorState(false,now);
  }
@@ -471,7 +471,7 @@ $("calibrate").onclick=()=>{
   if(!axis){setStatus("회전 변화가 충분하지 않아. 다시 설정해 줘.");return;}
   axes[mode]=axis;
   try{localStorage.setItem("motion-rpg-s21-axes",JSON.stringify(axes));}catch{}
-  syncSettings();detector.reset();setStatus(axis.toUpperCase()+"축 동작 설정 완료 · 잠시 멈춘 뒤 시작");
+  syncSettings();detector.reset();setStatus(axis.toUpperCase()+"축 설정 완료 · 다음 동작부터 인식");
  },3000);
 };
 $("clearAxis").onclick=()=>{

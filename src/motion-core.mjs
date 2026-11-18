@@ -1,7 +1,8 @@
 /**
- * Sensor gesture gate for the dedicated wireless S21 controller.
- * Uses orientation + translational acceleration but never integrates position.
- * A cooldown and a low-motion re-arm gate reduce false duplicate attacks.
+ * Motion input for the hand-held S21 controller.
+ * A stroke is a high-energy onset followed by a genuine release/valley, not
+ * a requirement to keep the forearm motionless between attacks.
+ * Cooldowns still protect the game animation and projectile return strokes.
  */
 export const SENSOR_MODES=Object.freeze(["throw","melee","auto"]);
 export const SENSOR_AXES=Object.freeze(["alpha","beta","gamma"]);
@@ -14,7 +15,6 @@ export function motionSample(event,selectedAxis=""){
  const linear=Math.hypot(num(a.x),num(a.y),num(a.z));
  if(rotational>1800||linear>95)return {valid:false,score:0,rotations,linear};
  const rotation=SENSOR_AXES.includes(selectedAxis)?rotations[selectedAxis]:rotational;
- // A nil sample is not a valid positive detection; requires actual IMU motion.
  const valid=!!(event?.rotationRate||event?.acceleration)&&[rotation,linear].every(Number.isFinite);
  return {valid,score:clamp(rotation/4+linear*5,0,100),rotations,rotation,linear};
 }
@@ -23,67 +23,69 @@ export function gestureThreshold(mode="throw",sensitivity=3){
  return (mode==="melee"?38:50)+(3-level)*20;
 }
 /**
- * One physical action => one event. A throw can briefly settle while the arm
- * starts its recovery: require BOTH a long refractory period and continuous
- * low-motion neutral. Auto mode extends the refractory window after a throw.
+ * A new stroke needs a measured dip from the prior peak and a fresh upward
+ * threshold crossing. The dip can include nonzero movement (e.g. the arm
+ * returning from a cut). No fixed 350/750 ms motionless posture is required.
  */
 export function createGestureDetector({
  mode="throw",sensitivity=3,axis="",cooldownMs=700,quietMs=350,
  throwCooldownMs=1900,throwQuietMs=750
 }={}){
- let last=-Infinity,nextReady=-Infinity,lowFrom=null,armed=true,previous=0,count=0,rearmQuiet=quietMs;
+ let last=-Infinity,nextReady=-Infinity,releaseFrom=null,armed=true,previous=0,count=0,peak=0;
  let lastCooldownDuration=0;
  let current={mode:SENSOR_MODES.includes(mode)?mode:"throw",sensitivity,axis};
+ // Old quietMs options remain accepted for callers, but are no longer used
+ // as a requirement for continuous sensor stillness.
+ void quietMs;void throwQuietMs;
  function configure(next){
   current={...current,...next};
   if(!SENSOR_MODES.includes(current.mode))current.mode="throw";
   if(!SENSOR_AXES.includes(current.axis))current.axis="";
-  armed=false;lowFrom=null;previous=0;nextReady=-Infinity;lastCooldownDuration=0;
-  rearmQuiet=current.mode==="throw"?throwQuietMs:quietMs;
+  armed=false;releaseFrom=null;previous=0;peak=0;nextReady=-Infinity;lastCooldownDuration=0;
  }
- function reset(){last=-Infinity;nextReady=-Infinity;lowFrom=null;armed=true;previous=0;count=0;lastCooldownDuration=0;rearmQuiet=current.mode==="throw"?throwQuietMs:quietMs;}
+ function reset(){
+  last=-Infinity;nextReady=-Infinity;releaseFrom=null;armed=true;previous=0;peak=0;
+  count=0;lastCooldownDuration=0;
+ }
  function protectThrow(startTime=last){
   if(!Number.isFinite(startTime))return;
   nextReady=Math.max(nextReady,startTime+throwCooldownMs);
   lastCooldownDuration=Math.max(lastCooldownDuration,throwCooldownMs);
-  rearmQuiet=throwQuietMs;
-  lowFrom=null;
-  armed=false;
+  armed=false;releaseFrom=null;
  }
  function feed(event,now=Date.now()){
   const data=motionSample(event,current.axis),threshold=gestureThreshold(current.mode,current.sensitivity);
   if(!data.valid)return {...data,gesture:null,armed,count,threshold,cooldownRemainingMs:Math.max(0,nextReady-now)};
   const score=data.score;
-  if(score<=threshold*.28){
-   if(lowFrom===null)lowFrom=now;
-   if(now-lowFrom>=rearmQuiet)armed=true;
-  }else lowFrom=null;
+  if(!armed){
+   peak=Math.max(peak,score);
+   // Release is relative to the prior stroke peak, not absolute stillness.
+   // Require multiple consecutive low-energy frames to reject a brief spike.
+   const releaseLevel=Math.max(threshold*.46,Math.min(threshold*.80,peak*.52));
+   if(score<=releaseLevel){
+    if(releaseFrom===null)releaseFrom=now;
+    if(now-releaseFrom>=80&&now-last>=180)armed=true;
+   }else releaseFrom=null;
+  }
   let gesture=null;
-  if(armed&&score>=threshold&&score>=previous*.92&&now>=nextReady){
+  if(armed&&score>=threshold&&previous<threshold*.90&&now>=nextReady){
    gesture={type:current.mode,strength:Math.round(score),time:now};
-   armed=false;last=now;count++;
+   armed=false;releaseFrom=null;peak=score;last=now;count++;
    lastCooldownDuration=current.mode==="throw"?throwCooldownMs:cooldownMs;
    nextReady=now+lastCooldownDuration;
-   rearmQuiet=current.mode==="throw"?throwQuietMs:quietMs;
   }
   previous=score;
   return {...data,gesture,armed,count,threshold,cooldownRemainingMs:Math.max(0,nextReady-now)};
  }
- configure({mode,sensitivity,axis});
- reset();
- /**
-  * Read-only timing for a separate visual countdown. Does not re-arm, consume
-  * samples or change attack mechanics.
-  */
+ configure({mode,sensitivity,axis});reset();
  function status(now=Date.now()){
   const remainingMs=Math.max(0,nextReady-now);
-  const quietRemainingMs=armed?0:lowFrom===null?rearmQuiet:Math.max(0,rearmQuiet-(now-lowFrom));
   return {
    cooldownRemainingMs:remainingMs,
    cooldownDurationMs:lastCooldownDuration,
-   quietRemainingMs,
-   armed,
-   ready:armed&&remainingMs===0,
+   quietRemainingMs:0,
+   armed,ready:armed&&remainingMs===0,
+   // Keep the packet field for backward compatibility; means stroke release.
    waitingForNeutral:remainingMs===0&&!armed
   };
  }

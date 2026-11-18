@@ -10,7 +10,7 @@ const configs=[
  {name:"slime",aggro:9.0,space:3.25,strafe:.12,walk:.96,hop:true},
  {name:"slime",aggro:9.0,space:3.40,strafe:.20,walk:.94,hop:true},
  {name:"slime",aggro:9.5,space:3.55,strafe:.22,walk:1.02,hop:true},
- {name:"wolf",aggro:13,space:4.05,strafe:.56,walk:1.03},
+ {name:"wolf",aggro:13,space:3.25,strafe:.42,walk:1.03},
  {name:"golem",aggro:18.5,space:8.0,strafe:.18,walk:1.08},
  {name:"boar",aggro:12,space:4.15,strafe:.33,walk:1.08},
  {name:"wisp",aggro:16,space:3.55,strafe:.40,walk:1.03},

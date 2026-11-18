@@ -20,39 +20,39 @@ assert.equal(dominantAxis([{alpha:12,beta:5,gamma:30}]),"gamma");
 assert.equal(dominantAxis([{alpha:5,beta:4,gamma:3}]),null);
 const detection=createGestureDetector({mode:"throw",sensitivity:3});
 let result=detection.feed(event(300),1000);
-assert.equal(result.gesture?.type,"throw","Strong movement emits one throw");
-assert.equal(detection.status(1000).cooldownRemainingMs,1900,"Throw cooldown reports 1.9 s");
-assert.equal(detection.status(1000).cooldownDurationMs,1900,"UI has the matching progress bar duration");
+assert.equal(result.gesture?.type,"throw","One strong movement yields one throw");
+assert.equal(detection.status(1000).cooldownRemainingMs,1900);
 assert.equal(detection.status(1900).cooldownRemainingMs,1000);
-assert.equal(detection.status(2900).ready,false,"Cooldown alone does not bypass neutral re-arm");
-assert.equal(detection.feed(event(300),1200).gesture,null,"No double trigger for held motion");
-detection.feed(event(0),2000);
-detection.feed(event(0),2370);
-assert.equal(detection.feed(event(300),2500).gesture,null,"Throw return stroke within cooldown must not trigger");
-detection.feed(event(0),2600);
-detection.feed(event(0),3410);
-assert.equal(detection.feed(event(300),3500).gesture?.type,"throw","Second deliberate throw after cooldown and full neutral");
-assert.equal(detection.status(3500).ready,false);
-assert.equal(detection.status(3600).cooldownRemainingMs,1800);
+assert.equal(detection.feed(event(300),1200).gesture,null,"Held strong motion is not a second stroke");
+assert.equal(detection.status(2900).ready,false,"High motion without a release cannot restart an attack");
+// A nonzero low-energy valley replaces the former 750 ms stillness.
+detection.feed(event(135),2300);
+detection.feed(event(135),2400);
+assert.equal(detection.status(2900).ready,true,"The arm may be moving slowly during recovery");
+assert.equal(detection.feed(event(300),2910).gesture?.type,"throw","Second stroke after release and cooldown");
 assert.equal(detection.count,2);
 detection.configure({mode:"melee",axis:"alpha",sensitivity:3});
-assert.equal(detection.feed(event(300),3600).gesture,null,"Changing mode must not immediately trigger");
-detection.feed(event(0),4000);
-detection.feed(event(0),4380);
-assert.equal(detection.feed(event(300),4500).gesture?.type,"melee");
-assert.equal(detection.status(4500).cooldownDurationMs,700,"Melee uses the real 700ms gate");
-assert.equal(detection.status(4900).cooldownRemainingMs,300);
-assert.equal(detection.status(5200).cooldownRemainingMs,0);
+assert.equal(detection.feed(event(300),3600).gesture,null,"Changing mode must not cause a phantom hit");
+detection.feed(event(90),3660);
+detection.feed(event(90),3770);
+assert.equal(detection.feed(event(300),3840).gesture?.type,"melee");
+assert.equal(detection.status(3840).cooldownDurationMs,700);
+assert.equal(detection.status(4100).cooldownRemainingMs,440);
+// Continuous alternating movement can form a second stroke without a full stop.
+detection.feed(event(110),4050);
+detection.feed(event(110),4160);
+assert.equal(detection.feed(event(300),4400).gesture,null,"Host animation timing is respected");
+detection.feed(event(110),4440);
+detection.feed(event(110),4570);
+assert.equal(detection.feed(event(300),4590).gesture?.type,"melee","Rhythmic follow-up needs no motionless pause");
 const auto=createGestureDetector({mode:"auto",sensitivity:3});
 assert.equal(auto.feed(event(300),1000).gesture?.type,"auto");
 auto.protectThrow(1000);
-assert.equal(auto.status(1000).cooldownDurationMs,1900,"Auto-mode throw extends the gate");
-auto.feed(event(0),2000);
-auto.feed(event(0),2780);
-assert.equal(auto.feed(event(300),2810).gesture,null,"Auto throw remains refractory for 1.9 seconds");
-auto.feed(event(0),2900);
-auto.feed(event(0),3700);
-assert.equal(auto.feed(event(300),3750).gesture?.type,"auto","Auto can attack again after deliberate reset");
+assert.equal(auto.status(1000).cooldownDurationMs,1900);
+auto.feed(event(140),2500);auto.feed(event(140),2620);
+assert.equal(auto.feed(event(300),2800).gesture,null,"Projectile return is blocked during cooldown");
+auto.feed(event(140),2910);auto.feed(event(140),3020);
+assert.equal(auto.feed(event(300),3100).gesture?.type,"auto");
 let packet={type:"gesture",gesture:"melee",strength:76,time:Date.now(),seq:1,session:"mrpg-abcdefghj"};
 assert.ok(validMotionPacket(packet,packet.session));
 assert.ok(validMotionPacket({...packet,skillHeld:true},packet.session),"Skill modifier is an optional boolean on motion packets");
@@ -140,7 +140,7 @@ const controller=fs.readFileSync(new URL("../controller.html",import.meta.url),"
 for(const needle of ['id="motionCooldown"','id="motionCooldownState"','id="motionCooldownTime"',
  'id="motionCooldownFill"','function renderMotionCooldown()','sensorReport.cooldownRemainingMs',
  'sensorReport.ready','sensorReport.sensorReceiving','packet.type==="sensor-state"',
- '공격 대기','공격 가능','팔을 잠시 멈춰']){
+ '공격 대기','공격 가능','동작 마무리']){
  assert.ok(arena.includes(needle),"Fold6 HUD must display real S21 readiness: "+needle);
 }
 assert.ok(!controller.includes('id="attackCooldown"'),"Do not keep cooldown display on S21");

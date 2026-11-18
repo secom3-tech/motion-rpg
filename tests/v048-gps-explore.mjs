@@ -39,7 +39,7 @@ const arena=fs.readFileSync(new URL("../indoor.html",import.meta.url),"utf8");
 const hub=fs.readFileSync(new URL("../preview.html",import.meta.url),"utf8");
 for(const phrase of [
  'id="attackReadySignal"','large.className=phase','phase==="ready"?"공격!"',
- 'phase==="neutral"?"팔 잠시 멈춰"','phase==="cooldown"?"공격 대기"',
+ 'phase==="neutral"?"동작 마무리"','phase==="cooldown"?"공격 대기"',
  'if(phase==="ready"&&previousAttackReadyPhase!=="ready")beep',
  'enemy.respawn=3.0','spawnAroundPlayer(camera,playerHeading,rand,undefined,{exploration:true})',
  '방향 표시를 따라 숲길을 탐색'
