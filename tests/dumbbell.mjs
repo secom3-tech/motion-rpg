@@ -38,7 +38,7 @@ assert.equal(detector.reps,0,"Partial motion is not a rep");
 const arena=fs.readFileSync(new URL("../indoor.html",import.meta.url),"utf8");
 const html=fs.readFileSync(new URL("../dumbbell.html",import.meta.url),"utf8");
 const hub=fs.readFileSync(new URL("../preview.html",import.meta.url),"utf8");
-for(const m of ['dumbbellMode','gameMode===\'dumbbell\'','function autoExploreDumbbell','new URL("./dumbbell.html"','autoExploreDumbbell(dt)'])assert.ok(arena.includes(m),"Dumbbell game mode marker missing: "+m);
+for(const m of ['dumbbellMode','gameMode===\'dumbbell\'','function autoExploreDumbbell','new URL(dumbbellMode?"./dumbbell.html"','autoExploreDumbbell(dt)'])assert.ok(arena.includes(m),"Dumbbell game mode marker missing: "+m);
 for(const m of ['createCurlDetector','gravityVector','averagedGravity','createWirelessController','send("sensor-state"','"gesture",{gesture:"melee"'])assert.ok(html.includes(m),"Dumbbell controller marker missing: "+m);
 assert.ok(hub.includes('아령 사냥 · 암밴드 테스트'));
 const script=html.match(/<script type="module">([\s\S]*?)<\/script>/);
