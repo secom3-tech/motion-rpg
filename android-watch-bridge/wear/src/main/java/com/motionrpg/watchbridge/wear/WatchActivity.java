@@ -10,6 +10,7 @@ import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.os.Bundle;
+import android.os.Build;
 import android.os.SystemClock;
 import android.graphics.Color;
 import android.view.Gravity;
@@ -242,9 +243,11 @@ public final class WatchActivity extends Activity implements SensorEventListener
     }
     private void startHeartRate(){
         if(heartSensor==null){heartView.setText("♥ 센서 지원 안 함");return;}
-        if(checkSelfPermission(Manifest.permission.BODY_SENSORS)!=PackageManager.PERMISSION_GRANTED){
+        String permission=Build.VERSION.SDK_INT>=36?
+            "android.permission.health.READ_HEART_RATE":Manifest.permission.BODY_SENSORS;
+        if(checkSelfPermission(permission)!=PackageManager.PERMISSION_GRANTED){
             heartView.setText("♥ 심박 권한 요청");
-            requestPermissions(new String[]{Manifest.permission.BODY_SENSORS},HR_PERMISSION_REQUEST);
+            requestPermissions(new String[]{permission},HR_PERMISSION_REQUEST);
             return;
         }
         if(!running)return;
