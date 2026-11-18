@@ -453,7 +453,10 @@ function syncWeaponHud(){
  el("fire").querySelector("b").textContent=n.ranged;
  el("fire").querySelector(".icon").innerHTML=itemIllustration(weapon,"weapon");
  el("sword").hidden=!melee;el("fire").hidden=melee;
- el("weaponStatus").textContent=(melee?"검 준비 · S21 휘두르기 / F·E·R":"활 준비 · S21 투척 / Space")+(autoSwitchEnabled?" · 자동 선택":"");
+ el("weaponStatus").textContent=watchInputMode?
+  "검 준비 · 워치4 아령 컬 또는 터치 검격":
+  dumbbellMode?"검 준비 · S21 암밴드 컬 또는 터치 검격":
+  (melee?"검 준비 · S21 휘두르기 / F·E·R":"활 준비 · S21 투척 / Space")+(autoSwitchEnabled?" · 자동 선택":"");
  el("weaponToggle").innerHTML='<span class="toggleIcon">'+itemIllustration(melee?equipped.rangedWeapon:equipped.meleeWeapon,"weapon")+"</span><small>"+(melee?"활로 전환":"검으로 전환")+"</small>";
 }
 function showReaction(kind,label){
