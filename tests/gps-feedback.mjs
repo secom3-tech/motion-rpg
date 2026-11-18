@@ -20,12 +20,12 @@ const html=fs.readFileSync(new URL("../preview.html",import.meta.url),"utf8");
 for(const marker of ['id="gpsStatus"','id="gpsStatusLabel"','id="gpsStatusDetail"',
  'import {gpsFeedback,GPS_ACCURACY_LIMIT_METERS}', 'voice=true',
  'setGpsStatus("waiting");startGeo()','setGpsStatus("connected",p.accuracy,false)',
- 'setGpsStatus("recording",p.accuracy)','setGpsStatus("lost")','denied?"denied":"error"',
- 'setGpsStatus("weak",p.accuracy)','gpsGeneration++',
+ 'setGpsStatus("recording",p.accuracy,false)','setGpsStatus("lost")','denied?"denied":"error"',
+ 'setGpsStatus("weak",p.accuracy,false)','gpsGeneration++',
  'startLine.head+". "+startLine.detail','lastGps=now;\n  const measured='])
  assert.ok(html.includes(marker),"GPS UI behavior missing: "+marker);
 assert.ok(html.includes('if(dt<2)return;\n  if(d<3)'),'Short location fixes should accumulate, not reset the GPS time anchor');
-assert.ok(html.includes('gpsLastGoodAt>18000'),'Loss should be based on the last accurate fix');
+assert.ok(html.includes('gpsSilenceIsProlonged(gpsLastGoodAt,Date.now())'),'Loss should be based on the last accurate fix');
 assert.ok(html.includes('voice?"on":"off"'),'Voice preference must be under user control');
 assert.ok(html.includes('gpsStatus').valueOf());
 console.log("GPS VOICE PASS: status meanings, audible startup, loss, permissions, and rapid-fix timer protection");
