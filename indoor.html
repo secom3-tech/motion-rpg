@@ -1303,7 +1303,7 @@ function updateEnemyNavigation(){
  }
  if(enemy.dead){
   tag.hidden=true;arrow.hidden=true;
-  if(dumbbellMode){
+  if(typeof dumbbellMode!=="undefined"&&dumbbellMode){
    notice.hidden=false;
    notice.textContent="다음 몬스터를 찾는 중 · "+Math.max(1,Math.ceil(enemy.respawn))+"초";
   }else notice.hidden=true;
