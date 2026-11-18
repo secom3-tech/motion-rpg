@@ -1069,6 +1069,14 @@ for(let i=enemyShots.length-1;i>=0;i--){
   }else applyEnemyHit(shot.damageFactor);
   continue;
  }
+ // A physical sidestep that makes the projectile miss its original aim is
+ // still a successful evasion, even without a collision.
+ const passedAim=shot.aim&&Math.hypot(shot.x-shot.aim.x,shot.y-shot.aim.y,shot.z-shot.aim.z)<Math.max(1.05,shot.radius+.32);
+ if(passedAim&&clock<=dodgeUntil&&["left","right","duck","button"].includes(lastDodgeKind)){
+  enemyShots.splice(i,1);huntDodgeSuccess++;
+  showDodgeResult("✓ 발사체 회피 성공!",1.7);showReaction("success","발사체 회피 성공!");
+  beep(745,.15,"sine",.07);continue;
+ }
  if(result.expired){enemyShots.splice(i,1);continue;}
 }
 for(let i=projectiles.length-1;i>=0;i--){let p=projectiles[i];p.age+=dt;p.x+=p.vx*dt;p.y+=p.vy*dt;p.z+=p.vz*dt;p.life-=dt;p.traveled+=p.speed*dt;
