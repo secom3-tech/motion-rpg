@@ -397,6 +397,7 @@ import {createMonsterMind,monsterMotionStep,retainTarget} from "./src/monster-ai
 import {canAutoAcquire,followTargetYaw,assistedAimYaw,AUTO_LOCK_MANUAL_PAUSE} from "./src/target-assist.mjs?v=0.44";
 import {automaticWeaponMode,autoMotionAttackMode} from "./src/auto-weapon.mjs?v=0.45";
 import {exerciseAttackMode,exerciseApproachState,exerciseCameraClearance,separateExerciseCamera} from "./src/dumbbell-combat.mjs?v=0.52";
+import {createExerciseNavigator,exerciseSightClear} from "./src/exercise-navigation.mjs?v=0.54";
 import {rangedProfile,isRangedStyle,canStartRanged,fireRangedProjectile,projectileStep} from "./src/enemy-ranged.mjs?v=0.38";
 import {dodgePrompt,DODGE_PROMPT_WINDOW_SEC} from "./src/dodge-cue.mjs?v=0.46";
 import {dodgeCameraPose,DODGE_SIDE_STEP_M,canReserveTimedDodge,shouldDodgeMeleeHit} from "./src/dodge-feedback.mjs?v=0.47";
@@ -641,16 +642,17 @@ function viewMatrix(){
 }
 function draw(asset,model=identity,tint=[1,1,1],glow=0,alpha=1,fog=1){gl.bindBuffer(gl.ARRAY_BUFFER,asset.buf);gl.vertexAttribPointer(loc.pos,3,gl.FLOAT,false,36,0);gl.vertexAttribPointer(loc.nor,3,gl.FLOAT,false,36,12);gl.vertexAttribPointer(loc.col,3,gl.FLOAT,false,36,24);gl.enableVertexAttribArray(loc.pos);gl.enableVertexAttribArray(loc.nor);gl.enableVertexAttribArray(loc.col);gl.uniformMatrix4fv(loc.model,false,model);gl.uniform3fv(loc.tint,tint);gl.uniform1f(loc.glow,glow);gl.uniform1f(loc.alpha,alpha);gl.uniform1f(loc.fog,fog);if(alpha<1){gl.enable(gl.BLEND);gl.blendFunc(gl.SRC_ALPHA,gl.ONE_MINUS_SRC_ALPHA);gl.depthMask(false)}else{gl.disable(gl.BLEND);gl.depthMask(true)}gl.drawArrays(gl.TRIANGLES,0,asset.n);if(alpha<1){gl.depthMask(true)}}
 function terrainHeight(x,z){return .11*Math.sin(x*.17+z*.07)+.07*Math.sin(z*.25-x*.24)+.07*Math.cos(x*.36)}
+const forestObstacles=[];
 const world=builder();let N=65,step=2;for(let i=0;i<N;i++)for(let j=0;j<N;j++){let x=(i-N/2)*step,z=(j-N/2)*step-19;let v=(a,b)=>[a,terrainHeight(a,b)-.11,b];let a=v(x,z),b=v(x+step,z),c=v(x+step,z+step),d=v(x,z+step);let path=Math.abs(x-.26*Math.sin(z*.095))<2.12&&z<9;let noise=rand();const bio=forestZoneAt(x,z).id;let col=path?[.47+noise*.09,.48+noise*.07,.35+noise*.04]:bio==="marsh"?[.12+noise*.08,.30+noise*.11,.30+noise*.10]:bio==="ruins"?[.28+noise*.08,.36+noise*.10,.30+noise*.07]:bio==="grove"?[.24+noise*.11,.37+noise*.12,.23+noise*.09]:[.19+noise*.12,.38+noise*.13,.24+noise*.07];pushT(world,a,b,d,col);pushT(world,b,c,d,col)}
 // Embedded rocks and broken ancient pathway.
 for(let i=0;i<44;i++){let z=5-rand()*68,x=(rand()-.5)*3.3;vertAsset(sphLow,world,x,terrainHeight(x,z)+.02,z,.35+rand()*.38,.04+rand()*.035,.35+rand()*.36,[.42+rand()*.11,.48+rand()*.08,.4+rand()*.08],rand()*3.14)}
 // Large stylised forest trees with multiple foliage layers.
-for(let i=0;i<87;i++){let x=(rand()-.5)*77,z=(rand()-.5)*97-23;if(z>9&&Math.abs(x)<9)continue;if(z<3&&z>-34&&Math.abs(x)<3.7)continue;let h=3.6+rand()*5.1,base=terrainHeight(x,z);let trunk=.18+rand()*.19,scale=.82+rand()*.75;let brown=[.32+rand()*.09,.30+rand()*.07,.25+rand()*.05];vertAsset(cylSrc,world,x,base-.1,z,trunk,h*.63,trunk,brown);let leaf=[.20+rand()*.2,.42+rand()*.23,.27+rand()*.11];for(let layer=0;layer<3;layer++){let y=base+h*(.26+layer*.22),wid=scale*(2.2-layer*.4);vertAsset(coneSrc,world,x,y,z,wid,h*.43,wid,[leaf[0]+layer*.035,leaf[1]+layer*.025,leaf[2]+layer*.015],rand()*6.2)}vertAsset(sphLow,world,x,base+h*.95,z,.43,h*.12,.43,[leaf[0]+.09,leaf[1]+.13,leaf[2]+.03])}
+for(let i=0;i<87;i++){let x=(rand()-.5)*77,z=(rand()-.5)*97-23;if(z>9&&Math.abs(x)<9)continue;if(z<3&&z>-34&&Math.abs(x)<3.7)continue;let h=3.6+rand()*5.1,base=terrainHeight(x,z);let trunk=.18+rand()*.19,scale=.82+rand()*.75;forestObstacles.push({x,z,r:Math.max(1.10,scale*1.42),type:"tree"});let brown=[.32+rand()*.09,.30+rand()*.07,.25+rand()*.05];vertAsset(cylSrc,world,x,base-.1,z,trunk,h*.63,trunk,brown);let leaf=[.20+rand()*.2,.42+rand()*.23,.27+rand()*.11];for(let layer=0;layer<3;layer++){let y=base+h*(.26+layer*.22),wid=scale*(2.2-layer*.4);vertAsset(coneSrc,world,x,y,z,wid,h*.43,wid,[leaf[0]+layer*.035,leaf[1]+layer*.025,leaf[2]+layer*.015],rand()*6.2)}vertAsset(sphLow,world,x,base+h*.95,z,.43,h*.12,.43,[leaf[0]+.09,leaf[1]+.13,leaf[2]+.03])}
 // Plants, stones, colourful spores.
 for(let i=0;i<620;i++){let x=(rand()-.5)*70,z=(rand()-.5)*95-23;if(Math.abs(x)<1.9&&z<9&&z>-60)continue;let y=terrainHeight(x,z)-.01;let r=.14+rand()*.34;if(rand()<.58){let cl=[.18+rand()*.16,.49+rand()*.25,.23+rand()*.12];vertAsset(coneSrc,world,x,y,z,r,r*(1.7+rand()*2),r,cl,rand()*6)}else{let co=rand()<.45?[.64,.75,.53]:[.33,.51,.45];vertAsset(sphLow,world,x,y,z,r,.16+rand()*.2,r*.85,co)} }
 for(let i=0;i<125;i++){let x=(rand()-.5)*53,z=(rand()-.5)*78-15,y=terrainHeight(x,z)+.04;let light=rand()<.55?[.88,.79,.45]:[.68,.56,.9];vertAsset(sphLow,world,x,y,z,.07,.11,.07,light)}
 // Fallen stone and mystical rune altar behind the enemy.
-for(let side of [-1,1]){let x=side*3.45,z=-18.8;let y=terrainHeight(x,z);vertAsset(cylSrc,world,x,y,z,.83,2.4,.83,[.42,.52,.5],side*.13);vertAsset(sphLow,world,x,y+2.4,z,.87,.25,.87,[.52,.63,.59])}
+for(let side of [-1,1]){let x=side*3.45,z=-18.8;let y=terrainHeight(x,z);forestObstacles.push({x,z,r:1.18,type:"pillar"});vertAsset(cylSrc,world,x,y,z,.83,2.4,.83,[.42,.52,.5],side*.13);vertAsset(sphLow,world,x,y+2.4,z,.87,.25,.87,[.52,.63,.59])}
 vertAsset(sphLow,world,0,terrainHeight(0,-19)-.12,-19,2.8,.23,1.3,[.42,.56,.50]);
 
 // Distinct connected forest landmarks: ruined gate, glowing marsh, boar clearing.
@@ -660,6 +662,7 @@ const stone=[.43,.51,.45],lichen=[.40,.60,.47],blue=[.28,.66,.72],gold=[.87,.74,
 for(const x of [-19,-11]){
  for(const z of [-25,-18,-11]){
   const y=terrainHeight(x,z);
+  forestObstacles.push({x,z,r:1.08,type:"ruin"});
   vertAsset(cylSrc,world,x,y,z,.6,1.4+(rand()*.8),.6,stone,rand()*.5);
   vertAsset(sphLow,world,x,y+2.0,z,.85,.28,.83,lichen);
   for(let k=0;k<2;k++){
@@ -670,6 +673,8 @@ for(const x of [-19,-11]){
 }
 for(let z of [-24,-18,-12]){
  const x=-15,y=terrainHeight(x,z);
+ forestObstacles.push({x:x-1.9,z,r:.78,type:"gate"});
+ forestObstacles.push({x:x+1.9,z,r:.78,type:"gate"});
  vertAsset(cylSrc,world,x-1.9,y,z,.38,3.0,.38,[.50,.59,.55]);
  vertAsset(cylSrc,world,x+1.9,y,z,.38,3.0,.38,[.49,.57,.56]);
  vertAsset(sphLow,world,x,y+3,z,2.45,.40,.48,[.49,.59,.52]);
@@ -685,6 +690,7 @@ for(let i=0;i<38;i++){
   vertAsset(sphLow,world,x,y-.042,z,ring*.62,.035,ring*.54,[.37,.75,.76]);
  }else if(kind<.80){
   const height=.4+rand()*1.4;
+  if(height>1.15)forestObstacles.push({x,z,r:Math.max(.6,ring*.86),type:"mushroom"});
   vertAsset(cylSrc,world,x,y,z,.09+height*.06,height,.09+height*.06,[.70,.79,.63]);
   vertAsset(sphLow,world,x,y+height,z,ring,.25+.17*rand(),ring,[.39,.63,.75]);
   vertAsset(sphLow,world,x,y+height+.06,z,ring*.62,.13,ring*.6,[.68,.83,.93]);
@@ -704,6 +710,7 @@ for(let i=0;i<40;i++){
  }
 }
 const campX=-7,campZ=3,campY=terrainHeight(campX,campZ);
+forestObstacles.push({x:campX,z:campZ,r:1.58,type:"camp"});
 for(let side of [-1,1]){
  vertAsset(cylSrc,world,campX+side*1.3,campY,campZ,.13,2.3,.13,[.46,.33,.19]);
 }
@@ -714,6 +721,7 @@ for(let i=0;i<5;i++){
 }
 vertAsset(coneSrc,world,campX,campY+.1,campZ,.34,.76,.34,[.98,.67,.33]);
 const staticMesh=upload(world);world.pos=[];world.nor=[];world.col=[];
+const forestNavigator=createExerciseNavigator(forestObstacles);
 function enemyColor(){return [[.39,.93,.56],[.63,.67,.98],[.97,.61,.51],[.39,.45,.42],[.59,.69,.65],[.65,.37,.30],[.38,.85,1],[.55,.65,.35]][enemy.kind]||[.39,.93,.56]}
 function part(mesh,x,y,z,sx,sy,sz,col,rot=0,glow=0,alpha=1){draw(mesh,matModel(x,y,z,sx,sy,sz,rot),col,glow,alpha)}
 
@@ -1006,7 +1014,7 @@ function damage(n,weapon="sword"){if(enemy.dead)return;enemyMind.aggro=true;enem
 const tint=weapon==="axe"||weapon==="ember"?[1,.58,.26]:weapon==="staff"||weapon==="orb"?[.38,.82,1]:weapon==="greatsword"||weapon==="aura"?[.50,.76,1]:weapon==="bow"||weapon==="arrow"?[.74,.94,.58]:[.80,1,.69];
 for(let i=0;i<16;i++){let p=(rand()-.5)*6,t=rand()*6.28,s=.65+rand()*2.6;sparks.push({x,y,z,vx:Math.cos(t)*s,vy:rand()*3.7,vz:Math.sin(t)*s,r:.04+rand()*.07,life:.4+rand()*.5,t:0,col:[tint[0],Math.min(1,tint[1]+rand()*.16),Math.min(1,tint[2]+rand()*.10)]})}toast('✦ '+n+' 데미지');beep(165,.12,'triangle',.11);if(enemy.hp<=0){enemy.dead=true;targetLocked=false;syncTargetUi();enemy.windup=0;enemy.impactUntil=0;enemyShots=[];el('attackBanner').hidden=true;el('enemyTag').hidden=true;el('enemyArrow').hidden=true;enemy.respawn=3.0;score+=80+enemy.kind*20;kills++;huntLog.push({name:enemy.name||"몬스터",at:huntElapsedSec});if(huntLog.length>25)huntLog.shift();heroHp=Math.min(stats.maxHp,heroHp+5);showHero();bankProgress();el('score').textContent=String(score).padStart(3,'0');el('enemyHud').style.opacity='0';el('stage').textContent=String(kills).padStart(2,'0');el('status').textContent='마력체 격파! 마을로 돌아가면 보상을 수령한다';setTimeout(()=>toast('마력체 격파 · 마을 보상 저장!'),350);beep(830,.25,'sine',.1)}}
 function spawnEnemy(){
- exerciseEngaged=false; // New monster => a new single approach/engagement cycle.
+ exerciseEngaged=false;exercisePath=null;exerciseRouteTarget=null;exercisePathIndex=0; // New monster => fresh approach and sightline.
  const oldKind=enemy.kind,area=forestZoneAt(camera.x,camera.z);
  dodgeProtectedAttack=0;
  enemy.kind=chooseForestMonster(area.id,rand,oldKind);
@@ -1135,9 +1143,8 @@ function updateEnemy(dt){
  * Pause automatic steps during telegraphs and attack follow-through; leave
  * dodge movement/camera recognition to the player.
  */
-// One approach per encounter. During engagement the hero stands still and
-// fires ranged attacks if the target backs out of sword reach.
-let exerciseEngaged=false;
+// One approach per encounter; reacquire a clear view when an enemy passes behind a prop.
+let exerciseEngaged=false,exercisePath=null,exercisePathIndex=0,exerciseRouteTarget=null,exerciseRepathAt=0;
 function dumbbellCombatSpacing(){
  const reach=weaponProfile(equipped.meleeWeapon).reach;
  // Giant monsters need more space. Out of melee range means a ranged shot.
@@ -1154,12 +1161,41 @@ function autoExploreDumbbell(dt){
  if(target!==null)yaw=followTargetYaw(yaw,target,dt*2.0);
  const dist=distance2d(camera,enemy),spacing=dumbbellCombatSpacing();
  const intent=exerciseApproachState(exerciseEngaged,dist,spacing);
- exerciseEngaged=intent.engaged;
- if(!intent.move||dist>100||enemy.windup>0||
-    clock<enemy.impactUntil||meleeAction||rangedAction)return;
- const step=Math.min(dist-spacing,dt*2.7);
- camera.x=Math.max(-22,Math.min(22,camera.x+(enemy.x-camera.x)/dist*step));
- camera.z=Math.max(-31,Math.min(7,camera.z+(enemy.z-camera.z)/dist*step));
+ const visible=exerciseSightClear(camera,enemy,forestObstacles);
+ // After reaching an engagement point, do not continually chase circling monsters.
+ // But if an object hides the enemy, take another clear position.
+ if(intent.engaged&&visible){exerciseEngaged=true;exercisePath=null;return;}
+ exerciseEngaged=false;
+ // Preserve the existing stationary dodge/attack windows even during a detour.
+ if(enemy.windup>0||clock<enemy.impactUntil||meleeAction||rangedAction)return;
+ if(dist>100)return;
+ const targetMoved=!exerciseRouteTarget||Math.hypot(enemy.x-exerciseRouteTarget.x,enemy.z-exerciseRouteTarget.z)>2.0;
+ if(!exercisePath||targetMoved||clock>=exerciseRepathAt){
+  const route=forestNavigator.plan(camera,enemy,spacing);
+  exercisePath=route?.path||[];
+  exercisePathIndex=0;exerciseRouteTarget={x:enemy.x,z:enemy.z};
+  exerciseRepathAt=clock+1.25;
+ }
+ if(!exercisePath.length)return;
+ // Skip intermediate grid nodes only when the entire straight walk stays clear.
+ while(exercisePathIndex+1<exercisePath.length&&
+   forestNavigator.walkClear(camera,exercisePath[exercisePathIndex+1]))exercisePathIndex++;
+ const waypoint=exercisePath[exercisePathIndex];
+ const remain=distance2d(camera,waypoint);
+ if(remain<.35){
+  if(exercisePathIndex+1<exercisePath.length)exercisePathIndex++;
+  else{
+   exercisePath=null;
+   // A clear ranged position is valid if stonework prevents a nearer stance.
+   if(visible&&dist<=12)exerciseEngaged=true;
+  }
+  return;
+ }
+ const step=Math.min(remain,dt*2.7);
+ const next={x:Math.max(-22,Math.min(22,camera.x+(waypoint.x-camera.x)/remain*step)),
+  z:Math.max(-31,Math.min(7,camera.z+(waypoint.z-camera.z)/remain*step))};
+ if(forestNavigator.walkClear(camera,next)){camera.x=next.x;camera.z=next.z;}
+ else{exercisePath=null;exerciseRepathAt=clock;}
 }
 function update(dt){if(!el("motionPanel").hidden||document.hidden)return;clock+=dt;if(!active)return;huntElapsedSec+=dt;const zone=forestZoneAt(camera.x,camera.z);
 el("forestZoneHud").textContent=zone.name;
