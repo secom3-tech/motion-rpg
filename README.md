@@ -1,10 +1,11 @@
 # Motion RPG — 경계의 숲
 
-## 최신 테스트 기준: v0.50 · 2026-11-18
+## 최신 테스트 기준: v0.51 · 2026-11-18
 
-- [워치4 설치·테스트 설명](./watch-setup.html) / [Watch4 네이티브 앱 소스](./android-watch-bridge/) / [v0.49 인수인계](./docs/PROJECT_HANDOFF_2026-11-18-v049.md) — **다음 대화에서는 이 문서부터 확인**\n- [v0.48 변경 이력](./docs/PROJECT_HANDOFF_2026-11-18.md)
+- [워치4 v0.51 완성형 테스트·설치](./watch-setup.html) / [Watch4 네이티브 앱 소스](./android-watch-bridge/) / [v0.49 인수인계](./docs/PROJECT_HANDOFF_2026-11-18-v049.md) — **다음 대화에서는 이 문서부터 확인**\n- [v0.48 변경 이력](./docs/PROJECT_HANDOFF_2026-11-18.md)
 - [게임 실행](https://secom3-tech.github.io/motion-rpg/preview.html?v=0.49) / [S21 검격 컨트롤러](https://secom3-tech.github.io/motion-rpg/controller.html?v=0.49) / [아령 사냥](https://secom3-tech.github.io/motion-rpg/indoor.html?v=0.49&mode=dumbbell&return=preview) / [S21 아령 컨트롤러](https://secom3-tech.github.io/motion-rpg/dumbbell.html?v=0.49)
 - 이번 수정: 늑대 접근·공격 사거리 정렬, 손에 든 S21의 정지 대기 제거(동작 꺾임+새 상승 인식), 별도 S21 암밴드 아령 컬(2점 보정·완전한 반복 1타) + 자동 이동하는 숲 사냥 실험.
+- **v0.51:** 워치4 심박수 실시간 권한·측정, 보정값 로컬 재사용, 손목 센서 배터리·연결 상태 전송, 게임 우상단 전신 실루엣(컬 팔 근육 반응, 카메라 앉기 동작 시 하체 근육 강조), 컬 횟수 피드백. 별도 방 코드 없이 휴대폰 앱과 Wear OS Data Layer가 통신. 실제 워치4 착용 시 측정 정확도·무선 지연은 검증 전.
 - **기존 S21 게임 및 암밴드 컬 모드를 유지**. 추가로 **워치4+폴드6 네이티브 연결 앱**을 개발해 Watch4 Data Layer 수신으로 3D 아령 사냥 모드를 조작. 폴드6 연결 앱의 WebView는 Chrome과 저장공간이 분리되므로 게임 진행은 별도로 테스트. 실제 워치와 연결은 기기 검증 전.
 - 새 기기 연결 때는 현재 임시 6자리 방 코드를 다시 입력해야 함. 장비 기억·자동 재연결은 미구현.
 

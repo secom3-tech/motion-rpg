@@ -1748,7 +1748,25 @@ window.addEventListener("message",e=>{
  if(e.origin!==location.origin||e.source!==window.parent)return;
  if(e.data?.type==="motion-rpg-pause-input")stopMotionInputs();
 });
-const begin=el('begin');if(begin)begin.addEventListener('click',()=>{active=true;el('intro').classList.add('hidden');if(!worldMode)spawnEnemy();toast('숲에서 몬스터의 흔적을 찾아보세요!');try{if(window.AudioContext)ctx=new AudioContext()}catch(e){}});
+const begin=el('begin');if(begin)begin.addEventListener('click',()=>{
+ active=true;el('intro').classList.add('hidden');
+ if(!worldMode)spawnEnemy();
+ toast('숲에서 몬스터의 흔적을 찾아보세요!');
+ try{if(window.AudioContext)ctx=new AudioContext()}catch(e){}
+ // This is a direct user gesture: permission is requested only when the user
+ // actively begins Watch4 play, never before they choose to use the camera.
+ if(watchInputMode&&!poseCamera.active){
+  el("poseStatus").textContent="카메라 회피 연결 중...";
+  el("cameraStart").disabled=true;
+  poseCamera.start().then(()=>{
+   el("cameraStop").disabled=false;el("cameraReset").disabled=false;
+   refreshMotionIndicator();
+  }).catch(error=>{
+   el("cameraStart").disabled=false;
+   el("poseStatus").textContent="카메라를 켜지 못했어 · 터치 회피는 그대로 사용 가능";
+  });
+ }
+});
 el("weaponToggle").addEventListener("click",()=>{setAutoSwitchEnabled(false);switchWeapon(activeWeaponMode==="melee"?"ranged":"melee");});
 el("skillAttack").addEventListener("click",activateSkill);
 el("bandage").addEventListener("click",useBestRecovery);

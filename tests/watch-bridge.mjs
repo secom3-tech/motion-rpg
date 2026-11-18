@@ -17,6 +17,18 @@ for(const p of ['mobile/build.gradle','wear/build.gradle']){
  assert.ok(content.includes("applicationId 'com.motionrpg.watchbridge'"),"Wear Data Layer app IDs must match");
 }
 assert.ok(get("watch-setup.html").includes("watch4-fold6-debug-apks"));
+assert.ok(arena.includes('id="watchBodyHud"'),"Workout silhouette must exist");
+assert.ok(arena.includes('id="watchBpm"'),"Live heart rate should have a label");
+assert.ok(arena.includes('data-focus="none"'),"Must start with neutral muscle map");
+assert.ok(arena.includes('watchLegFocusUntil'),"Squatting camera dodge should highlight lower-body muscles");
+assert.ok(arena.includes('watchHeartBpm'),"Heart-rate telemetry must be displayed");
+assert.ok(wearable.includes("Sensor.TYPE_HEART_RATE"),"Wear OS must listen for actual heart-rate samples");
+assert.ok(wearable.includes("Manifest.permission.BODY_SENSORS"),"Heart rate requires runtime permission");
+assert.ok(wearable.includes("restoreCalibration()"),"Past curl calibration should be reusable");
+assert.ok(wearable.includes('data.put("session",sessionId)'),"Phone must reconnect after watch restart");
+assert.ok(companion.includes("currentWatchSession"),"Fold6 must reset its deduplication on restart");
+assert.ok(get("android-watch-bridge/wear/src/main/AndroidManifest.xml").includes("android.permission.health.READ_HEART_RATE"));
+
 const moduleScript=arena.match(/<script type="module">([\s\S]*?)<\/script>/);
 assert.ok(moduleScript);
 const file=path.join(os.tmpdir(),"watch-game-"+process.pid+".mjs");
