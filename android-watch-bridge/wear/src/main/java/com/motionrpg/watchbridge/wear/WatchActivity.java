@@ -39,7 +39,7 @@ public final class WatchActivity extends Activity implements SensorEventListener
     private final ArrayDeque<Sample> recent=new ArrayDeque<>();
     private TextView countView,phaseView,statusView,linkView;
     private Button startButton,downButton,upButton;
-    private long lastDisplay=0,lastSend=0;
+    private long lastDisplay=0,lastSend=0,lastHeartbeat=0;
     private int seq=0;
     private final MessageClient.OnMessageReceivedListener acknowledgements=event->{
         if(!ACK_PATH.equals(event.getPath()))return;
@@ -163,7 +163,7 @@ public final class WatchActivity extends Activity implements SensorEventListener
         for(int i=0;i<3;i++){
             float raw=e.values[i];
             if(fallbackAccel){
-                filter[i]=hasFilter?.82f*filter[i]+.18f*raw:raw;
+                filter[i]=hasFilter ? .82f*filter[i]+.18f*raw : raw;
                 raw=filter[i];
             }
             v[i]=raw;norm+=raw*raw;
@@ -180,6 +180,7 @@ public final class WatchActivity extends Activity implements SensorEventListener
             countView.setText(String.valueOf(counter.getRepetitions()));
             send("rep");
         }
+        if(now-lastHeartbeat>5000){lastHeartbeat=now;send("status");}
         if(now-lastDisplay>120){
             phaseView.setText(counter.getPhaseText());
             lastDisplay=now;
