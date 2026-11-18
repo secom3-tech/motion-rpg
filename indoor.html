@@ -420,7 +420,7 @@ if(dumbbellMode){activeWeaponMode="melee";autoSwitchEnabled=true;
  el("begin").textContent="아령 사냥 시작";
  el("weaponToggle").hidden=true; // Exercise reps choose melee/ranged automatically; no manual weapon lock.
  el("controllerLink").textContent="S21 암밴드 컬 센서";el("controllerLink").href="./dumbbell.html";
- el("location").textContent=watchInputMode?"워치4 컬 · 자동 숲 탐색":"아령 실험 · 자동 숲 탐색";
+ el("location").querySelector("span").textContent=watchInputMode?"워치4 컬 · 자동 숲 탐색":"아령 실험 · 자동 숲 탐색";
  if(watchInputMode){
   el("watchBodyHud").hidden=false;
   el("introCard").querySelector("small").textContent="워치 앱에서 센서와 아래/위 자세를 먼저 보정해. 이 모드는 폴드6 전용 연결 앱에서 실행해야 워치 신호를 받을 수 있어.";

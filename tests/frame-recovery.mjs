@@ -20,4 +20,9 @@ assert.match(html,/renderAttackFxSafely\("warning",enemyVisual\)/);
 assert.match(html,/motion-rpg-last-frame-error-v1/);
 const renderBody=html.match(/function render\(\)\{([\s\S]*?)\n\}/)?.[1];
 assert.ok(renderBody&&!renderBody.includes("requestAnimationFrame(loop)"),"next frame must not depend on render completing");
+// The hunting status node lives inside #location. Updating its parent
+// with textContent removes #status and crashes updateEnemy on attack warnings.
+assert.ok(html.includes('id="status"'),"Game status node must exist");
+assert.ok(html.includes('el("location").querySelector("span").textContent=watchInputMode?'),"Watch mode should only change the location label");
+assert.ok(!html.includes('el("location").textContent='),"Never erase the nested hunt status node");
 console.log("Frame recovery + diagnostics regression tests passed");

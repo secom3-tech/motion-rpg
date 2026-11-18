@@ -17,3 +17,10 @@
 - 워치4 미연결에서도 폴드6 화면 버튼으로 몬스터 공격 예고→공격 종료→회피 및 공격→다음 몬스터 진행을 테스트.
 - 모바일 앱의 기존 WebView 시작 URL에 `v=0.51`이 남아 있으므로 GitHub Pages 갱신 후 앱 재실행 시 캐시 때문에 구 버전이 잠시 보일 가능성은 있음. APK는 이번 변경에서 재빌드/재설치하지 않음.
 - 몬스터 공격력/이동속도/사거리/공격 빈도, 자동 이동, 근접/원거리 자동전환, 워치 센서 판정, 스토리와 저장 형식은 변경하지 않음.
+
+## v0.53 후속 실기기 오류 수정 — 2026-11-18
+- 사용자가 3장 스크린샷에서 `전투 처리 오류 · 자동 복구 시도 (update) · Cannot set properties of null (setting 'textContent')` 확인. 멧돼지·늑대 공격 예고 시 발생. UI 입력/회피 안내는 남으나 update가 매 프레임 중단되며 전투 불능.
+- **확정 원인:** `dumbbellMode` 초기화 과정에서 `el("location").textContent=...`를 호출하면 해당 요소에 포함된 `<small id="status">`가 삭제됨. 이후 `spawnEnemy`와 `updateEnemy`에서 `el("status").textContent` 호출시 null 예외. 프레임 보호는 증상을 표시했으나 근본 해결은 아님.
+- **수정:** `el("location").querySelector("span").textContent=...`로 상위 위치 라벨만 변경하여 기존 `#status` 보존. 자동 공격·거리·피해량·회피 판정 등 전투 수치는 수정하지 않음.
+- **회귀 테스트:** `tests/frame-recovery.mjs`에 `#status` 존재 및 부모 `textContent` 덮어쓰기 방지 검사 추가.
+- 현재 설치 앱은 네이티브 코드 변경 없이 기존 Github Pages의 업데이트된 웹 컨텐츠를 로드할 수 있어야 하나, WebView 캐시 여부는 기기에서 확인 필요.
