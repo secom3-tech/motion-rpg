@@ -1,11 +1,11 @@
 # Motion RPG — 경계의 숲
 
-## 최신 테스트 기준: v0.48 · 2026-11-18
+## 최신 테스트 기준: v0.49 · 2026-11-18
 
-- [새 대화 인수인계·현재 상태·차기 운동 모드 후보](./docs/PROJECT_HANDOFF_2026-11-18.md) — **다음 ChatGPT 대화에서는 이 문서부터 확인**
-- [게임 실행](https://secom3-tech.github.io/motion-rpg/preview.html?v=0.48) / [S21 컨트롤러](https://secom3-tech.github.io/motion-rpg/controller.html?v=0.48)
-- 이번 수정: S21 공격 가능 상태를 멀리서 읽을 수 있도록 크게 표시, 숲에서 다음 몬스터를 직접 찾아 이동, 강아지 산책 GPS의 짧은 정지/위치 흔들림에 반복 안내 억제.
-- **기존 손에 든 S21 조작을 유지**. 사용자가 집에서 운동 효과를 다시 테스트한 뒤 아령+암밴드·자동 탐색 운동 모드 전환 여부 결정. **아령 모드는 아직 개발하지 않음.**
+- [최신 인수인계·아령 실험 테스트](./docs/PROJECT_HANDOFF_2026-11-18-v049.md) — **다음 대화에서는 이 문서부터 확인**\n- [v0.48 변경 이력](./docs/PROJECT_HANDOFF_2026-11-18.md)
+- [게임 실행](https://secom3-tech.github.io/motion-rpg/preview.html?v=0.49) / [S21 검격 컨트롤러](https://secom3-tech.github.io/motion-rpg/controller.html?v=0.49) / [아령 사냥](https://secom3-tech.github.io/motion-rpg/indoor.html?v=0.49&mode=dumbbell&return=preview) / [S21 아령 컨트롤러](https://secom3-tech.github.io/motion-rpg/dumbbell.html?v=0.49)
+- 이번 수정: 늑대 접근·공격 사거리 정렬, 손에 든 S21의 정지 대기 제거(동작 꺾임+새 상승 인식), 별도 S21 암밴드 아령 컬(2점 보정·완전한 반복 1타) + 자동 이동하는 숲 사냥 실험.
+- **기존 손에 든 S21 게임을 유지**하고 **아령 암밴드 모드를 별도 실험**으로 추가. 실물 S21/폴드6/암밴드 테스트 전이므로 반복 인식 정확도와 WebRTC 연결은 검증 필요.
 - 새 기기 연결 때는 현재 임시 6자리 방 코드를 다시 입력해야 함. 장비 기억·자동 재연결은 미구현.
 
 

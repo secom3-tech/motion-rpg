@@ -16,21 +16,30 @@ assert.equal(detector.calibrateUp([0,.02,-.999]),false,"Similar calibration post
 assert.ok(detector.calibrateUp(up));
 const point=t=>[0,Math.sin(t*Math.PI/2),-Math.cos(t*Math.PI/2)];
 let result;
-// First full controlled up/down, with a stable top.
-for(const [t,angle] of [[0,0],[200,.3],[450,.55],[760,1],[980,1],[1350,.7],[1600,.4],[1880,0],[2010,0]]){
- result=detector.feed(point(angle),t);
+// Simulate an actual 25 Hz sensor stream: 2 s controlled repetitions.
+function drive(start,keys){
+ for(let t=0;t<=keys.at(-1)[0];t+=40){
+  let angle=keys.at(-1)[1];
+  for(let k=1;k<keys.length;k++)if(t<=keys[k][0]){
+   const [t0,v0]=keys[k-1],[t1,v1]=keys[k],ratio=(t-t0)/(t1-t0);
+   angle=v0+(v1-v0)*ratio;break;
+  }
+  result=detector.feed(point(angle),start+t);
+ }
 }
+const full=[[0,0],[320,.30],[760,1],[960,1],[1530,.3],[1900,0],[2100,0]];
+drive(0,full);
 assert.equal(detector.reps,1,"Only a complete slow curl is an attack");
-for(const [t,angle] of [[2250,.3],[2500,.6],[2750,1],[2900,.9],[3180,.6],[3500,.3],[3740,0],[3850,0]])result=detector.feed(point(angle),t);
+drive(2450,full);
 assert.equal(detector.reps,2,"Second full curl should count without forced stillness");
 detector.reset();
-for(const [t,angle] of [[0,0],[250,.35],[450,.55],[650,.30],[900,0]])detector.feed(point(angle),t);
+drive(0,[[0,0],[300,.35],[500,.55],[700,.3],[1050,0]]);
 assert.equal(detector.reps,0,"Partial motion is not a rep");
 const arena=fs.readFileSync(new URL("../indoor.html",import.meta.url),"utf8");
 const html=fs.readFileSync(new URL("../dumbbell.html",import.meta.url),"utf8");
 const hub=fs.readFileSync(new URL("../preview.html",import.meta.url),"utf8");
-for(const m of ['dumbbellMode','mode=dumbbell','function autoExploreDumbbell','new URL("./dumbbell.html"','autoExploreDumbbell(dt)'])assert.ok(arena.includes(m),"Dumbbell game mode marker missing: "+m);
-for(const m of ['createCurlDetector','gravityVector','averagedGravity','createWirelessController','type:"sensor-state"','"gesture",{gesture:"melee"'])assert.ok(html.includes(m),"Dumbbell controller marker missing: "+m);
+for(const m of ['dumbbellMode','gameMode===\'dumbbell\'','function autoExploreDumbbell','new URL("./dumbbell.html"','autoExploreDumbbell(dt)'])assert.ok(arena.includes(m),"Dumbbell game mode marker missing: "+m);
+for(const m of ['createCurlDetector','gravityVector','averagedGravity','createWirelessController','send("sensor-state"','"gesture",{gesture:"melee"'])assert.ok(html.includes(m),"Dumbbell controller marker missing: "+m);
 assert.ok(hub.includes('아령 사냥 · 암밴드 테스트'));
 const script=html.match(/<script type="module">([\s\S]*?)<\/script>/);
 assert.ok(script,"Controller must have module script");

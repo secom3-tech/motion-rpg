@@ -298,10 +298,10 @@
 <div id="motionPanel" hidden role="dialog" aria-modal="true" aria-label="실전 모션 입력 설정">
  <div class="motionDialog">
   <div class="motionTop"><div><small>MOTION RPG / v0.47</small><h2>실전 모션 전투 설정</h2></div><button id="motionClose" class="subtle">게임으로 돌아가기</button></div>
-  <p class="motionLead">폴드6에서는 3D 전투와 전면 카메라 회피를 사용하고, S21에서는 실제 휘두르기·투척 동작을 전송해. 둘 다 선택 기능이야.</p>
+  <p class="motionLead">폴드6에서는 3D 전투와 전면 카메라 회피를 사용해. S21은 일반 모드에서 휘두르기·투척, 아령 실험 모드에서 천천히 굽혔다 펴는 한 번의 반복을 공격으로 전송해.</p>
   <section class="motionSection">
    <h3>① S21 무기 컨트롤러 연결 · 숫자 6자리</h3>
-   <p>폴드6에서 [연결 코드 만들기] → S21의 Chrome/삼성 인터넷에서 연결 주소 열기 → 같은 6자리 코드로 연결 → S21에서 [센서 켜기]를 눌러. 게임과 컨트롤러는 각각 열린 상태여야 해.</p>
+   <p>폴드6에서 [연결 코드 만들기] → S21의 Chrome/삼성 인터넷에서 연결 주소 열기 → 같은 6자리 코드로 연결 → S21에서 [센서 켜기]를 눌러. 아령 모드는 아래/위 자세를 2번 보정해야 해. 게임과 컨트롤러는 각각 열린 상태여야 해.</p>
    <div class="motionRow"><button id="hostStart">연결 코드 만들기</button><button id="hostStop" class="subtle" disabled>연결 종료</button><button id="copyController" class="subtle" disabled>연결 주소 복사</button></div>
    <div class="roomCode" id="motionRoom">연결 전</div>
    <a id="controllerLink" href="./controller.html" target="_blank" rel="noopener">S21 컨트롤러 화면</a>
@@ -333,7 +333,7 @@ import {attackArea,attackWindup,attackVisualState,warningFootprint} from "./src/
 import {createWirelessHost} from "./src/peer-bridge.mjs?v=0.43.4";
 import {createRemoteInput,lockOnYaw,rotateToward} from "./src/remote-control.mjs?v=0.41";
 import {FOREST_MONSTERS,forestZoneAt,chooseForestMonster,monsterBehaviour} from "./src/forest-encounters.mjs?v=0.35";
-import {createMonsterMind,monsterMotionStep,retainTarget} from "./src/monster-ai.mjs?v=0.44";
+import {createMonsterMind,monsterMotionStep,retainTarget} from "./src/monster-ai.mjs?v=0.49";
 import {canAutoAcquire,followTargetYaw,assistedAimYaw,AUTO_LOCK_MANUAL_PAUSE} from "./src/target-assist.mjs?v=0.44";
 import {automaticWeaponMode,autoMotionAttackMode} from "./src/auto-weapon.mjs?v=0.45";
 import {rangedProfile,isRangedStyle,canStartRanged,fireRangedProjectile,projectileStep} from "./src/enemy-ranged.mjs?v=0.38";
@@ -345,12 +345,18 @@ import {createPoseCamera} from "./src/pose-camera.mjs?v=0.47";
 import {ATTACKS,angleToTarget,turnToTarget,strikeInfo,spawnAroundPlayer,distance2d,dodgeMatches} from "./src/combat-spatial.mjs?v=0.35";
 (()=>{'use strict';
 const cvs=document.getElementById('game'),gl=cvs.getContext('webgl',{antialias:true,alpha:true,premultipliedAlpha:false,powerPreference:'high-performance'})||cvs.getContext('experimental-webgl');
-const el=id=>document.getElementById(id),RESULT_KEY='motion-rpg-indoor-result-v1',worldMode=new URLSearchParams(location.search).get('mode')==='world';if(worldMode){document.title='Motion RPG · 경계의 숲';el('brand').innerHTML='<div id="sigil">✦</div><div><h1>경계의 숲</h1><p>MOTION RPG · WORLD</p></div>';el('enemyHud').style.display='none';el('location').innerHTML='<span>VILLAGE GATE</span>숲 입구 마을<br><small style="opacity:.85">오늘의 원정을 선택하세요</small>';el('introCard').innerHTML='<div class="emblem">✦ 🌲 ✦</div><h2>경계의 숲</h2><p>마을을 거점으로 숲을 달리고,<br>발견한 마력체를 사냥하며 성장한다.</p><div id="worldMenu"><a href="./index.html?view=outdoor">🌲 숲 탐험 시작</a><a href="./index.html?view=indoor" class="secondary">🏃 러닝머신 원정</a><a href="./index.html" class="secondary">🏘️ 마을 정리</a></div><small>사냥 전투는 숲에서 마력체를 발견했을 때 시작된다</small>'}let active=false,last=0,clock=0,yaw=0,pitch=-0.032,weaponKick=0,impactTint=0,score=0,kills=0,projectiles=[],enemyShots=[],sparks=[],flares=[],enemy={x:.1,z:-7.2,hp:100,max:100,bob:0,dead:worldMode,respawn:0,name:'이끼 슬라임',speed:0.25,kind:0,attackTimer:2.5,windup:0,windupTotal:0,impactUntil:0,impactDuration:.5,attackStyle:"slam",facing:0};
+const el=id=>document.getElementById(id),RESULT_KEY='motion-rpg-indoor-result-v1',gameMode=new URLSearchParams(location.search).get('mode'),worldMode=gameMode==='world',dumbbellMode=gameMode==='dumbbell';if(worldMode){document.title='Motion RPG · 경계의 숲';el('brand').innerHTML='<div id="sigil">✦</div><div><h1>경계의 숲</h1><p>MOTION RPG · WORLD</p></div>';el('enemyHud').style.display='none';el('location').innerHTML='<span>VILLAGE GATE</span>숲 입구 마을<br><small style="opacity:.85">오늘의 원정을 선택하세요</small>';el('introCard').innerHTML='<div class="emblem">✦ 🌲 ✦</div><h2>경계의 숲</h2><p>마을을 거점으로 숲을 달리고,<br>발견한 마력체를 사냥하며 성장한다.</p><div id="worldMenu"><a href="./index.html?view=outdoor">🌲 숲 탐험 시작</a><a href="./index.html?view=indoor" class="secondary">🏃 러닝머신 원정</a><a href="./index.html" class="secondary">🏘️ 마을 정리</a></div><small>사냥 전투는 숲에서 마력체를 발견했을 때 시작된다</small>'}let active=false,last=0,clock=0,yaw=0,pitch=-0.032,weaponKick=0,impactTint=0,score=0,kills=0,projectiles=[],enemyShots=[],sparks=[],flares=[],enemy={x:.1,z:-7.2,hp:100,max:100,bob:0,dead:worldMode,respawn:0,name:'이끼 슬라임',speed:0.25,kind:0,attackTimer:2.5,windup:0,windupTotal:0,impactUntil:0,impactDuration:.5,attackStyle:"slam",facing:0};
 let enemyMind=createMonsterMind(enemy.kind,enemy.x,enemy.z,.39);enemy.moveSpeed=0;
 const shared=(()=>{try{return JSON.parse(localStorage.getItem("motion-rpg-save-v1")||"null")||{}}catch{return{}}})();
 const battleGear=normalizeRpgGear(shared);
 const equipped=battleGear.equipped,stats=combatStats(shared);
 let activeWeaponMode=battleGear.activeWeapon||"melee",autoSwitchEnabled=true,skillCooldownUntil=-1,skillPrimed=false;
+if(dumbbellMode){activeWeaponMode="melee";autoSwitchEnabled=false;
+ el("introCard").querySelector("p").textContent="S21을 팔 암밴드에 고정하고 아령을 천천히 들었다 내리면 검격 1회로 인식돼. 이동과 적 추적은 자동이야. 적의 공격은 폴드6 카메라 회피로 피할 수 있어.";
+ el("begin").textContent="아령 사냥 시작";
+ el("controllerLink").textContent="S21 암밴드 컬 센서";el("controllerLink").href="./dumbbell.html";
+ el("location").textContent="아령 실험 · 자동 숲 탐색";
+}
 const currentWeapon=()=>activeWeaponMode==="melee"?equipped.meleeWeapon:equipped.rangedWeapon;
 const equippedWeapon=()=>GEAR.weapon.find(item=>item.id===currentWeapon())?.name||"기본 장비";
 const sessionId="arena-"+Date.now()+"-"+Math.random().toString(36).slice(2,11);
@@ -1038,6 +1044,23 @@ function updateEnemy(dt){
  el("distance").textContent=Math.round(distance2d(enemy,camera))+" m";
  el("cross").classList.toggle("aim",radiusAiming());
 }
+/**
+ * Independent armband exercise variant: walk toward the next encounter
+ * without requiring the remote joystick while both hands are occupied.
+ * Pause automatic steps during telegraphs and attack follow-through; leave
+ * dodge movement/camera recognition to the player.
+ */
+function autoExploreDumbbell(dt){
+ if(!dumbbellMode||enemy.dead)return;
+ const target=lockOnYaw(camera,enemy);
+ if(target!==null)yaw=followTargetYaw(yaw,target,dt*2.0);
+ if(enemy.windup>0||clock<enemy.impactUntil||meleeAction||rangedAction)return;
+ const dist=distance2d(camera,enemy);
+ if(dist<=3.15||dist>100)return;
+ const step=Math.min(dist-3.15,dt*2.7);
+ camera.x=Math.max(-22,Math.min(22,camera.x+(enemy.x-camera.x)/dist*step));
+ camera.z=Math.max(-31,Math.min(7,camera.z+(enemy.z-camera.z)/dist*step));
+}
 function update(dt){if(!el("motionPanel").hidden||document.hidden)return;clock+=dt;if(!active)return;huntElapsedSec+=dt;const zone=forestZoneAt(camera.x,camera.z);
 el("forestZoneHud").textContent=zone.name;
 if(targetLocked&&(!autoLockEnabled||!retainTarget(camera,enemy)||enemy.dead||worldMode)){
@@ -1052,7 +1075,8 @@ if(targetLocked){
 }
 el("lockHud").hidden=!(targetLocked&&!enemy.dead);
 const remote=motionHost.connected?remoteInput.current(Date.now()):{x:0,y:0};
-let f=forward(),forwardX=Math.sin(yaw),forwardZ=-Math.cos(yaw),rightX=Math.cos(yaw),rightZ=Math.sin(yaw),mx=stick.x+remote.x+(keys.KeyD||keys.ArrowRight?1:0)-(keys.KeyA||keys.ArrowLeft?1:0),my=stick.y+remote.y+(keys.KeyS||keys.ArrowDown?1:0)-(keys.KeyW||keys.ArrowUp?1:0);let len=Math.hypot(mx,my);if(len>1){mx/=len;my/=len}let speed=4.0;camera.x+=(forwardX*-my+rightX*mx)*speed*dt;camera.z+=(forwardZ*-my+rightZ*mx)*speed*dt;camera.x=Math.max(-22,Math.min(22,camera.x));camera.z=Math.max(-31,Math.min(7,camera.z));
+let f=forward(),forwardX=Math.sin(yaw),forwardZ=-Math.cos(yaw),rightX=Math.cos(yaw),rightZ=Math.sin(yaw),mx=stick.x+(dumbbellMode?0:remote.x)+(keys.KeyD||keys.ArrowRight?1:0)-(keys.KeyA||keys.ArrowLeft?1:0),my=stick.y+(dumbbellMode?0:remote.y)+(keys.KeyS||keys.ArrowDown?1:0)-(keys.KeyW||keys.ArrowUp?1:0);let len=Math.hypot(mx,my);if(len>1){mx/=len;my/=len}let speed=4.0;camera.x+=(forwardX*-my+rightX*mx)*speed*dt;camera.z+=(forwardZ*-my+rightZ*mx)*speed*dt;camera.x=Math.max(-22,Math.min(22,camera.x));camera.z=Math.max(-31,Math.min(7,camera.z));
+autoExploreDumbbell(dt);
 if(!enemy.dead){
  const dx=camera.x-enemy.x,dz=camera.z-enemy.z;
  const dist=Math.hypot(dx,dz),minDist=enemy.kind===4||enemy.kind===7?2.12:enemy.kind===5?1.8:enemy.kind===3?1.5:1.48;
@@ -1526,8 +1550,8 @@ el("hostStart").onclick=async()=>{
  try{
   const room=await motionHost.start();
   lastMotionSequence=-1;lastMotionAt=-Infinity;
-  const url=new URL("./controller.html",location.href);
-  url.searchParams.set("v","0.48");url.searchParams.set("room",room);
+  const url=new URL(dumbbellMode?"./dumbbell.html":"./controller.html",location.href);
+  url.searchParams.set("v","0.49");url.searchParams.set("room",room);
   el("controllerLink").href=url.href;
   el("motionRoom").textContent=room.replace(/^mrpg-/,"");
   el("hostStop").disabled=false;
@@ -1541,7 +1565,7 @@ el("hostStop").onclick=()=>{
  motionHost.stop();
  el("hostStart").disabled=false;el("hostStop").disabled=true;
  el("copyController").disabled=true;el("motionRoom").textContent="연결 전";
- el("controllerLink").href="./controller.html";
+ el("controllerLink").href=dumbbellMode?"./dumbbell.html":"./controller.html";
  lastMotionSequence=-1;
 };
 el("copyController").onclick=async()=>{
