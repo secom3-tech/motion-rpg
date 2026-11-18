@@ -21,7 +21,7 @@ assert.ok(arena.includes('id="watchBodyHud"'),"Workout silhouette must exist");
 assert.ok(arena.includes('right:calc(17px + 136px + 11px)'),"Landscape watch HUD must not overlap radar");
 assert.ok(arena.includes('+ 174px'),"Near-square Fold6 layout should stack HUDs");
 assert.ok(arena.includes("function dumbbellCombatSpacing()"),"Oversized monsters need close-camera spacing");
-assert.ok(arena.includes("weaponProfile(equipped.meleeWeapon).reach-.25"),"Spacing must not break melee reach");
+assert.ok(arena.includes("Math.max(exerciseCameraClearance(enemy.kind)+.12"),"Monster-size clearance must take priority, with range shots when outside sword reach");
 assert.ok(arena.includes("function returnToVillage()") && arena.includes("if(watchInputMode||new URLSearchParams(location.search).get(\"return\")===\"preview\")"),"Watch game must return to the proper village to claim rewards");
 assert.ok(arena.includes("다음 몬스터를 찾는 중"),"Respawn must be visible after the first kill");
 assert.ok(arena.includes("검격 준비 중"),"Manual testing must show attack cooldown, not look frozen");
