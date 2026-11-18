@@ -14,6 +14,7 @@ const forest=createExerciseNavigator([tree,{x:-7,z:-13,r:1.0},{x:7,z:-13,r:1.1}]
 const around=forest.plan(player,enemy,4.1);
 assert.ok(around?.visible,"A visible engagement point should be reachable around trees");
 assert.ok(around.path.length>0);
+assert.ok(around.path.every(p=>p.x>=-22&&p.x<=22&&p.z>=-31&&p.z<=7));
 assert.equal(exerciseSightClear(around.goal,enemy,forest.obstacles),true);
 let at={...player},nodes=around.path.slice(),idx=0;
 for(let step=0;step<350&&idx<nodes.length;step++){

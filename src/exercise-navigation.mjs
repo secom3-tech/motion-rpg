@@ -87,6 +87,7 @@ export function createExerciseNavigator(obstacles,bounds=EXERCISE_NAV_BOUNDS){
     const x=ix+dx,z=iz+dz;if(!valid(x,z))continue;
     const next=index(x,z);if(blocked[next]||visited[next])continue;
     if(dx&&dz&&(blocked[index(ix+dx,iz)]||blocked[index(ix,iz+dz)]))continue;
+    if(!walkClear(p,point(next)))continue; // Do not cut a circle between free grid centres.
     const candidate=cost[id]+length*cell;
     if(candidate<cost[next]){cost[next]=candidate;previous[next]=id;push(next,candidate);}
    }
