@@ -8,6 +8,8 @@ import android.graphics.Color;
 import android.net.Uri;
 import android.os.Bundle;
 import android.view.Gravity;
+import android.view.View;
+import android.view.WindowManager;
 import android.view.ViewGroup;
 import android.webkit.PermissionRequest;
 import android.webkit.WebChromeClient;
@@ -37,7 +39,9 @@ public final class GameActivity extends Activity {
     private static final int CAMERA_REQUEST=381;
     private WebView game;
     private TextView status;
-    private long latestSeq=-1;
+    private long latestRepSeq=-1,latestStatusSeq=-1;
+    private String currentWatchSession="";
+
     private PermissionRequest cameraPermission;
     private boolean pageLoaded=false;
     private final MessageClient.OnMessageReceivedListener watchListener=event->{
@@ -45,16 +49,27 @@ public final class GameActivity extends Activity {
         try{
             JSONObject payload=new JSONObject(new String(event.getData(),StandardCharsets.UTF_8));
             String kind=payload.optString("event","");
+            String session=payload.optString("session","");
             int seq=payload.optInt("seq",-1);
-            if(seq<0||seq<=latestSeq)return;
-            latestSeq=seq;
+            if(seq<0||session.length()!=36||!session.matches("[0-9a-f\\-]{36}"))return;
+            if(!session.equals(currentWatchSession)){
+                currentWatchSession=session;latestRepSeq=-1;latestStatusSeq=-1;
+            }
+            boolean repetition="rep".equals(kind);
+            if(repetition){
+                if(seq<=latestRepSeq)return;
+                latestRepSeq=seq;
+            }else{
+                if(seq<=latestStatusSeq)return;
+                latestStatusSeq=seq;
+            }
             int count=payload.optInt("reps",0);
             boolean calibrated=payload.optBoolean("calibrated",false);
             String sourceNode=event.getSourceNodeId();
             runOnUiThread(()->{
                 status.setText(!calibrated?"워치4 수신 · 아래/위 자세를 보정해":
                     ("rep".equals(kind)?"워치 컬 "+count+"회 감지 · 게임 판정 중":"워치4 연결 · 운동 준비"));
-                if(!"rep".equals(kind)){
+                if(!repetition){
                     if(pageLoaded)game.evaluateJavascript(
                         "!!(window.motionRpgWatchStatus && window.motionRpgWatchStatus("+payload+"))",
                         value->{});
@@ -85,6 +100,8 @@ public final class GameActivity extends Activity {
     }
     @Override public void onCreate(Bundle savedState){
         super.onCreate(savedState);
+        getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON |
+            WindowManager.LayoutParams.FLAG_FULLSCREEN);
         FrameLayout root=new FrameLayout(this);
         game=new WebView(this);
         game.setBackgroundColor(Color.rgb(17,30,34));
@@ -98,8 +115,8 @@ public final class GameActivity extends Activity {
         game.setWebViewClient(new WebViewClient(){
             @Override public void onPageFinished(WebView view,String url){
                 pageLoaded=isTrusted(url);
-                status.setText(pageLoaded?"폴드6 게임 열림 · 워치4 앱을 켜고 보정해":
-                    "게임 주소 확인 필요");
+                status.setText(pageLoaded?"워치4 연결 대기":"게임 주소 확인 필요");
+                status.setVisibility(pageLoaded?View.GONE:View.VISIBLE);
             }
             @Override public boolean shouldOverrideUrlLoading(WebView view,WebResourceRequest request){
                 if(isTrusted(request.getUrl().toString()))return false;
@@ -133,11 +150,11 @@ public final class GameActivity extends Activity {
         root.addView(game,new FrameLayout.LayoutParams(-1,-1));
         status=new TextView(this);
         status.setText("폴드6 연결 앱 · 워치4 대기");
-        status.setTextSize(12);
+        status.setTextSize(11);
         status.setTextColor(Color.WHITE);
         status.setBackgroundColor(0xd9214039);
         status.setPadding(14,8,14,8);
-        FrameLayout.LayoutParams banner=new FrameLayout.LayoutParams(-1,-2,Gravity.TOP);
+        FrameLayout.LayoutParams banner=new FrameLayout.LayoutParams(-1,-2,Gravity.BOTTOM);
         root.addView(status,banner);
         setContentView(root);
         game.loadUrl(GAME_URL);
