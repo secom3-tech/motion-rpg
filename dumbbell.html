@@ -1,0 +1,143 @@
+<!doctype html>
+<html lang="ko"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+<title>Motion RPG · 아령 컬 센서</title>
+<style>
+:root{color-scheme:dark;font-family:system-ui,-apple-system,"Malgun Gothic",sans-serif;background:#101b20;color:#ebf4e6}
+*{box-sizing:border-box}body{margin:0;padding:14px;background:radial-gradient(ellipse at top,#254438,#101b20 65%);min-height:100vh}
+main{max-width:520px;margin:0 auto}h1{font-size:25px;margin:5px 0}p{line-height:1.5;font-size:13px;color:#cfdfd3}
+.card{padding:16px;margin:12px 0;border:1px solid #53736b;border-radius:16px;background:#1d302fd9}
+small{color:#b9d8c7}.tag{font-size:12px;font-weight:850;letter-spacing:.12em;color:#a8dbb3}
+button{border:1px solid #83cbb0;background:#295a51;color:#fff;border-radius:12px;min-height:48px;padding:10px 14px;font-size:15px;font-weight:750;cursor:pointer}
+button:disabled{opacity:.4;cursor:not-allowed}
+input{width:115px;padding:10px 12px;margin-right:7px;font-size:20px;letter-spacing:.15em;background:#0f252b;color:white;border:1px solid #87cbb4;border-radius:10px}
+.row{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:10px 0}
+#status,#ack,#calStatus{font-size:14px;line-height:1.6;min-height:22px}
+#count{font-size:clamp(64px,19vw,104px);font-weight:900;line-height:1;color:#b9f7c2;text-align:center;margin:5px}
+#phase{text-align:center;font-size:23px;font-weight:850;margin:8px}
+.bar{height:17px;border-radius:20px;overflow:hidden;background:#0e1b21;border:1px solid #648c77}
+.bar i{display:block;height:100%;width:0%;background:linear-gradient(90deg,#77d0aa,#f3d98b);transition:width .10s linear}
+#connectStatus{font-size:12px;color:#c4d9d1}b{color:#fff}
+</style></head><body><main>
+<div class="tag">MOTION RPG / ARM BAND EXPERIMENT</div><h1>아령 컬 전투</h1>
+<p>기존 게임과 별도의 S21 암밴드 컨트롤러. <b>아령을 천천히 들고 다시 내리는 동작 1회가 공격 1회</b>야. 휘두르거나 빠르게 반복하지 않아도 돼.</p>
+<section class="card">
+ <b>① 폴드6과 연결</b><div class="row">
+ <input id="roomCode" inputmode="numeric" maxlength="6" placeholder="6자리" aria-label="연결 코드">
+ <button id="connect">게임 연결</button><button id="disconnect" disabled>연결 해제</button>
+ </div><div id="connectStatus">폴드6의 '아령 사냥'에서 모션 설정 → 연결 코드 만들기.</div>
+</section>
+<section class="card">
+ <b>② 팔에 고정하고 센서 켜기</b>
+ <p>암밴드를 팔에 단단히 고정하고, 주변 공간을 확보해. 처음에는 가벼운 무게로 테스트하고 손목을 비틀거나 반동을 주지 마.</p>
+ <div class="row"><button id="start">센서 켜기</button><button id="stop" disabled>센서 끄기</button></div>
+ <div id="status">센서 대기 중</div>
+</section>
+<section class="card">
+ <b>③ 시작·끝 자세 2점 보정</b>
+ <p>센서를 켠 뒤 팔을 아래로 편 채 유지하고 '아래 자세'를 눌러. 팔꿈치를 굽혀 위에서 멈춘 다음 '위 자세'를 눌러. 매번 0.5초 정도 흔들리지 않게 유지해.</p>
+ <div class="row"><button id="calDown" disabled>아래 자세 기록</button><button id="calUp" disabled>위 자세 기록</button></div>
+ <div id="calStatus">아직 보정하지 않음</div>
+</section>
+<section class="card">
+ <div class="tag">완료한 반복 동작</div><div id="count">0</div>
+ <div id="phase">보정 대기</div><div class="bar"><i id="progress"></i></div>
+ <p id="ack">팔이 충분히 올라간 뒤, 천천히 처음 자세로 돌아와야 1회로 기록해.</p>
+ <div class="row"><button id="reset">횟수 초기화</button></div>
+</section>
+<p><small>한쪽 팔에 고정한 S21은 그 팔만 감지해. 양팔 동시 운동이나 정확한 관절 자세를 판별하지는 못해. 운동 기록은 이 화면에서만 집계하고, 실제 게임 공격은 폴드6에서 승인한 경우에만 적용돼.</small></p>
+</main>
+<script type="module">
+import {createWirelessController,cleanRoom} from "./src/peer-bridge.mjs?v=0.43.4";
+import {gravityVector,averagedGravity,createCurlDetector} from "./src/dumbbell-reps.mjs?v=0.49";
+const $=id=>document.getElementById(id),detector=createCurlDetector();
+let active=false,seq=0,samples=[],lastSample=0,lastRep=0;
+const wireless=createWirelessController({
+ onStatus:s=>{
+  $("connectStatus").textContent=s.message;
+  $("connect").disabled=s.connected;$("disconnect").disabled=!s.connected;
+  if(s.connected){
+   send("weapon-switch",{mode:"melee"});
+   publishState();
+  }
+ },
+ onMessage:data=>{
+  if(data?.type==="gesture-ack")$("ack").textContent=data.accepted?"게임 공격 성공 · 반복 동작 확인":"반복 동작 인식 · 게임 공격 대기: "+(data.reason||"전투 상태 확인");
+  if(data?.type==="hello"){$("connectStatus").textContent="폴드6 연결됨 · 암밴드 센서 준비";send("weapon-switch",{mode:"melee"});}
+ }
+});
+function send(type,data={}){return wireless.send({type,seq:++seq,time:Date.now(),session:wireless.room,...data});}
+function publishState(){
+ if(!wireless.connected)return;
+ const remaining=Math.max(0,680-(Date.now()-lastRep));
+ send("sensor-state",{sensorActive:active,sensorReceiving:active&&samples.length>0,mode:"melee",
+  cooldownRemainingMs:Math.round(remaining),cooldownDurationMs:680,
+  ready:active&&detector.calibrated&&remaining===0,
+  waitingForNeutral:active&&!detector.calibrated});
+}
+setInterval(publishState,280);
+const query=new URLSearchParams(location.search),room=cleanRoom(query.get("room"));
+if(room)$("roomCode").value=room.replace("mrpg-","");
+$("connect").onclick=async()=>{
+ const room=$("roomCode").value.trim();
+ $("connectStatus").textContent="연결 중...";
+ try{await wireless.connect(room);}catch(e){$("connectStatus").textContent="연결 실패: "+(e?.message||e);}
+};
+$("disconnect").onclick=()=>wireless.disconnect();
+function addSample(e){
+ if(!active)return;
+ const now=Date.now(),v=gravityVector(e);
+ if(!v)return;
+ samples.push({at:now,v});samples=samples.filter(s=>now-s.at<=1100).slice(-100);
+ if(!detector.calibrated)return;
+ const report=detector.feed(v,now);
+ if(now-lastSample>100){
+  $("progress").style.width=Math.round(report.progress*100)+"%";
+  $("phase").textContent=({down:"팔 아래 · 들기",lifting:"천천히 들기",lowering:"천천히 내리기"})[report.phase]||"보정 대기";
+  lastSample=now;
+ }
+ if(report.rep){
+  $("count").textContent=String(report.reps);
+  lastRep=now;
+  $("ack").textContent=wireless.connected?"운동 1회 기록 · 게임 판정 확인 중":"운동 1회 기록 · 게임 무선 미연결";
+  if(wireless.connected)send("gesture",{gesture:"melee",style:"overhead",strength:68});
+  publishState();
+ }
+}
+$("start").onclick=async()=>{
+ try{
+  if(typeof DeviceMotionEvent==="undefined")throw Error("이 브라우저는 동작 센서를 지원하지 않아.");
+  if(typeof DeviceMotionEvent.requestPermission==="function"){
+   const result=await DeviceMotionEvent.requestPermission();
+   if(result!=="granted")throw Error("센서 권한이 허용되지 않았어.");
+  }
+  window.addEventListener("devicemotion",addSample,{passive:true});active=true;samples=[];
+  $("start").disabled=true;$("stop").disabled=false;$("calDown").disabled=false;$("calUp").disabled=false;
+  $("status").textContent="센서 켜짐 · 암밴드를 고정하고 아래/위 자세를 기록해.";
+  publishState();
+ }catch(e){$("status").textContent="센서 시작 실패: "+(e?.message||e);}
+};
+$("stop").onclick=()=>{
+ window.removeEventListener("devicemotion",addSample);active=false;samples=[];
+ $("start").disabled=false;$("stop").disabled=true;$("calDown").disabled=true;$("calUp").disabled=true;
+ $("status").textContent="센서 꺼짐";publishState();
+};
+function samplePose(){
+ const now=Date.now(),recent=samples.filter(s=>now-s.at<=550).map(s=>s.v);
+ return averagedGravity(recent);
+}
+$("calDown").onclick=()=>{
+ const pose=samplePose();
+ if(!pose){$("calStatus").textContent="아래 자세가 흔들리거나 센서값이 부족해. 0.5초 고정 후 재시도.";return;}
+ detector.calibrateDown(pose);$("calStatus").textContent="아래 자세 기록됨 · 이제 팔을 굽혀 위 자세를 기록해.";
+ $("count").textContent="0";$("progress").style.width="0%";publishState();
+};
+$("calUp").onclick=()=>{
+ const pose=samplePose();
+ if(!pose){$("calStatus").textContent="위 자세 센서값 부족 · 흔들리지 않게 0.5초 유지해.";return;}
+ if(!detector.calibrateUp(pose)){$("calStatus").textContent="위아래 자세 각도 차이가 부족해. 암밴드 고정 방향을 확인해.";return;}
+ $("calStatus").textContent="2점 보정 완료 · 팔을 아래로 내린 뒤 천천히 1회 반복해.";
+ $("phase").textContent="팔 아래로 내리기";$("count").textContent="0";publishState();
+};
+$("reset").onclick=()=>{detector.reset();lastRep=0;$("count").textContent="0";$("ack").textContent="횟수 초기화됨 · 보정은 유지";};
+window.addEventListener("pagehide",()=>{window.removeEventListener("devicemotion",addSample);wireless.disconnect();});
+</script></body></html>
