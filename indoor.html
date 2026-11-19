@@ -1319,7 +1319,7 @@ camera.y=1.7+(len>.02?Math.sin(clock*10)*.045:Math.sin(clock*1.5)*.015)-dodgeCam
 updatePlayerActions();updateAutoWeaponMode();updateQueuedSkill();updateEnemy(dt);
 if(dumbbellMode){drainCurlQueue();updateExerciseNotice();}
 const flight=el("flightGuide");
-if(dumbbellMode&&enemyShots.length>0&&active){flight.hidden=false;el("flightPoseGraphic").innerHTML=DODGE_POSTURES.flight;}
+if(dumbbellMode&&enemyShots.length>0&&active){flight.hidden=false;const art=el("flightPoseGraphic");if(art.innerHTML!==DODGE_POSTURES.flight)art.innerHTML=DODGE_POSTURES.flight;}
 else flight.hidden=true;
 // The enemy can move closer on this frame; resolve visual-body clearance
 // after its own movement, before rendering or projectile collision.
@@ -1354,7 +1354,10 @@ for(let i=projectiles.length-1;i>=0;i--){let p=projectiles[i];p.age+=dt;p.x+=p.v
 if(p.life<=0||p.traveled>=p.targetDist){
  const close=!enemy.dead&&Math.hypot(p.x-enemy.x,p.z-enemy.z)<(enemy.kind===4?2.55:2.05);
  if(p.on&&close)damage(p.damage,p.kind);
- else toast(p.kind==="arrow"?"화살 빗나감":"원거리 공격 빗나감");
+ else {
+  toast(p.kind==="arrow"?"화살 빗나감":"원거리 공격 빗나감");
+  if(dumbbellMode)showExerciseNotice("fail","발사는 됐지만 빗나감",1.4);
+ }
  projectiles.splice(i,1);
 }}
 for(let i=sparks.length-1;i>=0;i--){let s=sparks[i];s.t+=dt;s.x+=s.vx*dt;s.y+=s.vy*dt;s.z+=s.vz*dt;s.vy-=6*dt;if(s.t>s.life)sparks.splice(i,1)}}
@@ -1656,7 +1659,7 @@ const motionHost=createWirelessHost({
    const queued=accepted&&(reason==="스킬 예약"||reason==="공격 예약");
    motionHost.send({type:"gesture-ack",seq:packet.seq,accepted,skill:accepted&&skillRequested&&!queued,queued,reason,time:Date.now()});
    el("remoteStatus").textContent="S21 "+(skillRequested?"스킬 + ":"")+action+
-     " 감지됨 · "+(queued?"스킬 예약 · 잠시 뒤 발동":accepted?(skillRequested?"스킬 공격 발동":"일반 공격 실행"):reason)+" · 강도 "+packet.strength;
+     " 감지됨 · "+(queued?(skillRequested?"스킬 예약":"공격 예약"):accepted?(skillRequested?"스킬 공격 발동":"일반 공격 실행"):reason)+" · 강도 "+packet.strength;
   };
   if(!active||worldMode){
    if(dumbbellMode)showExerciseNotice("fail",heroHp<=0?"기력이 소진됐어":"사냥 시작을 눌러",1.4);

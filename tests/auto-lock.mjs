@@ -68,8 +68,8 @@ assert.equal(dodgePrompt("bolt",.4),null,"Magic projectiles need a flight-time c
 assert.equal(dodgePrompt("slam",0),null,"Stop cue at impact");
 assert.ok(arena.includes("const prompt=dodgePrompt(enemy.attackStyle,enemy.windup"),
  "Countdown must feed actual remaining windup to the cue");
-assert.ok(arena.includes('banner.className=enemy.attackStyle+(prompt?.ready?" dodgeNow":"")'),
- "Show prominent warning only when dodge is possible");
-assert.ok(arena.includes('dodgeUntil=clock+1.05;dodgeCooldown=clock+2.2'),
- "Existing dodge duration and cooldown are unchanged");
+assert.ok(arena.includes('banner.className=enemy.attackStyle+(visualReady?" dodgeNow":"")'),
+ "Visual workout warning includes earlier posture window while classic keeps prompt timing");
+assert.ok(arena.includes('dodgeUntil=clock+1.05;')&&arena.includes('else dodgeCooldown=clock+2.2;')&&arena.includes('dodgeCooldown=clock+.35'),
+ "Classic dodge cooldown preserved while workout mode is shorter");
 console.log("V0.44.1 PASS: action-timed dodge display, correct direction, cooldown safety, no false projectile warning.");
