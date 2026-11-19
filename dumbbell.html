@@ -31,7 +31,7 @@ input{width:115px;padding:10px 12px;margin-right:7px;font-size:20px;letter-spaci
 </section>
 <section class="card">
  <b>② 팔에 고정하고 센서 켜기</b>
- <p>암밴드를 팔에 단단히 고정하고, 주변 공간을 확보해. 처음에는 가벼운 무게로 테스트하고 손목을 비틀거나 반동을 주지 마.</p>
+ <p><b>S21을 팔꿈치 아래 전완부(아래팔)에 단단히 고정해.</b> 위팔에 차면 팔꿈치를 굽혀도 기울기가 거의 변하지 않을 수 있어. 화면이 몸에 눌리지 않게 고정하고, 처음에는 가벼운 무게로 시험해. 손목을 억지로 비틀거나 반동을 주지 마.</p>
  <div class="row"><button id="start">센서 켜기</button><button id="stop" disabled>센서 끄기</button></div>
  <div id="status">센서 대기 중</div>
  <div id="motionLive" aria-live="off">움직임 센서 대기 · 아래/위 자세 보정 전에 각도 변화부터 확인해.</div>
@@ -40,7 +40,7 @@ input{width:115px;padding:10px 12px;margin-right:7px;font-size:20px;letter-spaci
 </section>
 <section class="card">
  <b>③ 아래·위 자세 한 번씩 보정</b>
- <p>센서를 켠 뒤 팔을 아래로 편 채 유지하고 '아래 자세'를 눌러. 팔꿈치를 굽혀 위에서 멈춘 다음 '위 자세'를 눌러. 매번 0.5초 정도 흔들리지 않게 유지해.</p>
+ <p>센서를 켠 뒤 전완을 아래로 향하게 유지하고 '아래 자세'를 눌러. 팔꿈치를 굽혀 전완을 위로 올린 다음 '위 자세'를 눌러. 각각 0.5초 정도 흔들리지 않게 유지해.</p>
  <div class="row"><button id="calDown" disabled>아래 자세 기록</button><button id="calUp" disabled>위 자세 기록</button></div>
  <div id="calStatus">아직 보정하지 않음</div>
 </section>
@@ -50,7 +50,7 @@ input{width:115px;padding:10px 12px;margin-right:7px;font-size:20px;letter-spaci
  <p id="ack">팔이 충분히 올라간 뒤, 천천히 처음 자세로 돌아와야 1회로 기록해.</p>
  <div class="row"><button id="reset">횟수 초기화</button></div>
 </section>
-<p><small>한쪽 팔에 고정한 S21은 그 팔만 감지해. 양팔 동시 운동이나 정확한 관절 자세를 판별하지는 못해. 운동 기록은 이 화면에서만 집계하고, 실제 게임 공격은 폴드6에서 승인한 경우에만 적용돼.</small></p>
+<p><small>한쪽 팔의 전완부에 고정한 S21은 그 팔만 감지해. 양팔 동시 운동이나 정확한 관절 자세를 판별하지는 못해. 운동 기록은 이 화면에서만 집계하고, 실제 게임 공격은 폴드6에서 승인한 경우에만 적용돼.</small></p>
 </main>
 <script type="module">
 import {createWirelessController,cleanRoom} from "./src/peer-bridge.mjs?v=0.43.4";
