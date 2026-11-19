@@ -425,7 +425,17 @@ if(dumbbellMode){activeWeaponMode="melee";autoSwitchEnabled=true;
  el("begin").textContent="아령 사냥 시작";
  el("weaponToggle").hidden=true; // Exercise reps choose melee/ranged automatically; no manual weapon lock.
  el("controllerLink").textContent="S21 암밴드 컬 센서";el("controllerLink").href="./dumbbell.html";
- el("location").querySelector("span").textContent=watchInputMode?"워치4 컬 · 자동 숲 탐색":"아령 실험 · 자동 숲 탐색";
+ el("location").querySelector("span").textContent=watchInputMode?"워치4 컬 · 자동 숲 탐색":"S21 암밴드 · 자동 숲 탐색";
+ if(!watchInputMode){
+  el("motionOpen").textContent="S21 연결";
+  el("motionOpen").title="S21 암밴드 연결과 폴드6 카메라 설정";
+  el("motionPanel").querySelector(".motionTop h2").textContent="S21 암밴드 · 폴드6 연결";
+  el("motionPanel").querySelector(".motionLead").textContent="폴드6은 3D 게임과 카메라 회피를 담당하고, 팔에 고정한 S21은 아령 컬을 인식해. 워치 앱이나 APK 설치는 필요 없어.";
+  el("motionPanel").querySelector(".motionSection h3").textContent="① S21 암밴드 · 숫자 6자리";
+  el("motionPanel").querySelector(".motionSection p").textContent="여기서 연결 코드를 만들고, S21 브라우저의 아령 컬 화면에서 같은 6자리로 연결해. S21에서 센서 켜기 → 아래 자세 기록 → 위 자세 기록 순서로 진행해.";
+  el("introCard").querySelector("small").textContent="처음에는 'S21 연결'에서 6자리 코드를 만들고, S21 암밴드 화면의 센서를 켜고 보정해. 연결 뒤 사냥을 시작해.";
+  el("linkStatus").textContent="연결 코드 만들기 → S21 아령 컬 화면에서 입력 → 센서 켜고 아래/위 보정.";
+ }
  if(watchInputMode){
   document.body.classList.add("watchNative");
   el("watchBodyHud").hidden=false;
@@ -1963,6 +1973,10 @@ el("resumeHunt").addEventListener("click",()=>{el("huntExit").hidden=true;active
 el("confirmHuntReturn").addEventListener("click",returnToVillage);
 window.addEventListener('keydown',e=>{keys[e.code]=true;if(['Space','ArrowLeft','ArrowRight','ArrowDown','ArrowUp'].includes(e.code))e.preventDefault();if(e.code==='KeyH'&&!e.repeat)useBestRecovery();if(e.code==='KeyT'&&!e.repeat){setAutoSwitchEnabled(false);switchWeapon(activeWeaponMode==='melee'?'ranged':'melee');}if(e.code==='KeyG'&&!e.repeat)activateSkill();if(e.code==='Space'&&!e.repeat)magic();if(e.code==='KeyF'&&!e.repeat)swordHit("sweep");
 if(e.code==='KeyE'&&!e.repeat)swordHit("overhead");
-if(e.code==='KeyR'&&!e.repeat)swordHit("thrust");if((e.code==='ShiftLeft'||e.code==='KeyQ')&&!e.repeat)dodge()});window.addEventListener('keyup',e=>{keys[e.code]=false});document.addEventListener('visibilitychange',()=>{last=performance.now()});window.addEventListener('resize',resize);dragCamera();joystick();requestAnimationFrame(loop);
+if(e.code==='KeyR'&&!e.repeat)swordHit("thrust");if((e.code==='ShiftLeft'||e.code==='KeyQ')&&!e.repeat)dodge()});window.addEventListener('keyup',e=>{keys[e.code]=false});document.addEventListener('visibilitychange',()=>{last=performance.now()});window.addEventListener('resize',resize);
+dragCamera();joystick();
+// Begin S21 armband play in the paused connection dialog, before enemy combat.
+if(dumbbellMode&&!watchInputMode)el("motionPanel").hidden=false;
+requestAnimationFrame(loop);
 })();
 </script></body></html>
