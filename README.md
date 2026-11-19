@@ -1,5 +1,16 @@
 # Motion RPG — 경계의 숲
 
+## 2026-11-19: S21 암밴드 플레이
+- 폴드6: https://secom3-tech.github.io/motion-rpg/preview.html?v=1.0
+- S21: https://secom3-tech.github.io/motion-rpg/dumbbell.html?v=1.0
+- 마을의 사냥 진입 버튼이 S21 암밴드 자동 사냥으로 연결된다. 6자리 코드 → S21 센서 켜기·아래/위 보정 → 폴드6 사냥 시작.
+- 사냥 중 자유롭게 마을 복귀하면 기존 XP·골드·재료 정산 및 제작·장착이 이어진다. 누적 처치 목표는 실전 목표 안내만 제공하며 추가 보상을 임의로 만들지 않는다.
+- 새 모험은 선택 사항이며, 기존 진행 기록을 브라우저에 백업한다. 워치4 사용은 보류.
+- 대장간 제작 장비 16종은 통일된 페인팅 일러스트로 표시한다.
+- S21 암밴드 장시간 실전 동작·페이스 검증은 별도로 필요하다.
+
+
+
 ## S21 암밴드 기본 모드 · 2026-11-19
 
 - [폴드6 아령 사냥](https://secom3-tech.github.io/motion-rpg/indoor.html?mode=dumbbell&return=preview) / [S21 암밴드 센서](https://secom3-tech.github.io/motion-rpg/dumbbell.html).

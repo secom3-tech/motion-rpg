@@ -42,7 +42,7 @@ for(const m of ['dumbbellMode','gameMode===\'dumbbell\'','function autoExploreDu
 for(const m of ['createCurlDetector','gravityVector','averagedGravity','createWirelessController','send("sensor-state"','"gesture",{gesture:"melee"'])assert.ok(html.includes(m),"Dumbbell controller marker missing: "+m);
 for(const m of ['id="motionLive"','id="motionGauge"','sensorSamples++','angleBetween','keepScreenOn()','센서 수신 0회'])assert.ok(html.includes(m),"S21 armband live diagnostic missing: "+m);
 for(const m of ['S21 암밴드 · 폴드6 연결','if(dumbbellMode&&!watchInputMode)el("motionPanel").hidden=false','S21 암밴드 · 자동 숲 탐색'])assert.ok(arena.includes(m),"Armband game setup missing: "+m);
-assert.ok(hub.includes('아령 사냥 · 암밴드 테스트'));
+assert.ok(hub.includes('S21 암밴드 숲 사냥'));
 const script=html.match(/<script type="module">([\s\S]*?)<\/script>/);
 assert.ok(script,"Controller must have module script");
 const tmp=path.join(os.tmpdir(),"motion-dumbbell-"+process.pid+".mjs");

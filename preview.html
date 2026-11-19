@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#0c1b23"><title>Motion RPG | 경계의 숲마을</title>
+<html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#0c1b23"><title>Motion RPG | 경계의 숲 · 모험 시작</title>
 <style>
 :root{color-scheme:dark;--bg:#071219;--panel:#10242a;--line:#426b684e;--fog:#b0cbc0;--white:#f5fcf8;--mint:#a8ecc2;--gold:#ffd593;font-family:system-ui,-apple-system,"Pretendard","Noto Sans KR",sans-serif}*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:radial-gradient(ellipse at 55% -10%,#1b4939,transparent 44%),#071219;color:var(--white)}button,input,select{font:inherit}button{cursor:pointer}button:disabled{opacity:.45;cursor:default}.app{width:min(1120px,100%);margin:auto;padding:18px 18px 66px}.top{display:flex;align-items:center;justify-content:space-between;gap:15px;margin-bottom:19px}.mark{letter-spacing:.2em;font-weight:900;font-size:13px;color:#bdebd0}.mark em{font-style:normal;color:#739e8c;font-weight:500;letter-spacing:.05em}.version{font-size:11px;border:1px solid #6e9b82;border-radius:999px;color:#bfdec9;padding:7px 11px}.menu{display:flex;gap:7px;overflow:auto;padding:5px 0 15px;scrollbar-width:none}.menu button{border:1px solid #416454;background:#112821;color:#bcd4c6;border-radius:13px;padding:11px 16px;white-space:nowrap;font-weight:750}.menu button.active{background:#b7e9ad;color:#152b22;border-color:#b7e9ad}.page{display:none}.page.active{display:block}.stage{position:relative;overflow:hidden;border-radius:24px;border:1px solid #a8d2b640;min-height:320px;background:#254837;box-shadow:0 19px 60px #0008}.stage canvas{display:block;width:100%;height:clamp(335px,57vw,575px)}.stage::after{content:"";position:absolute;inset:0;pointer-events:none;background:linear-gradient(90deg,#091a20d9 0%,#091a2080 37%,transparent 75%),linear-gradient(0deg,#031a1dcf,transparent 38%)}.stage-copy{position:absolute;z-index:2;left:clamp(17px,4vw,47px);top:clamp(30px,8vw,95px);width:min(440px,82%);pointer-events:none}.stage-copy .eyebrow{font-size:12px;letter-spacing:.2em;color:#caefb0}.stage-copy h1{font-size:clamp(32px,5vw,60px);line-height:1.08;margin:14px 0 17px;letter-spacing:-.06em;text-shadow:0 3px 13px #0008}.stage-copy p{max-width:335px;font-size:clamp(13px,1.7vw,17px);line-height:1.8;color:#e0ede7;margin:0;text-shadow:0 2px 6px #0007}.stage-bottom{position:absolute;z-index:3;bottom:20px;left:clamp(15px,3vw,34px);right:clamp(15px,3vw,34px);display:flex;gap:9px;flex-wrap:wrap}.cta{border:1px solid #d8f3c8;background:#b7e9ad;color:#193025;font-weight:900;padding:13px 19px;border-radius:14px;box-shadow:0 5px 18px #0717177d}.cta.alt{border-color:#d0efe477;background:#092b31c4;color:white;backdrop-filter:blur(12px)}.cta.ghost{background:#193b37;color:#dfefea;border-color:#568877}.section-title{display:flex;justify-content:space-between;align-items:center;gap:12px;margin:26px 0 12px}.section-title h2{font-size:19px;margin:0;letter-spacing:-.025em}.tiny{font-size:12px;color:#96b3a6}.grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}.card{border:1px solid var(--line);background:linear-gradient(160deg,#152d31,#0d1d25);border-radius:19px;padding:19px;box-shadow:inset 0 1px #e4ffe609}.card h3{font-size:16px;margin:3px 0 11px}.card p{color:#adc9be;font-size:13px;line-height:1.65;margin:0}.stat{font-size:28px;font-weight:900;letter-spacing:-.04em}.stat small{display:block;font-size:11px;font-weight:600;color:#96b7a8;letter-spacing:0}.flex{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}.world-note{font-size:12px;color:#aac5b7;margin:11px 0 0}.intro{margin:10px 0 19px;max-width:650px;color:#a7c4b4;line-height:1.7;font-size:14px}.mode-hero{display:grid;grid-template-columns:1.3fr .7fr;gap:14px}.forest{min-height:268px;position:relative;border-radius:19px;overflow:hidden;background:radial-gradient(ellipse at 65% 0,#eff4aa7a 0,transparent 45%),linear-gradient(170deg,#477c75,#254c49 52%,#183a2d 53%,#132e2c);display:flex;justify-content:center;align-items:center;border:1px solid #7bc99e4f}.forest::before{content:"🌲　🌳　🌲　🌲　🌳　🌲";position:absolute;bottom:12px;white-space:nowrap;font-size:clamp(36px,6vw,65px);filter:drop-shadow(0 3px 3px #071e1a);opacity:.96}.forest::after{content:"";position:absolute;left:38%;right:35%;bottom:0;height:38%;background:#9fa06a99;clip-path:polygon(43% 0%,66% 0,100% 100%,0 100%);opacity:.5}.floating{z-index:1;position:relative;text-align:center;padding:25px;text-shadow:0 3px 12px #102920}.floating .tag{font-size:11px;letter-spacing:.14em;color:#e2f8d6}.floating h2{font-size:clamp(23px,4vw,38px);margin:8px 0}.floating p{font-size:13px;max-width:330px;line-height:1.6;margin:auto;color:#e2f0e6}.tracker{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}.tracker .card{padding:13px 15px}.tracker .stat{font-size:22px}.settings{display:grid;grid-template-columns:1fr 1fr 1fr;gap:13px;margin-top:15px}.settings label{display:block;color:#9fbbac;font-size:12px;margin-bottom:8px}.settings select,.settings input{width:100%;height:42px;border:1px solid #5687777a;border-radius:11px;background:#0a2025;color:#e9f8ef;padding:8px 10px}.controls{display:flex;gap:8px;flex-wrap:wrap;margin-top:15px}.controls button{padding:10px 14px;border:1px solid #6c9685;border-radius:11px;background:#183a34;color:#ddf7e4;font-weight:750}.controls button.primary{background:#b7e9ad;color:#152b22;border-color:#b7e9ad}.controls button.active{background:#417e60;color:white;border-color:#c0f0bb}.story{min-height:115px;line-height:1.7;padding:18px;border-radius:17px;border:1px solid #6fa98b6c;background:#142f29;margin-top:15px}.story b{display:block;color:#c6f4c6;margin-bottom:6px}.story p{margin:0;color:#d9e9db;font-size:14px}.meter{width:100%;height:9px;border-radius:100px;background:#07171b;overflow:hidden;margin-top:15px}.meter span{display:block;height:100%;width:0;background:linear-gradient(90deg,#77c9a4,#d5ed9b);transition:width .25s}.feed{max-height:175px;overflow:auto;padding-left:17px;color:#bed4c7;font-size:12px;line-height:1.8}.badge{display:inline-block;padding:5px 9px;border:1px solid #68ad9373;border-radius:999px;color:#d2edda;font-size:11px}.msg{border:1px solid #819d8a40;border-radius:15px;background:#0d2928;padding:13px 15px;font-size:13px;color:#b9d2c4;line-height:1.7;margin:16px 0}.indoor-stage{height:min(65vh,550px);min-height:380px;border-radius:19px;overflow:hidden;border:1px solid #5c938282;background:#102b31}.indoor-stage iframe{border:0;width:100%;height:100%;display:block}.slots{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:13px}.slot{border:1px solid #52736469;border-radius:16px;background:#163129;padding:17px}.slot b{font-size:16px}.slot p{font-size:12px;color:#aac7b9;line-height:1.65}.footer{font-size:11px;color:#829b91;text-align:center;margin:34px 0 4px}.hidden{display:none!important}@media(max-width:740px){.grid{grid-template-columns:1fr 1fr}.mode-hero{grid-template-columns:1fr}.settings{grid-template-columns:1fr 1fr}.stage canvas{height:390px}.slots{grid-template-columns:1fr}.stage-copy{top:35px}.stage-bottom .cta{font-size:13px;padding:11px 13px}}@media(max-width:460px){.app{padding:13px 12px 58px}.grid{grid-template-columns:repeat(2,1fr)}.card{padding:15px}.settings{grid-template-columns:1fr 1fr}.stage canvas{height:400px}.cta{padding:11px 13px}.top{margin-bottom:10px}.stage-copy h1{font-size:39px}}
 
@@ -392,6 +392,16 @@
 .shopRow button:disabled{opacity:.5}
 #shopStatus{color:#f7e8bc;font-size:13px;margin:15px 0 2px}
 @media(max-width:550px){.shopList{grid-template-columns:1fr}.shopWindow{padding:13px}.shopRow{grid-template-columns:53px 1fr}.shopIcon{width:52px;height:52px}}
+
+/* Play release: clear village entrance and painted crafting cards */
+.firstHunt{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:15px 18px;margin:13px 0 0;border-radius:18px;border:1px solid #9ac6a580;background:linear-gradient(110deg,#254c3c,#102c31)}
+.firstHunt>div{min-width:0;flex:1}.firstHunt small{display:block;color:#b9d0bf;font-size:11px}.firstHunt strong{display:block;color:#f2ffe8;font-size:18px;margin:4px 0}.firstHunt p{font-size:12px;line-height:1.55;color:#c6dcca;margin:4px 0 9px}
+.firstHunt button{padding:13px 19px;border:0;min-height:55px;border-radius:13px;color:#15382e;background:linear-gradient(135deg,#c8f0b7,#82d3a8);font-size:16px;font-weight:900}
+.huntPlanTrack{height:7px;background:#09232a;border-radius:8px;overflow:hidden;margin:6px 0}.huntPlanTrack i{display:block;height:100%;background:#b1eda4;width:0;transition:width .22s}
+.huntSetupHint{margin:9px 4px 17px;color:#aecbbd;font-size:12px;line-height:1.6}.huntSetupHint a{color:#c9f1c0;font-weight:800}
+.newJourneyControls{display:flex;gap:8px;flex-wrap:wrap;margin:11px 0}.newJourneyControls button{font-size:11px;padding:9px 10px;border-radius:9px;background:#204338;border:1px solid #8fb39b7e;color:#e3f2dd}
+.craftWindow .craft-row{grid-template-columns:72px minmax(0,1fr) auto;min-height:102px}.craftWindow .craftArt{width:68px;height:68px;grid-row:1 / 5}.craftWindow .craftArt svg{width:100%;height:100%;filter:drop-shadow(0 2px 5px #0006)}
+@media(max-width:550px){.firstHunt{padding:12px}.firstHunt button{max-width:110px;font-size:14px;padding:10px}.craftWindow .craft-row{grid-template-columns:70px minmax(0,1fr) auto}}
 </style></head>
 <body><div class="app">
 <header class="top"><div class="mark">MOTION RPG <em> / 경계의 숲</em></div><div class="version">모험 허브 · 0.54 숲 시야 확보</div></header>
@@ -429,13 +439,16 @@
  <div class="homeProgress"><div class="homeProgressTop"><b>다음 레벨까지</b><span id="homeNextXp">경험치 확인 중</span></div><div class="homeProgressTrack"><i id="homeXpProgress"></i></div></div>
 <div class="townRumour" aria-live="polite"><span class="rumourIcon">✧</span><div class="rumourBody"><small>마을의 소문 · 귀를 기울여 보자</small><b id="rumourWho">마을 사람</b><p id="rumourLine">오늘은 무슨 소식이 들릴까?</p><button id="rumourNext">다른 소문 듣기</button></div></div>
 <div class="townObjective"><span>📜 지금의 여정</span><b id="homeObjective">숲의 조사를 준비하는 중</b><small id="homeObjectiveDesc">길드의 소식을 확인해 보자.</small></div>
+<div class="newJourneyControls"><button id="startNewJourney" type="button">레벨 1부터 새 모험 시작 · 현재 기록 백업</button><button id="restoreJourney" type="button" hidden>기존 기록 복원</button></div>
 
 
 </details>
 </div>
-<div class="controls" style="margin:12px 0 16px">
-<a class="cta alt" href="./indoor.html?v=0.54&mode=dumbbell&return=preview" style="text-decoration:none">아령 사냥 · S21 암밴드</a>
-<a class="cta alt" href="./indoor.html?v=0.54&mode=dumbbell&input=watch&return=preview" style="text-decoration:none">워치4 아령 사냥 · 전용 앱에서 실행</a></div>
+<section class="firstHunt" aria-label="현재 사냥 의뢰">
+<div><small>오늘의 사냥 · S21 암밴드</small><strong id="huntPlanTitle">첫 숲 사냥</strong><p id="huntPlanDetail">몬스터를 처치하고 마을에 복귀해 전리품을 확보해.</p>
+<div class="huntPlanTrack"><i id="huntPlanBar"></i></div><small id="huntPlanCount">사냥 목표 확인 중</small></div>
+<button id="playForest" type="button">숲 사냥 출발</button></section>
+<p class="huntSetupHint">폴드6에서 게임 실행 · <a href="./dumbbell.html?v=1.0" target="_blank" rel="noopener">S21 암밴드 센서 화면</a>은 S21에서 열기 · 사냥 입장 후 연결 코드 6자리 입력</p>
 </section>
 <section class="page" id="page-run">
   <div class="runBoard" id="runBoard">
@@ -488,7 +501,7 @@
   </div>
 </section>
 <section class="page" id="page-indoor"><div class="mark">INDOOR ACTION RPG</div><h1 style="font-size:30px;margin:9px 0">숲의 전투</h1><p class="intro"><b>1인칭 3D 전투</b>에 <b>S21의 실제 검격·투척 동작</b>과 <b>폴드6 전면 카메라 회피</b>를 연결했어. 전투 전체화면의 <b>모션 설정</b>에서 S21과 폴드6 카메라를 켜. 연결 코드는 숫자 6자리야. 설정 중에는 전투가 멈추고, 전투 패배 후에도 연결을 유지한 채 다시 시작할 수 있어.</p>
-<div class="indoor-stage"><iframe id="indoorFrame" title="기존 3D 실내 전투 프로토타입" loading="lazy" allow="camera; accelerometer; gyroscope"></iframe></div><div class="controls"><a class="cta" href="./indoor.html?v=0.54&return=preview" target="_blank" rel="noopener">3D 전투 전체화면 열기</a><button id="restartIndoor" class="cta alt">전투 화면 다시 불러오기</button><a class="cta alt" href="./controller.html?v=0.49" target="_blank" rel="noopener">S21 무기 컨트롤러</a><a class="cta alt" href="./indoor.html?v=0.54&mode=dumbbell&return=preview" target="_blank" rel="noopener">아령 사냥 · 암밴드 테스트</a><a class="cta alt" href="./watch-setup.html" target="_blank" rel="noopener">워치4 아령 운동 설치 안내</a></div>
+<div class="indoor-stage"><iframe id="indoorFrame" title="기존 3D 실내 전투 프로토타입" loading="lazy" allow="camera; accelerometer; gyroscope"></iframe></div><div class="controls"><a class="cta" href="./indoor.html?v=1.0&mode=dumbbell&return=preview" target="_blank" rel="noopener">3D 사냥 전체화면 열기</a><button id="restartIndoor" class="cta alt">전투 화면 다시 불러오기</button><a class="cta alt" href="./controller.html?v=0.49" target="_blank" rel="noopener">S21 무기 컨트롤러</a><a class="cta alt" href="./indoor.html?v=1.0&mode=dumbbell&return=preview" target="_blank" rel="noopener">S21 암밴드 숲 사냥</a><a class="cta alt" href="./dumbbell.html?v=1.0" target="_blank" rel="noopener">S21 암밴드 연결 화면</a></div>
 <div class="msg">S21로 이동·시점·공격을 조작하고 폴드6에서는 전투를 보며 몸으로 회피해. 숲길·유적·버섯 습지·공터를 탐험하면서 8종 몬스터를 만나게 돼. 적이 등장하면 방향·거리 알림과 미니맵으로 위치를 확인할 수 있어. 시야에 보이는 적은 머리 위 이름·체력 표시가 뜨고, 시야 밖의 적은 화살표가 안내해. 돌진·가로 공격·내려찍기를 몸으로 피하자. S21 컨트롤러의 휘두르기는 검격·투척으로 전송돼. 카메라·통신이 불안정하면 기존 화면 버튼으로 계속 전투할 수 있어. 외부 연결 서버와 모델 다운로드가 필요해 실기기 검증 전이야.</div></section>
 <section class="page" id="page-character">
  <div class="gearScreen">
@@ -568,7 +581,7 @@
   <div class="reportActivity" id="sessionActivity"></div><ol class="reportLog" id="sessionLog"></ol>
   <button type="button" class="reportClose" id="closeSessionReport">마을에서 계속하기</button>
  </section></div>
-<footer class="footer">MOTION RPG · 숲마을을 거점으로 실내 전투와 야외 탐험을 연결하는 통합 콘셉트 시안 · 기존 v0.24 본게임 보존</footer>
+<footer class="footer">MOTION RPG · 경계의 숲 · 플레이 버전 · 진행 기록은 현재 브라우저에 저장돼</footer>
 </div>
 <script type="module">
 import {createAdventure,startAdventure,advanceAdventure,endAdventure,summarizeAdventure,settleAdventure,expeditionReward} from "./src/expedition.mjs?v=0.42.1";
@@ -584,15 +597,16 @@ import {summarizeHuntResult,summarizeExpeditionResult} from "./src/session-repor
 import {QUESTS,REGIONS,newGame} from "./src/engine.mjs?v=0.37";
 import {experienceProgress} from "./src/progression.mjs?v=0.37";
 import {villageRumour,villageObjective} from "./src/town-life.mjs?v=0.37";
+import {huntPlan} from "./src/hunt-plan.mjs?v=1.0";
 // Village art is static: combat, GPS and character state retain their original modules.
 import {MATERIALS,RECIPES,normalizeRpgGear,gearRequirement,craftGear,equipGear,chooseActiveWeapon,weaponSlotFor,RANGED_WEAPONS,MELEE_WEAPONS,combatStats,claimIndoorBattle,addExpeditionMaterials} from "./src/gear-game.mjs?v=0.48";
 const $=id=>document.getElementById(id);
 const pages=["village","run","indoor","character"];
 function go(page){if(!pages.includes(page))return;
-if(page==="indoor"){location.assign("./indoor.html?v=0.54&return=preview");return;}const previous=pages.find(x=>$("page-"+x).classList.contains("active"));if(previous==="indoor"&&page!=="indoor"&&$("indoorFrame").contentWindow){$("indoorFrame").contentWindow.postMessage({type:"motion-rpg-pause-input"},location.origin);}pages.forEach(x=>$("page-"+x).classList.toggle("active",x===page));document.querySelectorAll("[data-view]").forEach(b=>b.classList.toggle("active",b.dataset.view===page));if(page==="indoor"){const frame=$("indoorFrame"),signature=JSON.stringify(normalizeRpgGear(sharedCharacter()).equipped);if(!frame.src||frame.dataset.gearSignature!==signature){frame.src="./indoor.html?v=0.54&return=preview&load="+Date.now();frame.dataset.gearSignature=signature;}}if(page==="village"){$("townEncounter").hidden=true;$("craftBench").hidden=true;$("shopDialog").hidden=true;}if(page==="character"){drawEquipment();}if(page==="character"||page==="village")syncCharacter();window.scrollTo({top:0,behavior:"smooth"});}
+if(page==="indoor"){location.assign("./indoor.html?v=1.0&mode=dumbbell&return=preview");return;}const previous=pages.find(x=>$("page-"+x).classList.contains("active"));if(previous==="indoor"&&page!=="indoor"&&$("indoorFrame").contentWindow){$("indoorFrame").contentWindow.postMessage({type:"motion-rpg-pause-input"},location.origin);}pages.forEach(x=>$("page-"+x).classList.toggle("active",x===page));document.querySelectorAll("[data-view]").forEach(b=>b.classList.toggle("active",b.dataset.view===page));if(page==="indoor"){const frame=$("indoorFrame"),signature=JSON.stringify(normalizeRpgGear(sharedCharacter()).equipped);if(!frame.src||frame.dataset.gearSignature!==signature){frame.src="./indoor.html?v=0.54&return=preview&load="+Date.now();frame.dataset.gearSignature=signature;}}if(page==="village"){$("townEncounter").hidden=true;$("craftBench").hidden=true;$("shopDialog").hidden=true;}if(page==="character"){drawEquipment();}if(page==="character"||page==="village")syncCharacter();window.scrollTo({top:0,behavior:"smooth"});}
 document.querySelectorAll("[data-view]").forEach(b=>b.onclick=()=>go(b.dataset.view));
 document.querySelectorAll("[data-go]").forEach(b=>b.onclick=()=>go(b.dataset.go));
-$("restartIndoor").onclick=()=>$("indoorFrame").src="./indoor.html?v=0.54&return=preview&reload="+Date.now();
+$("restartIndoor").onclick=()=>$("indoorFrame").src="./indoor.html?v=1.0&mode=dumbbell&return=preview&reload="+Date.now();
 let rumorOffset=0;
 function updateTownRumour(){
  const state=sharedCharacter(),today=new Date().toLocaleDateString("sv-SE");
@@ -603,6 +617,11 @@ function updateTownRumour(){
  $("homeObjective").textContent=objective.title;
  $("homeObjectiveDesc").textContent=objective.detail;
  $("townQuest").textContent=objective.title+" · "+objective.detail;
+ const goal=huntPlan(state);
+ $("huntPlanTitle").textContent=goal.title;
+ $("huntPlanDetail").textContent=goal.detail;
+ $("huntPlanBar").style.width=Math.round(goal.ratio*100)+"%";
+ $("huntPlanCount").textContent=goal.progress+" · 보상은 마을 복귀 후 정산";
 }
 $("rumourNext").onclick=()=>{rumorOffset++;updateTownRumour();};
 function townTalk(type){
@@ -644,6 +663,7 @@ function townTalk(type){
 }
 document.querySelectorAll("[data-town]").forEach(b=>b.addEventListener("click",()=>townTalk(b.dataset.town)));
 $("townAction").onclick=()=>go("indoor");
+$("playForest").onclick=()=>go("indoor");
 function sharedCharacter(){try{const s=JSON.parse(localStorage.getItem("motion-rpg-save-v1")||"null");return s&&typeof s==="object"&&!Array.isArray(s)?s:newGame();}catch{return newGame();}}
 function syncCharacter(){const s=sharedCharacter();const exp=experienceProgress(s);
 $("townHudLevel").textContent="Lv. "+(s.level||1);
@@ -675,6 +695,29 @@ function drawEquipment(){
  $("gearStatus").textContent="실제 장착 중인 장비만 표시 · 검과 활은 전투 중 S21에서 전환할 수 있어.";
 }
 const SAVE_KEY="motion-rpg-save-v1",INDOOR_KEY="motion-rpg-indoor-result-v1",HUNT_HISTORY_KEY="motion-rpg-last-hunt-report-v1";
+const BACKUP_KEY="motion-rpg-pre-play-backup-v1";
+function refreshRestoreButton(){try{$("restoreJourney").hidden=!localStorage.getItem(BACKUP_KEY);}catch{$("restoreJourney").hidden=true;}}
+$("startNewJourney").onclick=()=>{
+ if(!confirm("레벨 1부터 새 모험을 시작할까? 기존 캐릭터와 사냥 기록을 이 브라우저에 백업한 뒤 시작해."))return;
+ try{
+  localStorage.setItem(BACKUP_KEY,JSON.stringify({save:localStorage.getItem(SAVE_KEY),hunt:localStorage.getItem(HUNT_HISTORY_KEY),
+   pending:localStorage.getItem(INDOOR_KEY),savedAt:Date.now()}));
+  saveCharacter(newGame());localStorage.removeItem(INDOOR_KEY);localStorage.removeItem(HUNT_HISTORY_KEY);
+ }catch{alert("백업 또는 새 게임 저장에 실패했어. 기존 기록을 확인해.");return;}
+ refreshRestoreButton();refreshHuntShortcut();syncCharacter();$("villageJournal").open=false;
+};
+$("restoreJourney").onclick=()=>{
+ if(!confirm("백업한 캐릭터를 복원할까? 지금의 새 모험 진행은 덮어써져."))return;
+ let old;try{old=JSON.parse(localStorage.getItem(BACKUP_KEY)||"null");}catch{}
+ if(!old)return;
+ try{
+  for(const [key,value] of [[SAVE_KEY,old.save],[HUNT_HISTORY_KEY,old.hunt],[INDOOR_KEY,old.pending]])
+   if(value===null)localStorage.removeItem(key);else localStorage.setItem(key,value);
+  localStorage.removeItem(BACKUP_KEY);
+ }catch{alert("복원하지 못했어. 브라우저 저장 공간을 확인해.");return;}
+ refreshRestoreButton();refreshHuntShortcut();syncCharacter();
+};
+refreshRestoreButton();
 function saveCharacter(s){localStorage.setItem(SAVE_KEY,JSON.stringify(s));}
 function renderShop(){
  const state=sharedCharacter();
@@ -823,7 +866,7 @@ $("startCombat").onclick=()=>go("indoor");
 window.addEventListener("message",e=>{
  if(e.origin!==location.origin||e.data?.type!=="motion-rpg-indoor-return"||e.source!==$("indoorFrame").contentWindow)return;
  const report=claimPendingBattle();
- $("indoorFrame").src="./indoor.html?v=0.54&return=preview&reload="+Date.now();
+ $("indoorFrame").src="./indoor.html?v=1.0&mode=dumbbell&return=preview&reload="+Date.now();
  go("village");if(report)renderSessionReport(report);
 });
 for(const slot of Object.keys(gearSlots)){

@@ -34,8 +34,18 @@ const illustrated={
  hunter:[0,1], satchel:[1,1], staff:[2,1]
 };
 const ATLAS="./assets/gear-illustrations.webp?v=0.43.1";
+const craftIllustrated={bare:[0,0],traveler:[1,0],sword:[2,0],none:[3,0],
+ hood:[0,1],leather:[1,1],lantern:[2,1],axe:[3,1],
+ staff:[0,2],orb:[1,2],circlet:[2,2],forest:[3,2],
+ shield:[0,3],ironHelm:[1,3],iron:[2,3],greatsword:[3,3]};
+const CRAFT_ATLAS="./assets/blacksmith-craft-v1.webp?v=1.0";
 const tones={weapon:"#1d464f",head:"#35423f",armor:"#254a43",offhand:"#4b4437"};
 export function itemIllustration(id,slot="weapon"){
+ const craft=craftIllustrated[id];
+ if(craft){
+  const [column,row]=craft;
+  return '<svg class="itemArtwork paintedEquipment" viewBox="0 0 96 96" role="img" aria-label="장비 일러스트" xmlns="http://www.w3.org/2000/svg" style="overflow:hidden;border-radius:12px"><image href="'+CRAFT_ATLAS+'" x="'+(-column*96)+'" y="'+(-row*96)+'" width="384" height="384" preserveAspectRatio="none"/><path d="M2 2h92v92H2z" fill="none" stroke="#e1ca8c" stroke-opacity=".28" stroke-width="2"/></svg>';
+ }
  const sprite=illustrated[id];
  if(sprite){
   const [column,row]=sprite;
