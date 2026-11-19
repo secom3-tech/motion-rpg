@@ -22,4 +22,6 @@ const game=fs.readFileSync(new URL("../indoor.html",import.meta.url),"utf8");
 const phone=fs.readFileSync(new URL("../dumbbell.html",import.meta.url),"utf8");
 for(const marker of ['id="exerciseNotice"','id="dodgePoseGraphic"','DODGE_POSTURES.duck','DODGE_POSTURES.side','curl-reject','function acceptCurl()','function drainCurlQueue()','if(now-lastMotionAt<620&&!dumbbellMode)','cooldownMs:dumbbellMode?500:1100'])assert.ok(game.includes(marker),marker);
 for(const marker of ['report?.rejection','curl-reject','data.queued','cooldownRemainingMs:0','v=1.1'])assert.ok(phone.includes(marker),marker);
+assert.ok(game.includes("적이 사거리 밖으로 이동함"),"Melee swings that miss need a large reason");
+assert.ok(game.includes("발사는 됐지만 빗나감"),"Ranged misses need a large reason");
 console.log("EXERCISE FEEDBACK PASS: varied cadence, rejection diagnostics, attack queue and illustrated dodge");

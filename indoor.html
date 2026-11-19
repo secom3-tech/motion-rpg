@@ -1053,6 +1053,11 @@ function updatePlayerActions(){
     damage(amount,meleeAction.weapon);
    }else{
     toast("공격 빗나감 · 방향 또는 거리 확인");
+     if(dumbbellMode){
+      const reason=enemy.dead?"이미 처치한 적":distance2d(camera,enemy)>weaponProfile(meleeAction.weapon).reach+.35?
+       "적이 사거리 밖으로 이동함":"적이 공격 범위에서 벗어남";
+      showExerciseNotice("fail",reason,1.5);
+     }
    }
   }
   if(clock>=meleeAction.endsAt){meleeAction=null;skillPrimed=false;}
