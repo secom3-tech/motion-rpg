@@ -51,5 +51,5 @@ for(const phrase of [
  'if(!gpsHasFix)speak("GPS 연결 완료.',
  'gpsWeakSince=0;gpsLastGoodAt=Date.now()'
 ])assert.ok(hub.includes(phrase),"GPS resume must be quiet: "+phrase);
-assert.ok(hub.includes("indoor.html?v=1.0&mode=dumbbell"),"Hub links must use the current stable build");
+assert.ok(hub.includes("indoor.html?v=1.1&mode=dumbbell"),"Hub links must use the current stable build");
 console.log("V0.48 PASS: 2m GPS silence tolerance, no voice chatter, distance exploration, large S21 attack readiness");

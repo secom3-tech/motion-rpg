@@ -1961,7 +1961,7 @@ el("hostStart").onclick=async()=>{
   const room=await motionHost.start();
   lastMotionSequence=-1;lastMotionAt=-Infinity;
   const url=new URL(dumbbellMode?"./dumbbell.html":"./controller.html",location.href);
-  url.searchParams.set("v",dumbbellMode?"1.0":"0.49");url.searchParams.set("room",room);
+  url.searchParams.set("v",dumbbellMode?"1.1":"0.49");url.searchParams.set("room",room);
   el("controllerLink").href=url.href;
   el("motionRoom").textContent=room.replace(/^mrpg-/,"");
   el("hostStop").disabled=false;
@@ -2080,7 +2080,7 @@ function returnToVillage(){
  bankProgress();
  if(watchInputMode||new URLSearchParams(location.search).get("return")==="preview"){
   if(window.parent!==window)window.parent.postMessage({type:"motion-rpg-indoor-return",sessionId},location.origin);
-  else location.href="./preview.html?v=1.0&from=indoor";
+  else location.href="./preview.html?v=1.1&from=indoor";
  }else location.href="./index.html?from=indoor";
 }
 el("campReturn").addEventListener("click",showHuntSummary);

@@ -1,7 +1,7 @@
 # Motion RPG · S21 암밴드 실전 플레이 v1.0 (2026-11-19)
 ## 바로 시작
-- 폴드6 Chrome/삼성 인터넷: https://secom3-tech.github.io/motion-rpg/preview.html?v=1.0
-- S21 Chrome/삼성 인터넷: https://secom3-tech.github.io/motion-rpg/dumbbell.html?v=1.0
+- 폴드6 Chrome/삼성 인터넷: https://secom3-tech.github.io/motion-rpg/preview.html?v=1.1
+- S21 Chrome/삼성 인터넷: https://secom3-tech.github.io/motion-rpg/dumbbell.html?v=1.1
 - S21을 팔꿈치 아래 전완부에 고정하고, 처음에는 가벼운 아령으로 동작을 시험한다.
 1. 폴드6의 마을에서 숲 사냥 출발 → 연결 코드 만들기.
 2. S21에서 6자리 코드 입력 → 게임 연결 → 센서 켜기 → 아래 자세 기록 → 위 자세 기록.

@@ -8,8 +8,8 @@
 - 자동 코드는 기기별 센서·카메라 실물 성능을 대신 검증하지 않으며, 실제 운동에서 부드러운 움직임과 주변 안전을 우선한다.
 
 ## 2026-11-19: S21 암밴드 플레이
-- 폴드6: https://secom3-tech.github.io/motion-rpg/preview.html?v=1.0
-- S21: https://secom3-tech.github.io/motion-rpg/dumbbell.html?v=1.0
+- 폴드6: https://secom3-tech.github.io/motion-rpg/preview.html?v=1.1
+- S21: https://secom3-tech.github.io/motion-rpg/dumbbell.html?v=1.1
 - 마을의 사냥 진입 버튼이 S21 암밴드 자동 사냥으로 연결된다. 6자리 코드 → S21 센서 켜기·아래/위 보정 → 폴드6 사냥 시작.
 - 사냥 중 자유롭게 마을 복귀하면 기존 XP·골드·재료 정산 및 제작·장착이 이어진다. 누적 처치 목표는 실전 목표 안내만 제공하며 추가 보상을 임의로 만들지 않는다.
 - 새 모험은 선택 사항이며, 기존 진행 기록을 브라우저에 백업한다. 워치4 사용은 보류.
