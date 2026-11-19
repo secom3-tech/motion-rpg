@@ -1,8 +1,9 @@
 /**
  * Gravity-based forearm curl prototype (single arm only).
  * Calibrate down and up positions while the phone is fixed to the forearm.
- * One slow, complete up->down cycle emits one rep; no rep for bouncing,
- * one-way motions, or holding at the top. Not a weight/technique measurement.
+ * One completed up->down cycle emits one rep. The user chooses their own pace;
+ * a short anti-noise threshold only prevents accidental jiggles/double counts.
+ * Not a weight, technique, or exertion measurement.
  */
 const dot=(a,b)=>a[0]*b[0]+a[1]*b[1]+a[2]*b[2];
 const norm=a=>Math.hypot(...a);
@@ -25,41 +26,49 @@ export function averagedGravity(list){
  return mean;
 }
 export function createCurlDetector(){
- let down=null,up=null,smoothed=null,phase="down",startAt=0,topAt=0,lastRepAt=-Infinity,reps=0,progress=0;
+ let down=null,up=null,smoothed=null,phase="down",startAt=0,topAt=0,lastRepAt=-Infinity,reps=0,progress=0,peak=0;
  function calibrateDown(v){
   if(!v||v.length!==3||!v.every(Number.isFinite))return false;
-  down=v.slice();up=null;smoothed=null;phase="down";reps=0;progress=0;return true;
+  down=v.slice();up=null;smoothed=null;phase="down";reps=0;progress=0;peak=0;return true;
  }
  function calibrateUp(v){
   if(!down||!v||v.length!==3||!v.every(Number.isFinite))return false;
   const difference=norm(v.map((n,i)=>n-down[i]));
   if(difference<.38)return false; // roughly 22 degrees change, device-dependent
-  up=v.slice();smoothed=null;phase="down";startAt=0;topAt=0;lastRepAt=-Infinity;reps=0;progress=0;
+  up=v.slice();smoothed=null;phase="down";startAt=0;topAt=0;lastRepAt=-Infinity;reps=0;progress=0;peak=0;
   return true;
  }
  function feed(v,now){
   if(!down||!up||!v||!v.every(Number.isFinite)||!Number.isFinite(now))return {calibrated:!!(down&&up),rep:false,phase,progress,reps};
-  smoothed=smoothed?smoothed.map((n,i)=>n*.65+v[i]*.35):v.slice();
+  smoothed=smoothed?smoothed.map((n,i)=>n*.55+v[i]*.45):v.slice();
   const delta=up.map((n,i)=>n-down[i]);
   progress=clamp(dot(smoothed.map((n,i)=>n-down[i]),delta)/Math.max(.001,dot(delta,delta)),0,1);
-  let rep=false;
+  let rep=false,rejection=null;
   if(phase==="down"){
-   if(progress>.30){phase="lifting";startAt=now;}
+   if(progress>.32){phase="lifting";startAt=now;peak=progress;}
   }else if(phase==="lifting"){
-   if(progress>=.76&&now-startAt>=270){phase="lowering";topAt=now;}
-   else if(progress<.16){phase="down";startAt=0;}
-   else if(now-startAt>12000){phase="down";startAt=0;}
+   peak=Math.max(peak,progress);
+   // The calibrated top is a reference, not an exact pose/tempo to imitate.
+   if(progress>=.67){phase="lowering";topAt=now;}
+   else if(progress<.18){
+    if(peak>=.43)rejection="팔을 조금 더 올려줘";
+    phase="down";startAt=0;peak=0;
+   }else if(now-startAt>60000){
+    rejection="동작이 중단됐어 · 다시 들면 돼";phase="down";startAt=0;peak=0;
+   }
   }else if(phase==="lowering"){
-   if(progress<=.23){
-    // Slow controlled recovery, not an impulsive or partial stroke.
-    if(now-topAt>=320&&now-startAt>=900&&now-startAt<=12000&&now-lastRepAt>=900){
-     reps++;rep=true;lastRepAt=now;
-    }
-    phase="down";startAt=0;topAt=0;
-   }else if(now-startAt>12000){phase="down";startAt=0;}
+   if(progress<=.27){
+    // Reject only implausibly short sensor jitter, not a personal workout pace.
+    if(now-startAt<180)rejection="움직임이 너무 짧아 흔들림으로 감지";
+    else if(now-lastRepAt<250)rejection="중복 동작 감지";
+    else {reps++;rep=true;lastRepAt=now;}
+    phase="down";startAt=0;topAt=0;peak=0;
+   }else if(now-startAt>60000){
+    rejection="아래 자세로 돌아오지 않았어";phase="down";startAt=0;topAt=0;peak=0;
+   }
   }
-  return {calibrated:true,rep,phase,progress,reps};
+  return {calibrated:true,rep,rejection,phase,progress,reps};
  }
- function reset(){smoothed=null;phase="down";startAt=0;topAt=0;progress=0;lastRepAt=-Infinity;reps=0;}
+ function reset(){smoothed=null;phase="down";startAt=0;topAt=0;progress=0;peak=0;lastRepAt=-Infinity;reps=0;}
  return {calibrateDown,calibrateUp,feed,reset,get calibrated(){return !!(down&&up)},get phase(){return phase},get progress(){return progress},get reps(){return reps}};
 }

@@ -318,6 +318,28 @@ body.watchNative .motionSection .motionRow:has(#hostStart){display:none!importan
  #watchBodyHud{top:max(132px,calc(env(safe-area-inset-top) + 111px));
   right:calc(7px + 103px + 11px)}
 }
+
+/* S21 workout 1.1: large, readable visual dodge instructions */
+#attackBanner{top:12%;width:min(390px,65vw);padding:12px 16px 14px;background:#132f32ed}
+#dodgePoseGraphic{width:100%;height:clamp(90px,20vh,148px);margin:0 auto 5px}
+#dodgePoseGraphic svg{height:100%;max-width:100%;display:block;margin:auto;filter:drop-shadow(0 3px 7px #031b23)}
+#attackBanner b,#attackBanner.dodgeNow b{font-size:clamp(25px,5vw,46px)}
+#attackBanner small{font-size:clamp(12px,2vw,17px);margin-top:7px}
+#attackBanner .attackMeter{height:8px;margin-top:8px}
+#flightGuide[hidden],#exerciseNotice[hidden]{display:none!important}
+#flightGuide{position:fixed;z-index:16;pointer-events:none;left:50%;top:13%;transform:translateX(-50%);text-align:center;
+ width:min(360px,63vw);border:3px solid #ffe1a0;border-radius:19px;padding:12px;background:#302a24ec;box-shadow:0 6px 30px #000b}
+#flightGuide b{display:block;font-size:clamp(13px,2.7vw,21px);color:#fff1d1}
+#flightGuide strong{display:block;font-size:clamp(27px,6vw,51px);color:#fff6ce}
+#flightPoseGraphic{height:clamp(70px,16vh,115px)}
+#flightPoseGraphic svg{height:100%;max-width:100%}
+#exerciseNotice{position:fixed;z-index:21;pointer-events:none;top:46%;left:50%;transform:translate(-50%,-50%);
+ padding:13px 20px;max-width:80vw;min-width:min(260px,54vw);text-align:center;border:3px solid #ffd591;border-radius:16px;
+ font-size:clamp(21px,4.1vw,37px);line-height:1.2;font-weight:950;background:#482b25ed;color:#fff1d0;text-shadow:0 2px 5px #0009}
+#exerciseNotice.ok{border-color:#b2f7be;background:#145e47ed;color:#e2ffe7}
+#exerciseNotice.wait{border-color:#ffe3a4;background:#565022ed;color:#fff7c8}
+#exerciseNotice.fail{border-color:#ffaaa1;background:#632e31ed;color:#ffe7e2}
+@media(max-width:620px){#attackBanner{width:73vw;top:13%}#dodgePoseGraphic{height:clamp(85px,16vh,115px)}#flightGuide{top:13%}}
 </style></head><body>
 <div id="sky"></div><canvas id="game"></canvas><div id="vignette"></div><div id="bottomShade"></div><div id="screenFx"></div><canvas id="weaponCanvas" aria-hidden="true"></canvas>
 <div class="ui" id="brand"><div id="sigil">✦</div><div><h1>Motion RPG</h1><p>BORDERWOOD · HUNT</p></div></div>
@@ -328,7 +350,9 @@ body.watchNative .motionSection .motionRow:has(#hostStart){display:none!importan
 <div id="enemyTag" hidden><div id="enemyTagName">▼ 몬스터</div><div id="enemyTagTrack"><i id="enemyTagHp"></i></div></div>
 <div id="enemyArrow" hidden><div id="enemyArrowIcon">▲</div><span id="enemyArrowText">적 발견</span></div>
 <div id="spawnNotice" hidden role="status" aria-live="polite"></div>
-<div id="attackBanner" hidden aria-live="off"><b id="attackBannerText">공격 준비</b><div class="attackMeter"><i id="attackBannerMeter"></i></div><small id="attackBannerHint"></small></div>
+<div id="attackBanner" hidden aria-live="off"><div id="dodgePoseGraphic" aria-label="회피 자세 그림"></div><b id="attackBannerText">공격 준비</b><div class="attackMeter"><i id="attackBannerMeter"></i></div><small id="attackBannerHint"></small></div>
+<div id="flightGuide" hidden><b>날아오는 탄 피하기</b><div id="flightPoseGraphic" aria-hidden="true"></div><strong>옆으로!</strong></div>
+<div id="exerciseNotice" hidden role="status" aria-live="polite">동작 안내</div>
 
 <div id="watchBodyHud" hidden aria-label="워치4 실시간 심박수와 운동 근육 표시" data-focus="none" data-connected="no">
  <div class="hrRow"><span class="hrIcon">♥</span><strong id="watchBpm">--</strong><span class="hrText">BPM</span></div>
@@ -421,7 +445,7 @@ let activeWeaponMode=battleGear.activeWeapon||"melee",autoSwitchEnabled=true,ski
 if(dumbbellMode){activeWeaponMode="melee";autoSwitchEnabled=true;
  el("introCard").querySelector("p").textContent=watchInputMode?
   "갤럭시 워치4에서 컬을 1회 완료하면 거리 안에서는 검격, 거리 밖에서는 활 공격이 나가. 적을 발견하면 접근 후 교전 중에는 멈추고, 폴드6 카메라로 회피해.":
-  "S21을 팔 암밴드에 고정하고 아령을 천천히 들었다 내리면, 가까운 적은 검격하고 먼 적은 활로 공격해. 교전 거리에 도착하면 이동을 멈추고 회피를 기다려.";
+  "S21을 팔 암밴드에 고정하고 아령을 자신의 속도로 들었다 내리면, 가까운 적은 검격하고 먼 적은 활로 공격해. 교전 거리에 도착하면 이동을 멈추고 회피를 기다려.";
  el("begin").textContent="아령 사냥 시작";
  el("weaponToggle").hidden=true; // Exercise reps choose melee/ranged automatically; no manual weapon lock.
  el("controllerLink").textContent="S21 암밴드 컬 센서";el("controllerLink").href="./dumbbell.html";
@@ -460,7 +484,7 @@ const equippedWeapon=()=>GEAR.weapon.find(item=>item.id===currentWeapon())?.name
 const sessionId="arena-"+Date.now()+"-"+Math.random().toString(36).slice(2,11);
 let heroHp=stats.maxHp,dodgeUntil=0,dodgeCooldown=0,lastDodgeKind="button",dodgeVisualUntil=0,bandageReadyAt=0,dodgeMessageUntil=0,dodgeMessage="",dodgeProtectedAttack=0,enemyAttackSeq=0,dodgeVisualStart=-99;
 let huntElapsedSec=0,huntDodgeInputs=0,huntDodgeSuccess=0,huntMotionActions=0;const huntLog=[];
-let enemySpawnClock=-99,lastRadarClock=-99,dodgePromptPlayed=false;
+let enemySpawnClock=-99,lastRadarClock=-99,dodgePromptPlayed=false,lastDodgeRejectedAttack=-1,lastDodgeRejectedReason="";
 let meleeAction=null,rangedAction=null,queuedSkillUntil=-1;
 const weaponCanvas=el("weaponCanvas"),weaponCtx=weaponCanvas.getContext("2d",{alpha:true});
 const camera={x:0,y:1.7,z:5.5};const stick={x:0,y:0};let W=innerWidth,H=innerHeight,dpr=1,prevToast=null,moveTouch=false,lastFire=-999;const keys={};
@@ -570,35 +594,62 @@ function setAutoHeal(enabled){
  syncAutoHealSetting();
 }
 syncBandage();
+
+// Simple high-contrast movement silhouettes: no reading a tiny text prompt.
+const DODGE_POSTURES={
+ duck:'<svg viewBox="0 0 190 120" xmlns="http://www.w3.org/2000/svg"><g fill="none" stroke="#f9f9e7" stroke-width="11" stroke-linecap="round" stroke-linejoin="round"><circle cx="97" cy="27" r="15" fill="#f9f9e7" stroke="none"/><path d="M93 49l-17 24 27 15M77 73L49 92l12 16M103 87l31 4 20 16M91 55l22 11 21-8"/></g><path d="M24 15v28m-12-12 12 13 12-13" stroke="#ffe28d" stroke-width="9" fill="none" stroke-linecap="round"/></svg>',
+ side:'<svg viewBox="0 0 190 120" xmlns="http://www.w3.org/2000/svg"><g fill="none" stroke="#f9f9e7" stroke-width="11" stroke-linecap="round" stroke-linejoin="round"><circle cx="96" cy="20" r="14" fill="#f9f9e7" stroke="none"/><path d="M96 42l-9 30m9-22 24 18m-23-18-20 18m10 4-21 35m21-35 24 35"/></g><path d="M20 59h44m-15-15 16 15-16 15M170 59h-44m15-15-16 15 16 15" stroke="#ffe28d" stroke-width="9" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+ flight:'<svg viewBox="0 0 190 120" xmlns="http://www.w3.org/2000/svg"><g fill="none" stroke="#f9f9e7" stroke-width="10" stroke-linecap="round"><circle cx="105" cy="19" r="13" fill="#f9f9e7" stroke="none"/><path d="M105 38l-10 34m10-20 21 14m-26-14-17 14m12 6-16 35m16-35 25 33"/></g><path d="M13 60h59m-16-16 16 16-16 16" stroke="#ffe28d" stroke-width="9" fill="none"/><circle cx="22" cy="32" r="15" fill="#b59b78" stroke="#fff1be" stroke-width="4"/></svg>'
+};
+function dodgePicture(style){
+ return style==="sweep"?DODGE_POSTURES.duck:isRangedStyle(style)?DODGE_POSTURES.flight:DODGE_POSTURES.side;
+}
+let exerciseNoticeUntil=0;
+function showExerciseNotice(kind,message,seconds=1.55){
+ if(!dumbbellMode||!message)return;
+ const box=el("exerciseNotice");box.hidden=false;box.className=kind;box.textContent=message;
+ exerciseNoticeUntil=clock+seconds;
+}
+function updateExerciseNotice(){
+ if(!el("exerciseNotice").hidden&&clock>=exerciseNoticeUntil)el("exerciseNotice").hidden=true;
+}
 function showDodgeResult(message,duration=1.4){
  dodgeMessage=message;dodgeMessageUntil=clock+duration;
  el("dodgeInfo").textContent=message;
+ if(dumbbellMode)showExerciseNotice(message.includes("성공")?"ok":message.includes("확보")?"ok":"fail",
+  message.includes("성공")?"회피 성공!":message.includes("너무")?"회피 너무 일찍":
+  message.includes("재사용")?"자세를 다시 잡아줘":message.includes("인식")?"회피 인식!":"회피 실패",duration);
 }
 function dodge(direction="button"){
  if(!active)return false;
  const kind=["left","right","duck"].includes(direction)?direction:"button";
  const ranged=isRangedStyle(enemy.attackStyle);
  // Prevent a premature camera movement from consuming the attack's only dodge.
- if(kind!=="button"&&enemy.windup>0&&!ranged&&enemy.windup>DODGE_PROMPT_WINDOW_SEC+.08){
+ if(kind!=="button"&&enemy.windup>0&&!ranged&&enemy.windup>(dumbbellMode?1.45:DODGE_PROMPT_WINDOW_SEC)+.08){
+  lastDodgeRejectedAttack=enemyAttackSeq;lastDodgeRejectedReason="너무 일찍 피했어";
   showDodgeResult("아직 빨라 · 지금 회피 신호를 기다려",1.1);
   showReaction("detect","조금 기다려");return false;
  }
  if(kind!=="button"&&enemy.windup<=0&&enemyShots.length===0){
+  lastDodgeRejectedAttack=enemyAttackSeq;lastDodgeRejectedReason="회피 타이밍이 아님";
   showDodgeResult("공격 경고를 기다려",1.0);return false;
  }
  if(clock<dodgeCooldown){
+  lastDodgeRejectedAttack=enemyAttackSeq;lastDodgeRejectedReason="자세를 다시 잡아줘";
   showDodgeResult("회피 재사용 대기 "+Math.ceil(dodgeCooldown-clock)+"초",1.2);
   return false;
  }
  lastDodgeKind=kind;dodgeVisualStart=clock;
- dodgeUntil=clock+1.05;dodgeCooldown=clock+2.2;dodgeVisualUntil=clock+1.0;weaponKick=.3;
+ dodgeUntil=clock+1.05;
+ if(dumbbellMode)dodgeCooldown=clock+.35;else dodgeCooldown=clock+2.2;
+ dodgeVisualUntil=clock+1.0;weaponKick=.3;
  if(kind==="left"||kind==="right"){
   const side=kind==="left"?-1:1;
   camera.x=Math.max(-22,Math.min(22,camera.x+side*Math.cos(yaw)*DODGE_SIDE_STEP_M));
   camera.z=Math.max(-31,Math.min(7,camera.z+side*Math.sin(yaw)*DODGE_SIDE_STEP_M));
  }
  const reserved=canReserveTimedDodge({windup:enemy.windup,remaining:enemy.windup,
-  promptSeconds:DODGE_PROMPT_WINDOW_SEC,cooldownRemaining:0,ranged});
+  promptSeconds:dumbbellMode?1.45:DODGE_PROMPT_WINDOW_SEC,cooldownRemaining:0,ranged});
  if(reserved)dodgeProtectedAttack=enemyAttackSeq;
  const label=kind==="duck"?"숙이기":kind==="left"?"왼쪽 회피":kind==="right"?"오른쪽 회피":"회피";
  showDodgeResult(reserved?"✓ "+label+" 인식 · 이 공격 회피 확보":label+" 인식 · 타격 순간 판정",1.5);
@@ -620,7 +671,12 @@ function applyEnemyHit(factor=1){
  const type=ATTACKS[enemy.kind],taken=Math.max(1,Math.round(type.damage*factor*(1-stats.defence)));
  heroHp=Math.max(0,heroHp-taken);showHero();flashHit(taken);
  el("status").textContent="적의 공격에 맞았다! 위치를 바꾸거나 회피하세요.";
- if(clock<dodgeMessageUntil)showDodgeResult("회피 타이밍이 맞지 않아 피격",1.4);
+ if(dumbbellMode){
+  const reason=!poseCamera.active?"카메라가 꺼져 있어":!poseCamera.calibrated?"카메라가 자세를 못 봤어":
+   lastDodgeRejectedAttack===enemyAttackSeq?lastDodgeRejectedReason:
+   "회피 동작이 타격 전에 인식되지 않았어";
+  showExerciseNotice("fail",reason,2);
+ }else if(clock<dodgeMessageUntil)showDodgeResult("회피 타이밍이 맞지 않아 피격",1.4);
  toast("피격 -"+taken);beep(105,.23,"sawtooth",.11);
  if(heroHp<=0){
   active=false;enemy.impactUntil=0;bankProgress();el("attackBanner").hidden=true;el("retryWrap").hidden=false;el("attackCue").classList.remove("warning");
@@ -1084,10 +1140,18 @@ function updateEnemy(dt){
   cue.textContent="⚠ "+enemy.name+" · "+(enemy.attackStyle==="rock"?"거석 투척 → 좌우 회피":enemy.attackStyle==="bolt"?"청염탄 → 몸 이동":enemy.attackStyle==="charge"?"돌진 → 좌우 회피":enemy.attackStyle==="sweep"?"가로 공격 → 앉기":"내려찍기 → 좌우 회피")+" · "+Math.max(0,enemy.windup).toFixed(1)+"초";
   const banner=el("attackBanner");
   const prompt=dodgePrompt(enemy.attackStyle,enemy.windup,Math.max(0,dodgeCooldown-clock));
-  banner.hidden=false;banner.className=enemy.attackStyle+(prompt?.ready?" dodgeNow":"");
-  el("attackBannerText").textContent=prompt?.text||(enemy.attackStyle==="rock"?"거석 투척":enemy.attackStyle==="bolt"?"청염탄 발사":enemy.attackStyle==="charge"?"멧돼지 돌진":enemy.attackStyle==="sweep"?"가로 휘두르기":"내려찍기");
+  const earlyWorkoutDodge=dumbbellMode&&!isRangedStyle(enemy.attackStyle)&&enemy.windup<=1.45;
+  const visualReady=Boolean(prompt?.ready||earlyWorkoutDodge);
+  if(banner.dataset.pose!==enemy.attackStyle){
+   banner.dataset.pose=enemy.attackStyle;
+   el("dodgePoseGraphic").innerHTML=dodgePicture(enemy.attackStyle);
+  }
+  banner.hidden=false;banner.className=enemy.attackStyle+(visualReady?" dodgeNow":"");
+  el("attackBannerText").textContent=dumbbellMode?
+  (isRangedStyle(enemy.attackStyle)?"날아오면 옆으로!":enemy.attackStyle==="sweep"?"숙여!":earlyWorkoutDodge?"옆으로!":"옆으로 피할 준비"):
+  (prompt?.text||(enemy.attackStyle==="rock"?"거석 투척":enemy.attackStyle==="bolt"?"청염탄 발사":enemy.attackStyle==="charge"?"멧돼지 돌진":enemy.attackStyle==="sweep"?"가로 휘두르기":"내려찍기"));
   el("attackBannerHint").textContent=prompt?.hint||(isRangedStyle(enemy.attackStyle)?"발사 후 날아오는 탄을 옆으로 피하기":enemy.attackStyle==="charge"?"좌우로 피하기 · 전방 돌진로 벗어나기":enemy.attackStyle==="sweep"?"앉기 · 사거리 이탈":"좌우 회피 · 적 뒤로 이동");
-  if(prompt?.ready&&!dodgePromptPlayed){dodgePromptPlayed=true;beep(940,.14,"sine",.085);}
+  if(visualReady&&!dodgePromptPlayed){dodgePromptPlayed=true;beep(940,.14,"sine",.085);}
   el("attackBannerMeter").style.width=Math.max(0,100*enemy.windup/enemy.windupTotal).toFixed(0)+"%";
   if(enemy.windup<=0){
    enemy.impactDuration=.54;enemy.impactUntil=clock+enemy.impactDuration;
@@ -1253,6 +1317,10 @@ camera.y=1.7+(len>.02?Math.sin(clock*10)*.045:Math.sin(clock*1.5)*.015)-dodgeCam
  syncBandage();
  el("skillAttack").querySelector("b").textContent=clock<skillCooldownUntil?"스킬 "+Math.ceil(skillCooldownUntil-clock)+"초":"스킬";el("dodgeInfo").textContent=clock<dodgeMessageUntil?dodgeMessage:clock<dodgeCooldown?"회피 재사용 "+(dodgeCooldown-clock).toFixed(1)+"초":"경고 시 좌우 이동·숙이기 / Q";
 updatePlayerActions();updateAutoWeaponMode();updateQueuedSkill();updateEnemy(dt);
+if(dumbbellMode){drainCurlQueue();updateExerciseNotice();}
+const flight=el("flightGuide");
+if(dumbbellMode&&enemyShots.length>0&&active){flight.hidden=false;el("flightPoseGraphic").innerHTML=DODGE_POSTURES.flight;}
+else flight.hidden=true;
 // The enemy can move closer on this frame; resolve visual-body clearance
 // after its own movement, before rendering or projectile collision.
 if(dumbbellMode&&!enemy.dead){guardExerciseCamera();updateAutoWeaponMode();}
@@ -1492,6 +1560,26 @@ function joystick(){const area=el('joy'),stickEl=el('stick');let pid=null;functi
  * Peer-to-peer events contain classified actions only (no raw IMU/video).
  * The local game verifies the channel, room, sequence and anti-spam timing.
  */
+// A finished curl is an input, not a demand to keep pace with an attack animation.
+let curlQueue=0,curlQueueExpiresAt=0;
+function drainCurlQueue(){
+ if(!dumbbellMode||curlQueue<=0||!active||!el("motionPanel").hidden||worldMode)return false;
+ if(clock>curlQueueExpiresAt){curlQueue=0;showExerciseNotice("fail","공격 예약 만료",1.3);return false;}
+ if(enemy.dead)return false;
+ updateAutoWeaponMode();
+ const fired=activeWeaponMode==="ranged"?magic():swordHit("overhead");
+ if(fired){
+  curlQueue--;huntMotionActions++;
+  showExerciseNotice("ok",curlQueue?"공격! · 예약 "+curlQueue+"회":"공격!",.85);
+ }
+ return fired;
+}
+function acceptCurl(){
+ if(curlQueue>=6)return {accepted:false,queued:false,reason:"공격 예약이 가득 찼어"};
+ curlQueue++;curlQueueExpiresAt=clock+18;
+ const fired=drainCurlQueue();
+ return {accepted:true,queued:!fired,reason:fired?"공격 실행":"공격 예약"};
+}
 const motionHost=createWirelessHost({
  onStatus:state=>{
   el("linkStatus").textContent=state.message+(state.connected&&state.latencyMs?" · 연결 지연 "+state.latencyMs+"ms":"");
@@ -1501,7 +1589,7 @@ const motionHost=createWirelessHost({
    lastMotionSequence=-1;lastMotionAt=-Infinity;remoteInput.reset();
    syncTargetUi(true);
   }
-  if(!state.connected&&wasLinked){remoteInput.reset();sensorReport=null;sensorReportAt=0;lastSensorSeq=-1;syncTargetUi();}
+  if(!state.connected&&wasLinked){remoteInput.reset();sensorReport=null;sensorReportAt=0;lastSensorSeq=-1;curlQueue=0;syncTargetUi();}
   wasLinked=state.connected;
   refreshMotionIndicator();
  },
@@ -1519,6 +1607,13 @@ const motionHost=createWirelessHost({
    lastSensorSeq=packet.seq;
    sensorReport=packet;sensorReportAt=Date.now();
    renderMotionCooldown();
+   return;
+  }
+  if(packet.type==="curl-reject"){
+   if(dumbbellMode&&motionHost.connected&&packet.session===motionHost.room&&
+    Number.isSafeInteger(packet.seq)&&typeof packet.reason==="string"&&packet.reason.length<=60){
+    showExerciseNotice("fail",packet.reason,1.5);
+   }
    return;
   }
   if(packet.type==="diagnostic"){
@@ -1558,18 +1653,21 @@ const motionHost=createWirelessHost({
   const action=packet.gesture==="throw"?"투척":({sweep:"가로 베기",overhead:"내려찍기",thrust:"찌르기"}[packet.style]||"검격");
   const skillRequested=packet.skillHeld===true;
   const respond=(accepted,reason)=>{
-   const queued=accepted&&reason==="스킬 예약";
+   const queued=accepted&&(reason==="스킬 예약"||reason==="공격 예약");
    motionHost.send({type:"gesture-ack",seq:packet.seq,accepted,skill:accepted&&skillRequested&&!queued,queued,reason,time:Date.now()});
    el("remoteStatus").textContent="S21 "+(skillRequested?"스킬 + ":"")+action+
      " 감지됨 · "+(queued?"스킬 예약 · 잠시 뒤 발동":accepted?(skillRequested?"스킬 공격 발동":"일반 공격 실행"):reason)+" · 강도 "+packet.strength;
   };
   if(!active||worldMode){
+   if(dumbbellMode)showExerciseNotice("fail",heroHp<=0?"기력이 소진됐어":"사냥 시작을 눌러",1.4);
    respond(false,heroHp<=0?"기력 0 · 다시 싸우기 눌러":"전투 시작 버튼을 먼저 눌러");
    return;
   }
-  if(!el("motionPanel").hidden){respond(false,"설정 창에서는 입력만 확인 · 창을 닫고 싸워");return;}
+  if(!el("motionPanel").hidden){
+   if(dumbbellMode)showExerciseNotice("fail","설정 창을 닫아줘",1.4);
+   respond(false,"설정 창에서는 입력만 확인 · 창을 닫고 싸워");return;}
   const now=performance.now();
-  if(now-lastMotionAt<620){respond(false,"공격 대기 시간");return;}
+  if(now-lastMotionAt<620&&!dumbbellMode){respond(false,"공격 대기 시간");return;}
   lastMotionAt=now;
   // Distance is authoritative in auto mode; swinging/throwing is only an
   // input gesture, never a reason to change the equipped weapon.
@@ -1590,13 +1688,20 @@ const motionHost=createWirelessHost({
      showReaction("skill","✦ 스킬 예약 · 공격 동작 종료 후 발동");
     }
    }
+  }else if(dumbbellMode){
+   const response=acceptCurl();
+   accepted=response.accepted;reason=response.reason;
   }else{
    accepted=attackMode==="ranged"?magic():swordHit(packet.gesture==="melee"?packet.style:null);
    if(!accepted)reason="공격 쿨다운 중";
   }
+  if(dumbbellMode){
+   if(!accepted)showExerciseNotice("fail",reason,1.6);
+   else if(reason==="공격 예약")showExerciseNotice("wait","공격 예약 "+curlQueue+"회",1);
+  }
   if(accepted){
-   huntMotionActions++;
-   if(!skillRequested)showReaction("detect","모션 인식 · "+action);
+   if(!dumbbellMode||skillRequested)huntMotionActions++;
+   if(!skillRequested&&!dumbbellMode)showReaction("detect","모션 인식 · "+action);
   }
   respond(accepted,reason);
  }
@@ -1740,14 +1845,16 @@ function renderMotionCooldown(){
  }else if(!active||!el("motionPanel").hidden){
   title="전투 준비 중";
  }else{
-  const sensorMs=Math.max(0,sensorReport.cooldownRemainingMs-age);
-  const hostPacketMs=Math.max(0,620-(performance.now()-lastMotionAt));
+  const sensorMs=dumbbellMode?0:Math.max(0,sensorReport.cooldownRemainingMs-age);
+  const hostPacketMs=dumbbellMode?0:Math.max(0,620-(performance.now()-lastMotionAt));
   const gameMs=Math.max(0,
    (activeWeaponMode==="melee"?.48:.60)*1000+stats.attackDelay*1000-(clock-lastFire)*1000);
   const actionMs=Math.max(0,((meleeAction?.endsAt||rangedAction?.endsAt||-1)-clock)*1000);
   const remainingMs=Math.max(sensorMs,hostPacketMs,gameMs,actionMs);
-  if(remainingMs>0){
-   phase="cooldown";title="공격 대기";
+  if(dumbbellMode&&curlQueue>0){
+   phase="neutral";title="공격 "+curlQueue+"회 예약";duration="준비 중";progress=100;
+  }else if(remainingMs>0){
+   phase="cooldown";title=dumbbellMode?"공격 동작 중":"공격 대기";
    duration=(remainingMs/1000).toFixed(1)+"초";
    progress=100*(1-remainingMs/Math.max(sensorReport.cooldownDurationMs,620,
     (activeWeaponMode==="melee"?.48:.60)*1000+stats.attackDelay*1000,1));
@@ -1760,9 +1867,9 @@ function renderMotionCooldown(){
  panel.className="motionCooldown "+phase;
  if(!large.hidden){
   large.className=phase;
-  const main=phase==="ready"?"공격!":phase==="neutral"?"동작 마무리":
+  const main=phase==="ready"?"컬 자유롭게!":phase==="neutral"?(dumbbellMode?title:"동작 마무리"):
    phase==="cooldown"?"공격 대기":title;
-  const sub=phase==="ready"?"이제 팔을 움직여 공격해":phase==="neutral"?"이전 동작이 꺾이면 다음 공격 가능":
+  const sub=phase==="ready"?(dumbbellMode?"자신의 속도로 운동":"이제 팔을 움직여 공격해"):phase==="neutral"?(dumbbellMode?"완료한 컬은 자동 공격":"이전 동작이 꺾이면 다음 공격 가능"):
    phase==="cooldown"?duration+" 남음":"S21 상태 확인 중";
   const composed=main+'<span class="sub">'+sub+'</span>';
   if(large.innerHTML!==composed)large.innerHTML=composed;
@@ -1784,7 +1891,7 @@ function speakCameraGuide(message){
   window.speechSynthesis.cancel();window.speechSynthesis.speak(utterance);}catch{}
 }
 const poseCamera=createPoseCamera({
- video:el("posePreview"),
+ video:el("posePreview"),cooldownMs:dumbbellMode?500:1100,
  onStatus:state=>{if(performance.now()>poseFeedbackUntil)el("poseStatus").textContent=state.message;refreshMotionIndicator();},
  onFraming:frame=>{
   const guide=el("poseGuide"),good=frame.kind==="good";
@@ -1831,7 +1938,7 @@ function refreshMotionIndicator(){
 el("retryCombat").onclick=()=>{
  // Test-mode recovery, keeps earned kills in the same capped battle session.
  heroHp=stats.maxHp;showHero();camera.x=0;camera.z=5.5;camera.y=1.7;
- yaw=0;pitch=-.032;lastFire=-999;dodgeCooldown=0;dodgeUntil=0;dodgeMessageUntil=0;dodgeProtectedAttack=0;dodgeVisualStart=-99;queuedSkillUntil=-1;projectiles=[];enemyShots=[];sparks=[];meleeAction=null;rangedAction=null;
+ yaw=0;pitch=-.032;lastFire=-999;curlQueue=0;dodgeCooldown=0;dodgeUntil=0;dodgeMessageUntil=0;dodgeProtectedAttack=0;dodgeVisualStart=-99;queuedSkillUntil=-1;projectiles=[];enemyShots=[];sparks=[];meleeAction=null;rangedAction=null;
  el("retryWrap").hidden=true;active=true;spawnEnemy();
  el("status").textContent=watchInputMode?"전투 재개 · 워치4 연결 유지 중":"전투 재개 · S21 연결은 그대로 유지 중";
 };

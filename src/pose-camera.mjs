@@ -37,9 +37,9 @@ export async function loadPoseModel({importer=(url)=>import(url),report=()=>{}}=
  }
  throw Error("모든 자세 인식 모듈 경로가 실패했습니다. Chrome 또는 삼성 인터넷에서 열어 다시 시도하세요. "+errors.map(x=>x.slice(0,100)).join(" | "));
 }
-export function createPoseCamera({video,onStatus=()=>{},onDodge=()=>{},onFraming=()=>{}}={}){
+export function createPoseCamera({video,onStatus=()=>{},onDodge=()=>{},onFraming=()=>{},cooldownMs=1100}={}){
  if(!video)throw Error("Camera video element missing");
- const pose=createPoseTracker({calibrationFrames:14,stableFrames:2,resetFrames:3,cooldownMs:1100});
+ const pose=createPoseTracker({calibrationFrames:14,stableFrames:2,resetFrames:3,cooldownMs});
  let active=false,stream=null,model=null,timer=null,lastTime=-1,previousLabel="",starting=false;
  const status=(message)=>onStatus({message,running:active,calibrated:pose.calibrated});
  function stop(){

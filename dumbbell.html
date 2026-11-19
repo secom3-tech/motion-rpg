@@ -20,9 +20,11 @@ input{width:115px;padding:10px 12px;margin-right:7px;font-size:20px;letter-spaci
 #motionLive{font-size:13px;font-weight:750;color:#b9f7c2;line-height:1.65;margin:8px 0}
 #motionGauge{height:9px;margin:6px 0 0;background:#0e1b21;border:1px solid #648c77;border-radius:15px;overflow:hidden}
 #motionGauge i{display:block;height:100%;width:0%;background:#7ee2a4;transition:width .1s}b{color:#fff}
+#ack{font-size:20px!important;font-weight:900;min-height:36px}
+#ack[data-result="ok"]{color:#baffcc}#ack[data-result="wait"]{color:#ffe19b}#ack[data-result="fail"]{color:#ffad9f}
 </style></head><body><main>
 <div class="tag">MOTION RPG / S21 ARM BAND</div><h1>S21 암밴드 · 아령 사냥</h1>
-<p>이 화면은 <b>S21에 열어 둔 채 팔에 고정</b>하는 전용 컨트롤러야. 아령을 천천히 들었다 내리면 폴드6 게임에서 거리별로 검·활 공격을 해. 워치와 별도 앱 설치는 필요 없어.</p>
+<p>이 화면은 <b>S21에 열어 둔 채 팔에 고정</b>하는 전용 컨트롤러야. 아령을 자신의 속도로 들었다 내리면 폴드6 게임에서 거리별로 검·활 공격을 해. 워치와 별도 앱 설치는 필요 없어.</p>
 <section class="card">
  <b>① 폴드6과 연결</b><div class="row">
  <input id="roomCode" inputmode="numeric" maxlength="6" placeholder="6자리" aria-label="연결 코드">
@@ -47,17 +49,17 @@ input{width:115px;padding:10px 12px;margin-right:7px;font-size:20px;letter-spaci
 <section class="card">
  <div class="tag">완료한 반복 동작</div><div id="count">0</div>
  <div id="phase">보정 대기</div><div class="bar"><i id="progress"></i></div>
- <p id="ack">팔이 충분히 올라간 뒤, 천천히 처음 자세로 돌아와야 1회로 기록해.</p>
+ <p id="ack">자신의 속도로 들어 올렸다 내리면 1회로 기록해. 실패하면 이유를 표시해.</p>
  <div class="row"><button id="reset">횟수 초기화</button></div>
 </section>
 <p><small>한쪽 팔의 전완부에 고정한 S21은 그 팔만 감지해. 양팔 동시 운동이나 정확한 관절 자세를 판별하지는 못해. 운동 기록은 이 화면에서만 집계하고, 실제 게임 공격은 폴드6에서 승인한 경우에만 적용돼.</small></p>
 </main>
 <script type="module">
 import {createWirelessController,cleanRoom} from "./src/peer-bridge.mjs?v=0.43.4";
-import {gravityVector,averagedGravity,createCurlDetector} from "./src/dumbbell-reps.mjs?v=0.56";
+import {gravityVector,averagedGravity,createCurlDetector} from "./src/dumbbell-reps.mjs?v=1.1";
 const $=id=>document.getElementById(id),detector=createCurlDetector();
 let active=false,seq=0,samples=[],lastSample=0,lastRep=0;
-let sensorSamples=0,firstDirection=null,downDirection=null,wakeLock=null;
+let sensorSamples=0,firstDirection=null,downDirection=null,wakeLock=null,lastRejectionAt=0;
 const angleBetween=(a,b)=>{
  if(!a||!b)return 0;
  const cosine=a.reduce((s,n,i)=>s+n*b[i],0)/
@@ -87,17 +89,19 @@ const wireless=createWirelessController({
   }
  },
  onMessage:data=>{
-  if(data?.type==="gesture-ack")$("ack").textContent=data.accepted?"게임 공격 성공 · 반복 동작 확인":"반복 동작 인식 · 게임 공격 대기: "+(data.reason||"전투 상태 확인");
+  if(data?.type==="gesture-ack"){
+   const label=data.queued?"공격 예약됨":data.accepted?"공격 실행!":"공격 실패: "+(data.reason||"전투 상태 확인");
+   $("ack").textContent=label;$("ack").dataset.result=data.accepted?(data.queued?"wait":"ok"):"fail";
+  }
   if(data?.type==="hello"){$("connectStatus").textContent="폴드6 연결됨 · 암밴드 센서 준비";send("weapon-switch",{mode:"melee"});}
  }
 });
 function send(type,data={}){return wireless.send({type,seq:++seq,time:Date.now(),session:wireless.room,...data});}
 function publishState(){
  if(!wireless.connected)return;
- const remaining=Math.max(0,680-(Date.now()-lastRep));
  send("sensor-state",{sensorActive:active,sensorReceiving:active&&samples.length>0,mode:"melee",
-  cooldownRemainingMs:Math.round(remaining),cooldownDurationMs:680,
-  ready:active&&detector.calibrated&&remaining===0,
+  cooldownRemainingMs:0,cooldownDurationMs:0,
+  ready:active&&detector.calibrated,
   waitingForNeutral:active&&!detector.calibrated});
 }
 setInterval(publishState,280);
@@ -128,10 +132,16 @@ function addSample(e){
   }
   lastSample=now;
  }
+ if(report?.rejection&&now-lastRejectionAt>900){
+  lastRejectionAt=now;
+  $("ack").textContent="미인식: "+report.rejection;$("ack").dataset.result="fail";
+  if(wireless.connected)send("curl-reject",{reason:report.rejection});
+ }
  if(report?.rep){
   $("count").textContent=String(report.reps);
   lastRep=now;
-  $("ack").textContent=wireless.connected?"운동 1회 기록 · 게임 판정 확인 중":"운동 1회 기록 · 게임 무선 미연결";
+  $("ack").textContent=wireless.connected?"컬 1회! · 공격 확인 중":"컬 1회 · 폴드6 연결 안 됨";
+  $("ack").dataset.result=wireless.connected?"wait":"fail";
   if(wireless.connected)send("gesture",{gesture:"melee",style:"overhead",strength:68});
   publishState();
  }
