@@ -949,7 +949,6 @@ function notifyNew(before){
  if(session.phase==="complete"&&before?.phase!=="complete")finishRun();
 }
 function resetTimers(){
- clearVoice();
  if(timer)clearInterval(timer);timer=null;
  if(gpsMonitor)clearInterval(gpsMonitor);gpsMonitor=null;
  gpsGeneration++;
@@ -957,7 +956,7 @@ function resetTimers(){
  watchId=null;lastGps=null;lastGpsAt=0;gpsLastGoodAt=0;gpsStartedAt=0;gpsWeakSince=0;gpsHasFix=false;
 }
 function start(mode){
- resetTimers();gpsPaces=[];
+ clearVoice();resetTimers();gpsPaces=[];
  let baseline=mode==="walk"?15:mode==="gps"?priorGpsPace():Number($("base").value);
  if(!Number.isFinite(baseline)||baseline<5||baseline>15){alert("기준 페이스는 5~15분/km 중에서 설정해.");return;}
  session=startAdventure(createAdventure({mode,basePace:baseline,durationMin:Number($("duration").value),style:$("style").value,seed:seed++,level:Number(sharedCharacter().level)||1}));
@@ -975,7 +974,7 @@ function start(mode){
  }
 }
 function stepGame(sec,pace){if(!session||session.phase==="complete")return;const old=session;session=advanceAdventure(session,sec,pace);notifyNew(old);syncRun();}
-function stop(){if(!session)return;const old=session;session=endAdventure(session);resetTimers();notifyNew(old);syncRun();}
+function stop(){if(!session)return;const old=session;session=endAdventure(session);clearVoice();resetTimers();notifyNew(old);syncRun();}
 function finishRun(){
  resetTimers();if(!session)return;
  if(["gps","walk"].includes(session.mode))setGpsStatus("ended",null,false);
@@ -1083,7 +1082,7 @@ function startGeo(){
  },{enableHighAccuracy:true,maximumAge:2000,timeout:15000});
 }
 function clamp(n,lo,hi){return Math.max(lo,Math.min(hi,n));}
-window.addEventListener("pagehide",()=>resetTimers());
+window.addEventListener("pagehide",()=>{clearVoice();resetTimers();});
 // The visual hub has no canvas, joystick, character mesh, or perpetual animation loop.
 function drawVillage(){ /* Static backdrop; dynamic HUD is updated by syncCharacter(). */ }
 $("townBagButton").onclick=()=>go("character");
