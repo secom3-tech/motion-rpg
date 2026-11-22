@@ -85,7 +85,7 @@ assert.ok(mobileHub.includes("grid-template-rows:repeat(3,59px)"),"Mobile facili
 for(const area of [".spot-guild{grid-column:1;grid-row:1}",".spot-smith{grid-column:2;grid-row:1}",".spot-trader{grid-column:1;grid-row:2}",".spot-ranger{grid-column:2;grid-row:2}",".spot-forest{grid-column:1 / -1;grid-row:3}"])
  assert.ok(mobileHub.includes(area),"Every mobile hotspot must have a unique explicit grid cell: "+area);
 assert.ok(mobileHub.includes(".villageJournal[open]"),"Expanded journal has its own overlay layout");
-assert.ok(html.includes('id="startWalk"')&&html.includes('speak(last.head+". "+last.detail)'),"Walk exploration shares event voice announcements");
+assert.ok(html.includes('id="startWalk"')&&html.includes('speak(notice.head+". "+notice.detail)'),"Walk exploration shares event voice announcements");
 assert.ok(html.includes("syncCharacter()"),"Existing saved XP, gold and gear remain connected");
 const script=html.match(/<script type="module">([\s\S]*?)<\/script>/)?.[1];
 assert.ok(script);
