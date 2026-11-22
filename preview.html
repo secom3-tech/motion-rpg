@@ -584,7 +584,7 @@
 <footer class="footer">MOTION RPG · 경계의 숲 · 플레이 버전 · 진행 기록은 현재 브라우저에 저장돼</footer>
 </div>
 <script type="module">
-import {createAdventure,startAdventure,advanceAdventure,endAdventure,summarizeAdventure,settleAdventure,expeditionReward} from "./src/expedition.mjs?v=0.42.1";
+import {createAdventure,startAdventure,advanceAdventure,endAdventure,summarizeAdventure,settleAdventure,expeditionReward} from "./src/expedition.mjs?v=1.2";
 import {gpsFeedback,GPS_ACCURACY_LIMIT_METERS} from "./src/gps-feedback.mjs?v=0.44.2";
 import {gpsSilenceIsProlonged,gpsAccuracyWarningDue,gpsStatusShouldSpeak} from "./src/gps-stability.mjs?v=0.48";
 import {GEAR} from "./src/avatar.mjs?v=0.42";
@@ -888,7 +888,7 @@ $("closeCraft").onclick=()=>{$("craftBench").hidden=true;};
 $("craftBench").addEventListener("click",e=>{if(e.target===$("craftBench"))$("craftBench").hidden=true;});
 document.addEventListener("keydown",e=>{if(e.key==="Escape"){$("craftBench").hidden=true;$("shopDialog").hidden=true;}});
 syncCharacter();
-let session=null,timer=null,voice=true,paceType="steady",watchId=null,lastGps=null,lastGpsAt=0,seed=Date.now()>>>0,runId="",gpsPaces=[];
+let session=null,timer=null,voice=true,paceType="steady",watchId=null,lastGps=null,lastGpsAt=0,seed=Date.now()>>>0,runId="",gpsPaces=[],gpsRecentPaces=[];
 let gpsMonitor=null,gpsGeneration=0,gpsStartedAt=0,gpsLastGoodAt=0,gpsState="idle",gpsWeakSince=0,gpsHasFix=false;
 const VOICE_KEY="motion-rpg-run-voice-v1";
 let voiceQueue=[],voicePlaying=false,voiceGeneration=0;
@@ -956,7 +956,7 @@ function resetTimers(){
  watchId=null;lastGps=null;lastGpsAt=0;gpsLastGoodAt=0;gpsStartedAt=0;gpsWeakSince=0;gpsHasFix=false;
 }
 function start(mode){
- clearVoice();resetTimers();gpsPaces=[];
+ clearVoice();resetTimers();gpsPaces=[];gpsRecentPaces=[];
  let baseline=mode==="walk"?15:mode==="gps"?priorGpsPace():Number($("base").value);
  if(!Number.isFinite(baseline)||baseline<5||baseline>15){alert("기준 페이스는 5~15분/km 중에서 설정해.");return;}
  session=startAdventure(createAdventure({mode,basePace:baseline,durationMin:Number($("duration").value),style:$("style").value,seed:seed++,level:Number(sharedCharacter().level)||1}));
@@ -1060,8 +1060,15 @@ function startGeo(){
   }
   lastGps=now;
   const measured=clamp(1000*dt/(d*60),5,session.mode==="walk"?65:30);
-  if(session.mode==="gps")learnGpsPace(measured);
-  stepGame(Math.min(dt,35),measured);
+  // Median of the last five valid GPS movements reduces one-off location jitter.
+  let stable=measured;
+  if(session.mode==="gps"){
+   gpsRecentPaces.push(measured);if(gpsRecentPaces.length>5)gpsRecentPaces.shift();
+   const ordered=[...gpsRecentPaces].sort((a,b)=>a-b);
+   stable=ordered[Math.floor(ordered.length/2)];
+   learnGpsPace(stable);
+  }
+  stepGame(Math.min(dt,35),stable);
   setGpsStatus("recording",p.accuracy,false);
  },err=>{
   if(generation!==gpsGeneration||!session||session.phase==="complete")return;

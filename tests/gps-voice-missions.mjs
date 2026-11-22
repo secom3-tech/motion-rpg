@@ -37,5 +37,5 @@ jump=follow(jump,60,jumpPace);
 const prompts=jump.announcements.map(a=>a.head);
 assert.ok(prompts.includes("중간 상황")&&prompts.includes("목표 접근")&&prompts.includes("종료 카운트다운")&&prompts.includes("임무 성공"),prompts.join(" / "));
 const html=fs.readFileSync(new URL("../preview.html",import.meta.url),"utf8");
-for(const phrase of ['voiceQueue','playNextVoice()','clearVoice()','notices=session.announcements.filter','GPS 신호 불안정. 임무 판정을 잠시 보류해','임무 준비·카운트다운'])assert.ok(html.includes(phrase),phrase);
+for(const phrase of ['gpsRecentPaces','expedition.mjs?v=1.2','voiceQueue','playNextVoice()','clearVoice()','notices=session.announcements.filter','GPS 신호 불안정. 임무 판정을 잠시 보류해','임무 준비·카운트다운'])assert.ok(html.includes(phrase),phrase);
 console.log("GPS VOICE MISSIONS PASS: metric goals, countdowns, middle, near, outcome, reason, GPS signal gating and FIFO narration");
