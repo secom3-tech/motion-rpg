@@ -872,14 +872,21 @@ function claimPendingBattle(){
  if(!result)return null;
  const claim=claimIndoorBattle(sharedCharacter(),result);
  localStorage.removeItem(INDOOR_KEY);
+ const guild=claim.awarded?(result.guildBoss==="forest"?
+  recordGuildBossVictory(claim.state,result):
+  recordGuildHunt(claim.state,claim,result.sessionId)):{state:claim.state,awarded:false};
  const report=summarizeHuntResult(result,claim);
+ if(guild.awarded){
+  report.rewards+=" · "+guild.reason;
+  report.entries=[...(report.entries||[]),"길드 의뢰: "+guild.reason];
+ }
  try{localStorage.setItem(HUNT_HISTORY_KEY,JSON.stringify(report));}catch{}
  refreshHuntShortcut();
  if(claim.awarded){
-  saveCharacter(claim.state);
-  showCraftMessage("사냥 보상 자동 지급 · 처치 "+claim.kills+"마리 · XP +"+claim.xp+" · 골드 +"+claim.gold+" · 붕대 +"+(claim.bandages||0));
+  saveCharacter(guild.state);
+  showCraftMessage("사냥 보상 자동 지급 · 처치 "+claim.kills+"마리 · XP +"+claim.xp+" · 골드 +"+claim.gold+" · 붕대 +"+(claim.bandages||0)+(guild.awarded?" · "+guild.reason:""));
   $("craftStatus").dataset.touched="yes";
-  updateEquippedVisual(claim.state);syncCharacter();
+  updateEquippedVisual(guild.state);syncCharacter();
  }else{
   showCraftMessage(result.kills>0?"사냥 기록 확인 완료 · 이미 정산했거나 수령할 새 보상 없음":"사냥을 종료했어. 처치 기록은 없어.");
  }
@@ -1009,10 +1016,13 @@ function finishRun(){
   if(r.awarded){
    const resources=addExpeditionMaterials(r.state,session,runId);
    const finalState=resources.awarded?resources.state:r.state;
-   saveCharacter(finalState);syncCharacter();
+   const guild=recordGuildExpedition(finalState,session,runId);
+   saveCharacter(guild.state);syncCharacter();
    message(session.mode==="walk"?"산책 탐색 완료 · 채집 보상 지급":"달리기 원정 완료 · 성장 보상 지급",
-    "경험치 +"+r.xp+" · 골드 +"+r.gold+" · 전리품 "+Object.values(summary.loot).reduce((a,b)=>a+b,0)+"개.");
-   renderSessionReport(summarizeExpeditionResult(session,{awarded:true,xp:r.xp,gold:r.gold,materials:resources.materials||{}}));
+    "경험치 +"+r.xp+" · 골드 +"+r.gold+" · 전리품 "+Object.values(summary.loot).reduce((a,b)=>a+b,0)+"개."+(guild.awarded?" 길드 "+guild.reason+".":""));
+   const report=summarizeExpeditionResult(session,{awarded:true,xp:r.xp,gold:r.gold,materials:resources.materials||{}});
+   if(guild.awarded){report.rewards+=" · "+guild.reason;report.entries=[...(report.entries||[]),"길드 의뢰: "+guild.reason];}
+   renderSessionReport(report);
   }else{
    message("원정 기록 완료","GPS 이동 기록 3분·200m 이상이 확인돼야 게임 보상을 지급해.");
    renderSessionReport(summarizeExpeditionResult(session,{awarded:false}));
