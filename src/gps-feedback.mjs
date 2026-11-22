@@ -6,6 +6,7 @@ const STATES = {
   weak: {label:"GPS 신호 불안정",detail:"위치 정확도가 낮아 이동 기록을 잠시 보류하고 있어.",voice:"GPS 신호가 불안정해요. 정확한 위치를 기다리고 있어요.",tone:"warning"},
   connected: {label:"GPS 위치 확인 완료",detail:"정확한 위치를 수신했어. 움직임이 확인되면 거리와 시간이 기록돼.",voice:"GPS 연결이 확인됐어요. 이제 이동 기록을 시작할 수 있어요.",tone:"good"},
   recording: {label:"GPS 이동 기록 중",detail:"실제 위치 변화를 확인하며 시간과 이동 거리를 기록 중이야.",voice:"GPS 이동 기록이 시작됐어요. 안전하게 탐험하세요.",tone:"good"},
+  exploring: {label:"GPS 산책 탐색 중",detail:"정상적인 GPS 위치 확인 중이야. 멈춰 있어도 탐색 시간은 기록되며 실제 이동거리만 별도로 계산해.",voice:"",tone:"good"},
   lost: {label:"GPS 신호 끊김",detail:"최근 위치 갱신이 없어 기록이 일시 중단됐어. 신호가 돌아오면 이어서 기록해.",voice:"GPS 신호가 끊겼어요. 기록을 잠시 멈추고 다시 연결을 기다릴게요.",tone:"warning"},
   denied: {label:"GPS 위치 권한 거부",detail:"브라우저의 위치 권한을 허용해야 GPS 원정을 진행할 수 있어.",voice:"GPS 위치 권한이 꺼져 있어요. 위치 권한을 확인해 주세요.",tone:"error"},
   unsupported: {label:"GPS 사용 불가",detail:"이 브라우저는 위치 기능을 지원하지 않아.",voice:"이 브라우저에서는 GPS 위치 기능을 사용할 수 없어요.",tone:"error"},

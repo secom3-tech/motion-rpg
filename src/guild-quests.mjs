@@ -58,7 +58,7 @@ export function recordGuildExpedition(state,session,sessionId,region="forest"){
  const receipt="gps:"+id;
  if(!id||!state.rpgGear?.expeditionClaims?.includes(id)||
     !["gps","walk"].includes(session?.mode)||session.phase!=="complete"||
-    session.elapsedSec<180||session.distanceM<200||!Array.isArray(session.events))
+    session.elapsedSec<180||session.distanceM<(session.mode==="walk"?3:200)||!Array.isArray(session.events))
   return noResult(state,"정산되지 않은 GPS 기록");
  if(ledger(state).includes(receipt))return noResult(state,"이미 반영한 GPS 기록");
  // Only completed in-engine encounters are accepted; don't count a preview.

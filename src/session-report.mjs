@@ -49,12 +49,13 @@ export function summarizeExpeditionResult(session={},reward={}){
   label:walk?"WALK / 산책 탐색 기록":run?"OUTDOOR / 달리기 원정 기록":"INDOOR / 러닝머신 기록",
   title:walk?"산책 탐색 완료":run?"달리기 원정 완료":"러닝머신 원정 완료",
   description:"움직인 기록과 게임 속 탐험 결과를 확인해.",
-  metrics:[{value:formatClock(timed),label:"유효 이동 시간"},{value:Math.round(distance)+" m",label:treadmill?"입력 속도 기반 거리":"GPS 이동 거리"},{value:String(nonNeg(session.success))+" / "+String(nonNeg(session.fail)),label:"임무 성공 / 실패"}],
+  metrics:[{value:formatClock(timed),label:walk?"GPS 탐색 시간":"유효 이동 시간"},{value:Math.round(distance)+" m",label:treadmill?"입력 속도 기반 거리":"GPS 이동 거리"},{value:String(nonNeg(session.success))+" / "+String(nonNeg(session.fail)),label:"임무 성공 / 실패"}],
   rewards:claimed?"자동 지급 · 경험치 +"+xp+" · 골드 +"+gold+(itemRewards.length?" · "+itemRewards.join(" / "):""):
-   treadmill?"연습 기록 · 속도 수동 입력으로 정식 보상 제외":"보상 조건 미충족 · GPS 유효 이동 3분·200m 이상 필요",
+   treadmill?"연습 기록 · 속도 수동 입력으로 정식 보상 제외":
+   walk?"보상 조건 미충족 · GPS 탐색 3분·실제 이동 3m 이상 필요":"보상 조건 미충족 · GPS 유효 이동 3분·200m 이상 필요",
   activity:treadmill?"속도 수동 입력으로 계산한 거리·시간이야. 실제 운동 효과나 칼로리를 측정한 것은 아니야.":
-   "GPS 유효 이동 기록 · 평균 페이스 "+formatPace(distance,timed)+
-   ". 움직임 기록을 기반으로 했으며 심박수·칼로리 소모량은 측정하지 않았어.",
+   (walk?"GPS 확인 중 탐색한 시간과 실제 이동거리야. 멈춰 있던 시간도 탐색에 포함되지만 가상의 이동거리는 더하지 않아.":
+   "GPS 유효 이동 기록 · 평균 페이스 "+formatPace(distance,timed)+". 움직임 기록을 기반으로 했으며 심박수·칼로리 소모량은 측정하지 않았어."),
   entries:(Array.isArray(session.events)?session.events:[]).slice(-8).map(x=>formatClock(x.elapsedSec)+" · "+x.name+" · "+(x.passed?"성공":"실패"))
  };
 }
