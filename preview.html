@@ -626,7 +626,11 @@ function updateTownRumour(){
  $("huntPlanTitle").textContent=goal.title;
  $("huntPlanDetail").textContent=goal.detail;
  $("huntPlanBar").style.width=Math.round(goal.ratio*100)+"%";
- $("huntPlanCount").textContent=goal.progress+" · 보상은 마을 복귀 후 정산";
+ const guild=guildStatus(state,"forest");
+ $("huntPlanCount").textContent=goal.progress+(guild.accepted?
+  " · 길드 조사 "+guild.attempts+"/6 · 성공 "+guild.successes+"/3":
+  " · 길드 의뢰를 수령하면 메인 이야기 진행");
+ $("playForest").textContent=!guild.accepted&&!guild.bossDefeated?"길드 의뢰 수령":guild.bossReady?"지역 보스 도전":"숲 사냥 출발";
 }
 $("rumourNext").onclick=()=>{rumorOffset++;updateTownRumour();};
 function townTalk(type){
@@ -687,7 +691,12 @@ function townTalk(type){
 }
 document.querySelectorAll("[data-town]").forEach(b=>b.addEventListener("click",()=>townTalk(b.dataset.town)));
 $("townAction").onclick=()=>go("indoor");
-$("playForest").onclick=()=>go("indoor");
+$("playForest").onclick=()=>{
+ const guild=guildStatus(sharedCharacter(),"forest");
+ if(!guild.accepted&&!guild.bossDefeated){townTalk("guild");return;}
+ if(guild.bossReady){startGuildBoss();return;}
+ go("indoor");
+};
 function sharedCharacter(){try{const s=JSON.parse(localStorage.getItem("motion-rpg-save-v1")||"null");return s&&typeof s==="object"&&!Array.isArray(s)?s:newGame();}catch{return newGame();}}
 function syncCharacter(){const s=sharedCharacter();const exp=experienceProgress(s);
 $("townHudLevel").textContent="Lv. "+(s.level||1);
