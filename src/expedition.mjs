@@ -87,7 +87,9 @@ function beginEncounter(s){
  s.phase="briefing";s.phaseSeconds=7;
  const task=s.mode==="walk"?"목표 "+Math.round(e.goalDurationSec/60*10)/10+"분 주변 탐색. 강아지가 멈춰도 조사는 계속돼.":
   "목표 "+e.goalDistanceM+"미터. "+eventPaceAdvice(e.kind,e.basePace);
- announce(s,e.name+" 발견",e.line+" "+task+" 임무 시작을 준비해.");
+ announce(s,e.name+" 발견",(s.mode==="walk"?
+   e.modifier+" 기운이 감도는 숲에서 흔적을 발견했어. 급하게 이동할 필요는 없어.":e.line)+
+   " "+task+" 임무 시작을 준비해.");
 }
 function enterChallenge(s){
  s.phase="challenge";s.phaseSeconds=s.mode==="walk"?s.event.goalDurationSec:Math.max(80,s.event.durationSec*2.35);

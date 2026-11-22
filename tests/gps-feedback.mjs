@@ -11,6 +11,8 @@ assert.match(gpsFeedback("connected",8).label,/±8m/);
 assert.match(gpsFeedback("connected").voice,/연결/);
 assert.notEqual(gpsFeedback("connected").label,gpsFeedback("recording").label,"Position fix must not imply movement recording");
 assert.match(gpsFeedback("recording").voice,/기록이 시작/);
+assert.match(gpsFeedback("exploring").label,/산책 탐색/);
+assert.match(gpsFeedback("exploring").detail,/실제 이동거리/);
 assert.match(gpsFeedback("lost").voice,/끊겼/);
 assert.match(gpsFeedback("denied").detail,/권한/);
 assert.match(gpsFeedback("unsupported").label,/사용 불가/);
