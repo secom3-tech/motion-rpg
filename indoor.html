@@ -433,12 +433,16 @@ import {relativeTarget,radarTarget,projectEnemyHead,enemyEdgePointer,monsterHead
 import {validMotionPacket} from "./src/motion-core.mjs?v=0.49";
 import {runFrameSafely} from "./src/frame-loop.mjs?v=0.53";
 import {createPoseCamera} from "./src/pose-camera.mjs?v=0.47";
+import {guildBossAvailable} from "./src/guild-quests.mjs?v=1.3";
 import {ATTACKS,angleToTarget,turnToTarget,strikeInfo,spawnAroundPlayer,distance2d,dodgeMatches} from "./src/combat-spatial.mjs?v=0.35";
 (()=>{'use strict';
 const cvs=document.getElementById('game'),gl=cvs.getContext('webgl',{antialias:true,alpha:true,premultipliedAlpha:false,powerPreference:'high-performance'})||cvs.getContext('experimental-webgl');
 const el=id=>document.getElementById(id),RESULT_KEY='motion-rpg-indoor-result-v1',gameMode=new URLSearchParams(location.search).get('mode'),worldMode=gameMode==='world',dumbbellMode=gameMode==='dumbbell',watchInputMode=dumbbellMode&&new URLSearchParams(location.search).get('input')==='watch';if(worldMode){document.title='Motion RPG · 경계의 숲';el('brand').innerHTML='<div id="sigil">✦</div><div><h1>경계의 숲</h1><p>MOTION RPG · WORLD</p></div>';el('enemyHud').style.display='none';el('location').innerHTML='<span>VILLAGE GATE</span>숲 입구 마을<br><small style="opacity:.85">오늘의 원정을 선택하세요</small>';el('introCard').innerHTML='<div class="emblem">✦ 🌲 ✦</div><h2>경계의 숲</h2><p>마을을 거점으로 숲을 달리고,<br>발견한 마력체를 사냥하며 성장한다.</p><div id="worldMenu"><a href="./index.html?view=outdoor">🌲 숲 탐험 시작</a><a href="./index.html?view=indoor" class="secondary">🏃 러닝머신 원정</a><a href="./index.html" class="secondary">🏘️ 마을 정리</a></div><small>사냥 전투는 숲에서 마력체를 발견했을 때 시작된다</small>'}let active=false,last=0,clock=0,yaw=0,pitch=-0.032,weaponKick=0,impactTint=0,score=0,kills=0,projectiles=[],enemyShots=[],sparks=[],flares=[],enemy={x:.1,z:-7.2,hp:100,max:100,bob:0,dead:worldMode,respawn:0,name:'이끼 슬라임',speed:0.25,kind:0,attackTimer:2.5,windup:0,windupTotal:0,impactUntil:0,impactDuration:.5,attackStyle:"slam",facing:0};
 let enemyMind=createMonsterMind(enemy.kind,enemy.x,enemy.z,.39);enemy.moveSpeed=0;
 const shared=(()=>{try{return JSON.parse(localStorage.getItem("motion-rpg-save-v1")||"null")||{}}catch{return{}}})();
+const guildBossRequested=new URLSearchParams(location.search).get("guildBoss")==="forest";
+const guildBossMode=dumbbellMode&&guildBossRequested&&guildBossAvailable(shared,"forest");
+let bossVictory=false;
 const battleGear=normalizeRpgGear(shared);
 const equipped=battleGear.equipped,stats=combatStats(shared);
 let activeWeaponMode=battleGear.activeWeapon||"melee",autoSwitchEnabled=true,skillCooldownUntil=-1,skillPrimed=false;
@@ -478,6 +482,15 @@ if(dumbbellMode){activeWeaponMode="melee";autoSwitchEnabled=true;
   el("retryWrap").querySelector("p").textContent="워치4 연결은 유지돼. 기력을 회복하고 다시 싸울 수 있어.";
   el("footerNote").textContent="워치4 컬 = 거리별 검격/활 공격 · 미연결 시 화면 공격 버튼";
  }
+}
+if(guildBossMode){
+ el("introCard").querySelector("h2").textContent="길드 특별 사냥";
+ el("introCard").querySelector("p").textContent="경계의 숲 조사 결과를 확인하러 왔어. 한 명의 강력한 수문장을 쓰러뜨리고 마을로 돌아가자. S21 아령 컬 공격과 카메라 회피를 사용해.";
+ el("introCard").querySelector("small").textContent="보스 전투 1회 · 처치 후 마을에서 길드 보상을 정산해.";
+ el("begin").textContent="수문장에 도전";
+ el("location").querySelector("span").textContent="길드 특별 의뢰 · 보스";
+}else if(guildBossRequested){
+ el("introCard").querySelector("small").textContent="길드에서 조사 6회·성공 3회를 달성하고 의뢰를 수령해야 보스에 도전할 수 있어. 일반 사냥으로 시작해.";
 }
 const currentWeapon=()=>activeWeaponMode==="melee"?equipped.meleeWeapon:equipped.rangedWeapon;
 const equippedWeapon=()=>GEAR.weapon.find(item=>item.id===currentWeapon())?.name||"기본 장비";
@@ -1090,27 +1103,35 @@ function activateSkill(){
  beep(860,.34,"triangle",.14);
  return true;
 }
-function currentHuntRecord(){return {kills,score,sessionId,updatedAt:Date.now(),elapsedSec:Math.round(huntElapsedSec),motionActions:huntMotionActions,dodges:huntDodgeInputs,dodgeSuccess:huntDodgeSuccess,log:huntLog.slice(-16)};}
+function currentHuntRecord(){return {kills,score,sessionId,updatedAt:Date.now(),elapsedSec:Math.round(huntElapsedSec),motionActions:huntMotionActions,dodges:huntDodgeInputs,dodgeSuccess:huntDodgeSuccess,guildBoss:guildBossMode?"forest":null,bossVictory:guildBossMode&&bossVictory,log:huntLog.slice(-16)};}
 function bankProgress(){try{localStorage.setItem(RESULT_KEY,JSON.stringify(currentHuntRecord()))}catch(e){}}
 function damage(n,weapon="sword"){if(enemy.dead)return;enemyMind.aggro=true;enemy.hp=Math.max(0,enemy.hp-n);el('enemyHP').style.width=(enemy.hp/enemy.max*100)+'%';let x=enemy.x,y=1.4,z=enemy.z;
 const tint=weapon==="axe"||weapon==="ember"?[1,.58,.26]:weapon==="staff"||weapon==="orb"?[.38,.82,1]:weapon==="greatsword"||weapon==="aura"?[.50,.76,1]:weapon==="bow"||weapon==="arrow"?[.74,.94,.58]:[.80,1,.69];
-for(let i=0;i<16;i++){let p=(rand()-.5)*6,t=rand()*6.28,s=.65+rand()*2.6;sparks.push({x,y,z,vx:Math.cos(t)*s,vy:rand()*3.7,vz:Math.sin(t)*s,r:.04+rand()*.07,life:.4+rand()*.5,t:0,col:[tint[0],Math.min(1,tint[1]+rand()*.16),Math.min(1,tint[2]+rand()*.10)]})}toast('✦ '+n+' 데미지');beep(165,.12,'triangle',.11);if(enemy.hp<=0){enemy.dead=true;targetLocked=false;syncTargetUi();enemy.windup=0;enemy.impactUntil=0;enemyShots=[];el('attackBanner').hidden=true;el('enemyTag').hidden=true;el('enemyArrow').hidden=true;enemy.respawn=3.0;score+=80+enemy.kind*20;kills++;huntLog.push({name:enemy.name||"몬스터",at:huntElapsedSec});if(huntLog.length>25)huntLog.shift();heroHp=Math.min(stats.maxHp,heroHp+5);showHero();bankProgress();el('score').textContent=String(score).padStart(3,'0');el('enemyHud').style.opacity='0';el('stage').textContent=String(kills).padStart(2,'0');el('status').textContent='마력체 격파! 마을로 돌아가면 보상을 수령한다';setTimeout(()=>toast('마력체 격파 · 마을 보상 저장!'),350);beep(830,.25,'sine',.1)}}
+for(let i=0;i<16;i++){let p=(rand()-.5)*6,t=rand()*6.28,s=.65+rand()*2.6;sparks.push({x,y,z,vx:Math.cos(t)*s,vy:rand()*3.7,vz:Math.sin(t)*s,r:.04+rand()*.07,life:.4+rand()*.5,t:0,col:[tint[0],Math.min(1,tint[1]+rand()*.16),Math.min(1,tint[2]+rand()*.10)]})}toast('✦ '+n+' 데미지');beep(165,.12,'triangle',.11);if(enemy.hp<=0){enemy.dead=true;targetLocked=false;syncTargetUi();enemy.windup=0;enemy.impactUntil=0;enemyShots=[];el('attackBanner').hidden=true;el('enemyTag').hidden=true;el('enemyArrow').hidden=true;enemy.respawn=3.0;score+=80+enemy.kind*20;kills++;huntLog.push({name:enemy.name||"몬스터",at:huntElapsedSec});if(huntLog.length>25)huntLog.shift();heroHp=Math.min(stats.maxHp,heroHp+5);showHero();bankProgress();el('score').textContent=String(score).padStart(3,'0');el('enemyHud').style.opacity='0';el('stage').textContent=String(kills).padStart(2,'0');el('status').textContent='마력체 격파! 마을로 돌아가면 보상을 수령한다';setTimeout(()=>toast('마력체 격파 · 마을 보상 저장!'),350);beep(830,.25,'sine',.1);
+if(guildBossMode){
+ bossVictory=true;
+ el("status").textContent="숲의 수문장 격파! 마을에서 길드 의뢰를 완료해.";
+ showReaction("success","수문장 격파!");
+ bankProgress();
+ setTimeout(()=>{if(active&&bossVictory)showHuntSummary();},1600);
+}
+}}
 function spawnEnemy(){
  exerciseEngaged=false;exercisePath=null;exerciseRouteTarget=null;exercisePathIndex=0; // New monster => fresh approach and sightline.
  const oldKind=enemy.kind,area=forestZoneAt(camera.x,camera.z);
  dodgeProtectedAttack=0;
- enemy.kind=chooseForestMonster(area.id,rand,oldKind);
+ enemy.kind=guildBossMode?7:chooseForestMonster(area.id,rand,oldKind);
  const creature=FOREST_MONSTERS[enemy.kind];
- enemy.max=creature.hp+Math.min(340,Math.floor(kills*12));
+ enemy.max=guildBossMode?creature.hp+Math.max(130,Math.floor((Number(shared.level)||1)*18)):creature.hp+Math.min(340,Math.floor(kills*12));
  enemy.hp=enemy.max;
  const playerHeading=Math.atan2(Math.sin(yaw),-Math.cos(yaw));
  const position=spawnAroundPlayer(camera,playerHeading,rand,undefined,{exploration:true});
  enemy.x=position.x;enemy.z=position.z;enemy.facing=angleToTarget(enemy,camera);
  enemyMind=createMonsterMind(enemy.kind,enemy.x,enemy.z,rand());enemy.moveSpeed=0;
- enemy.speed=creature.speed+Math.min(kills*.027,.38);
+ enemy.speed=guildBossMode?creature.speed+0.18:creature.speed+Math.min(kills*.027,.38);
  enemy.attackTimer=2.5;enemy.windup=0;enemy.windupTotal=0;
  enemy.impactUntil=0;enemy.impactDuration=.54;enemy.attackStyle="slam";enemy.dead=false;
- enemy.name=creature.name;enemySpawnClock=clock;lastRadarClock=-99;
+ enemy.name=guildBossMode?"숲의 수문장":creature.name;enemySpawnClock=clock;lastRadarClock=-99;
  targetLocked=false;syncTargetUi();
  el("monName").textContent=creature.icon+" "+enemy.name;
  el("enemyHP").style.width="100%";el("enemyHud").style.opacity="1";
@@ -1119,7 +1140,7 @@ function spawnEnemy(){
  el("attackBanner").hidden=true;
  beep(635,.12,"sine",.060);
  const dir=relativeTarget(camera,yaw,enemy);
- el("spawnNotice").textContent="탐색 · "+creature.name+" · "+(dir?compassDirection(dir.angle):"근처")+" "+Math.round(dir?.distance||0)+"m 이동";
+ el("spawnNotice").textContent=(guildBossMode?"길드 보스 · ":"탐색 · ")+enemy.name+" · "+(dir?compassDirection(dir.angle):"근처")+" "+Math.round(dir?.distance||0)+"m 이동";
  el("spawnNotice").hidden=false;
 }
 let ctx=null;function beep(freq,time,type='sine',vol=.065){try{if(!ctx)ctx=new(window.AudioContext||window.webkitAudioContext)();const o=ctx.createOscillator(),g=ctx.createGain();o.type=type;o.frequency.setValueAtTime(freq,ctx.currentTime);o.frequency.exponentialRampToValueAtTime(Math.max(70,freq*.55),ctx.currentTime+time);g.gain.setValueAtTime(.0001,ctx.currentTime);g.gain.exponentialRampToValueAtTime(vol,ctx.currentTime+.02);g.gain.exponentialRampToValueAtTime(.0001,ctx.currentTime+time);o.connect(g);g.connect(ctx.destination);o.start();o.stop(ctx.currentTime+time+.02)}catch(e){}}
@@ -1127,6 +1148,7 @@ function resize(){const n=Math.min(window.devicePixelRatio||1,1.7);if(W!==innerW
 function updateEnemy(dt){
  if(worldMode)return;
  if(enemy.dead){
+  if(guildBossMode)return; // A boss kill concludes this special guild fight.
   enemy.respawn-=dt;
   if(enemy.respawn<=0)spawnEnemy();
   return;
@@ -1946,7 +1968,7 @@ function refreshMotionIndicator(){
 el("retryCombat").onclick=()=>{
  // Test-mode recovery, keeps earned kills in the same capped battle session.
  heroHp=stats.maxHp;showHero();camera.x=0;camera.z=5.5;camera.y=1.7;
- yaw=0;pitch=-.032;lastFire=-999;curlQueue=0;dodgeCooldown=0;dodgeUntil=0;dodgeMessageUntil=0;dodgeProtectedAttack=0;dodgeVisualStart=-99;queuedSkillUntil=-1;projectiles=[];enemyShots=[];sparks=[];meleeAction=null;rangedAction=null;
+ yaw=0;pitch=-.032;lastFire=-999;curlQueue=0;bossVictory=false;dodgeCooldown=0;dodgeUntil=0;dodgeMessageUntil=0;dodgeProtectedAttack=0;dodgeVisualStart=-99;queuedSkillUntil=-1;projectiles=[];enemyShots=[];sparks=[];meleeAction=null;rangedAction=null;
  el("retryWrap").hidden=true;active=true;spawnEnemy();
  el("status").textContent=watchInputMode?"전투 재개 · 워치4 연결 유지 중":"전투 재개 · S21 연결은 그대로 유지 중";
 };
@@ -2067,6 +2089,10 @@ function showHuntSummary(){
   payout=claimIndoorBattle(saved?.level?saved:newGame(),currentHuntRecord());
  }catch{}
  const info=summarizeHuntResult(currentHuntRecord(),payout);
+ if(guildBossMode&&bossVictory){
+  info.title="숲의 수문장 격파!";
+  info.description="특별 의뢰 성공. 마을로 돌아가면 길드 완료 보상과 제작 조건이 해금돼.";
+ }
  el("huntExitTitle").textContent=info.title;el("huntExitInfo").textContent=info.description;
  el("huntExitStats").replaceChildren(...info.metrics.map(item=>{
   const e=document.createElement("div"),b=document.createElement("b"),label=document.createElement("small");
