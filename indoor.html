@@ -2106,7 +2106,7 @@ function returnToVillage(){
  bankProgress();
  if(watchInputMode||new URLSearchParams(location.search).get("return")==="preview"){
   if(window.parent!==window)window.parent.postMessage({type:"motion-rpg-indoor-return",sessionId},location.origin);
-  else location.href="./preview.html?v=1.1&from=indoor";
+  else location.href="./preview.html?v=1.3&from=indoor";
  }else location.href="./index.html?from=indoor";
 }
 el("campReturn").addEventListener("click",showHuntSummary);

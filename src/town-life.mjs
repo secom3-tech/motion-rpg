@@ -44,7 +44,7 @@ export function villageObjective(state){
  const zone=state?.region==="ridge"?"ridge":"forest";
  const q=quests[zone]||{};
  if(q.bossDefeated)return {title:"길드 의뢰 완료",detail:"숲의 수문장 격파 · 다음 모험을 준비하자.",progress:1};
- if(state?.guildQuest?.accepted?.[zone]!==true)return {title:"길드 의뢰 수령",detail:"길드에서 의뢰를 받고 숲 사냥·GPS 원정으로 진행하자.",progress:0};
+ if(state?.guildQuest?.accepted?.[zone]!==true)return {title:"길드 의뢰 수령",detail:"길드에서 의뢰를 받고 숲 사냥·GPS 원정으로 진행하자.",progress:Math.min(1,(Math.max(0,Number(q.attempts)||0)+Math.max(0,Number(q.successes)||0))/9)};
  const count=Math.min(6,Math.max(0,Number(q.attempts)||0));
  const won=Math.min(3,Math.max(0,Number(q.successes)||0));
  if(count>=6&&won>=3)return {title:"지역 보스 도전",detail:"길드에서 특별 사냥에 도전할 수 있어.",progress:1};
