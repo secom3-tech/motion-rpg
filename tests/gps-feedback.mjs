@@ -24,7 +24,7 @@ for(const marker of ['id="gpsStatus"','id="gpsStatusLabel"','id="gpsStatusDetail
  'setGpsStatus("waiting");startGeo()','setGpsStatus("connected",p.accuracy,false)',
  'setGpsStatus("recording",p.accuracy,false)','setGpsStatus("lost")','denied?"denied":"error"',
  'setGpsStatus("weak",p.accuracy,false)','gpsGeneration++',
- 'startLine.head+". "+startLine.detail','lastGps=now;\n  const measured='])
+ 'startLine.head+". "+startLine.detail','walkPendingDistanceM+=d','const measured='])
  assert.ok(html.includes(marker),"GPS UI behavior missing: "+marker);
 assert.ok(html.includes('if(dt<2)return;\n  if(d<3)'),'Short location fixes should accumulate, not reset the GPS time anchor');
 assert.ok(html.includes('gpsSilenceIsProlonged(gpsLastGoodAt,Date.now())'),'Loss should be based on the last accurate fix');
