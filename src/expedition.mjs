@@ -44,12 +44,14 @@ function pickEncounter(s){
  const pool=SCENARIOS.filter(e=>!seen.has(e.id)&&(s.mode!=="walk"||e.kind!=="surge"));
  const e=pool[Math.floor(rand(s)*pool.length)];
  const m=MODIFIERS[Math.floor(rand(s)*MODIFIERS.length)];
- return {...e,modifier:m.name,flavor:m.flavor,durationSec:35+Math.floor(rand(s)*4)*5,qualitySec:0,requiredSec:0};
+ return {...e,modifier:m.name,flavor:m.flavor,durationSec:35+Math.floor(rand(s)*4)*5,
+  qualitySec:0,requiredSec:0,distanceM:0,goodDistanceM:0,tooFastSec:0,tooSlowSec:0,
+  goalDistanceM:0,countdownAnnounced:false,halfAnnounced:false,nearAnnounced:false,finalAnnounced:false};
 }
 export function paceRequirement(type,base){
  if(type==="surge")return {label:"조금 빠르게 이동",hint:"평소보다 약 6% 빠르게. 전력질주는 불필요.",upper:base*.94};
  if(type==="quiet")return {label:"속도를 낮춰 은신",hint:"회복하듯 편하게 움직여.",lower:base*1.06};
- return {label:"안정적으로 이동",hint:"평소 편안한 페이스를 유지해.",lower:base*.88,upper:base*1.16};
+ return {label:"안정적으로 이동",hint:"평소 편안한 페이스를 유지해.",lower:base*.80,upper:base*1.22};
 }
 export function paceQualifies(type,pace,base){
  if(!Number.isFinite(pace)||pace<=0||pace>16)return false;
@@ -61,28 +63,57 @@ export function createAdventure({mode="demo",basePace=8.5,style="scout",duration
  if(!Number.isFinite(basePace)||basePace<5||basePace>15)throw Error("Invalid baseline pace");
  if(![0,12,20,30,45,60].includes(durationMin))throw Error("Invalid duration");
  return {version:3,mode,basePace,style,freeRoam:durationMin===0,durationSec:durationMin===0?120*60:durationMin*60,seed:(seed>>>0)||17,level:Math.max(1,Math.floor(level)),
- phase:"ready",elapsedSec:0,phaseSeconds:0,event:null,events:[],success:0,fail:0,xp:0,gold:0,loot:{torch:0,map:0,bandage:0},
+ phase:"ready",elapsedSec:0,phaseSeconds:0,event:null,events:[],speechSeq:0,success:0,fail:0,xp:0,gold:0,loot:{torch:0,map:0,bandage:0},
  hp:100,distanceM:0,announcements:[],lastAnnouncement:"탐험 준비 완료",battleRank:Math.max(1,Math.floor((level-1)/4)+1),endReason:null};
 }
-function announce(s,head,detail){const item={at:Math.round(s.elapsedSec),head,detail};s.announcements.push(item);if(s.announcements.length>12)s.announcements.shift();s.lastAnnouncement=head+" "+detail;}
+function announce(s,head,detail){const item={id:++s.speechSeq,at:Math.round(s.elapsedSec),head,detail};s.announcements.push(item);if(s.announcements.length>12)s.announcements.shift();s.lastAnnouncement=head+" "+detail;}
 export function startAdventure(prev){if(prev.phase!=="ready")throw Error("Already started");const s=structuredClone(prev);s.phase="travel";s.phaseSeconds=45;announce(s,s.mode==="walk"?"산책 탐색 시작":"경계의 숲에 도착했다",s.mode==="walk"?"천천히 걸으며 숲의 흔적을 발견해. 강아지가 멈추면 함께 쉬어도 괜찮아.":"천천히 숲을 탐험하며 호흡을 정리하자.");return s}
+/** Outdoor missions have measurable GPS distance and pace goals, never a hidden button choice. */
+export function eventGoalDistance(basePace,durationSec){
+ return Math.round(clamp(durationSec*1000/(basePace*60),55,125)/10)*10;
+}
+export function eventPaceAdvice(kind,basePace){
+ if(kind==="surge")return "안전한 구간에서 평소보다 조금 빠르게 이동해.";
+ if(kind==="quiet")return "평소보다 천천히 움직여. 멈출 필요는 없어.";
+ return "현재 편안한 페이스를 유지해.";
+}
 function beginEncounter(s){
- s.phase="challenge";s.event=pickEncounter(s);s.phaseSeconds=s.event.durationSec;
- const req=paceRequirement(s.event.kind,s.basePace);
- announce(s,s.event.name,s.mode==="walk"?s.event.flavor+" "+s.event.line+" 주변을 안전하게 살펴보고 편안히 걸어가자. 속도를 높일 필요는 없어.":s.event.flavor+" "+s.event.line+" "+req.label+". "+req.hint);
+ s.event=pickEncounter(s);
+ const e=s.event;
+ e.goalDistanceM=eventGoalDistance(s.basePace,e.durationSec);
+ e.basePace=s.basePace; // Fix the target at encounter start, even if GPS calibration updates later.
+ s.phase="briefing";s.phaseSeconds=7;
+ announce(s,e.name+" 발견",e.line+" 목표 "+e.goalDistanceM+"미터. "+(s.mode==="walk"?"편안하게 걸으면 돼.":eventPaceAdvice(e.kind,e.basePace))+" 임무 시작을 준비해.");
+}
+function enterChallenge(s){
+ s.phase="challenge";s.phaseSeconds=Math.max(80,s.event.durationSec*2.35);
+ announce(s,"임무 시작","이제 이동해! 목표 "+s.event.goalDistanceM+"미터.");
+}
+function eventFailureReason(e,passed,completed){
+ if(passed)return "목표 거리와 페이스 조건을 달성했어.";
+ if(!completed)return "목표 거리 "+e.goalDistanceM+"미터에 도달하지 못했어.";
+ if(e.tooFastSec>e.tooSlowSec*1.3)return "너무 빠른 페이스로 이동한 구간이 많았어.";
+ if(e.tooSlowSec>e.tooFastSec*1.3)return "목표보다 느린 구간이 많았어.";
+ return "목표 페이스를 유지한 구간이 부족했어.";
 }
 function resolveEncounter(s){
- const e=s.event,ratio=e.requiredSec>0?e.qualitySec/e.requiredSec:0,bonus=STYLES[s.style][e.kind];
+ const e=s.event,completed=e.distanceM>=e.goalDistanceM-.001;
+ const ratio=e.requiredSec>0?e.qualitySec/e.requiredSec:0;
+ // GPS outcomes are explained by measured performance, not a hidden random roll.
+ // Other modes retain their legacy random encounter resolution for compatibility.
+ const bonus=STYLES[s.style][e.kind];
  const rating=ratio+bonus+(rand(s)-.5)*.22-(s.battleRank-1)*.025;
- const passed=ratio>=.58&&rating>=.72;
+ const passed=completed&&(s.mode==="gps"?ratio>=.60:ratio>=.58&&rating>=.72);
  const earnedXp=passed?14+Math.min(8,s.battleRank*2):5,earnedGold=passed?5+Math.min(8,s.battleRank*2):0;
  s.xp+=earnedXp;s.gold+=earnedGold;
  if(passed){s.success++;s.hp=clamp(s.hp+2,0,100)}else{s.fail++;s.hp=clamp(s.hp-(s.style==="guardian"?6:10),0,100)}
  let item=null;
  if(passed&&rand(s)<.22){item=itemIds[Math.floor(rand(s)*itemIds.length)];s.loot[item]+=1}
- const result={id:e.id,name:e.name,modifier:e.modifier,kind:e.kind,passed,ratio:Number(ratio.toFixed(2)),earnedXp,earnedGold,item,elapsedSec:s.elapsedSec};
+ const reason=eventFailureReason(e,passed,completed);
+ const result={id:e.id,name:e.name,modifier:e.modifier,kind:e.kind,passed,ratio:Number(ratio.toFixed(2)),
+  goalDistanceM:e.goalDistanceM,distanceM:Math.round(e.distanceM),reason,earnedXp,earnedGold,item,elapsedSec:s.elapsedSec};
  s.events.push(result);
- announce(s,passed?"임무 성공":"임무 실패",(passed?e.win:e.lose)+" 경험치 "+earnedXp+", 골드 "+earnedGold+"."+(item?" 전리품 발견.":"")+" 회복 구간에 진입한다.");
+ announce(s,passed?"임무 성공":"임무 실패",(passed?e.win:e.lose)+" "+reason+" 경험치 "+earnedXp+", 골드 "+earnedGold+"."+(item?" 전리품 발견.":"")+" 이제 회복 구간이야.");
  s.event=null;s.phase="recovery";s.phaseSeconds=50;
  if(s.hp<=0){s.phase="complete";s.endReason="retreat";announce(s,"안전한 후퇴","게임 기력이 소진되어 원정을 마친다. 실제로 무리하지 않아도 된다.")}
 }
@@ -92,17 +123,71 @@ export function advanceAdventure(prev,dtSec,pace){
  if(prev.phase==="ready"||prev.phase==="complete")return structuredClone(prev);
  if(!Number.isFinite(dtSec)||dtSec<=0||dtSec>120||!Number.isFinite(pace)||pace<=0)throw Error("Invalid movement");
  const s=structuredClone(prev);let left=Math.min(dtSec,s.durationSec-s.elapsedSec);
- while(left>0&&s.phase!=="complete"){
-  const n=Math.min(left,s.phaseSeconds,s.durationSec-s.elapsedSec);
-  if(n<=0){finish(s);break}
-  s.elapsedSec+=n;s.distanceM+=n*1000/(pace*60);s.phaseSeconds-=n;left-=n;
-  if(s.phase==="challenge"){s.event.requiredSec+=n;if(s.mode==="walk"?pace>=8&&pace<=65:paceQualifies(s.event.kind,pace,s.basePace))s.event.qualitySec+=n}
-  if(s.phaseSeconds<=0.00001){
-   if(s.phase==="travel")beginEncounter(s);
-   else if(s.phase==="challenge")resolveEncounter(s);
-   else if(s.phase==="recovery"){s.phase="travel";s.phaseSeconds=55+Math.floor(rand(s)*5)*10;s.hp=clamp(s.hp+3,0,100);announce(s,"다음 탐험 구간","호흡을 정리하며 새로운 흔적을 살펴보자.");}
+ while(left>1e-8&&s.phase!=="complete"){
+  let n=Math.min(left,s.phaseSeconds,s.durationSec-s.elapsedSec);
+  if(s.phase==="briefing"&&!s.event.countdownAnnounced)
+   n=Math.min(n,Math.max(0,s.phaseSeconds-3));
+  if(s.phase==="challenge"&&s.event){
+   const e=s.event,metresPerSec=1000/(pace*60);
+   n=Math.min(n,Math.max(0,(e.goalDistanceM-e.distanceM)/metresPerSec));
   }
-  if(s.elapsedSec>=s.durationSec&&s.phase!=="complete")finish(s);
+  if(n<=1e-8){
+   if(s.phase==="briefing"&&!s.event.countdownAnnounced){
+    s.event.countdownAnnounced=true;
+    announce(s,"시작 카운트다운","3, 2, 1. 곧 출발!");
+    continue;
+   }
+   if(s.phase==="challenge"&&s.event){resolveEncounter(s);continue;}
+   finish(s);break;
+  }
+  s.elapsedSec+=n;
+  const travelled=n*1000/(pace*60);
+  s.distanceM+=travelled;
+  s.phaseSeconds-=n;left-=n;
+  if(s.phase==="challenge"){
+   const e=s.event;
+   e.distanceM+=travelled;e.requiredSec+=n;
+   const qualified=s.mode==="walk"?pace>=8&&pace<=65:paceQualifies(e.kind,pace,e.basePace);
+   if(qualified){e.qualitySec+=n;e.goodDistanceM+=travelled;}
+   else{
+    const req=paceRequirement(e.kind,e.basePace);
+    if(req.upper&&pace<req.upper)e.tooFastSec+=n;
+    else if(req.lower&&pace>req.lower)e.tooSlowSec+=n;
+    else e.tooSlowSec+=n;
+   }
+   const ratio=e.distanceM/e.goalDistanceM;
+   const paceState=qualified?"페이스 좋아. 그대로 유지해.":
+      e.tooSlowSec>=e.tooFastSec?"조금 느려졌어. 편한 범위에서 페이스를 조절해.":
+      "조금 빨라졌어. 안전하게 속도를 조절해.";
+   if(ratio>=.5&&!e.halfAnnounced){
+    e.halfAnnounced=true;announce(s,"중간 상황","목표의 절반을 지났어. "+paceState);
+   }
+   if(ratio>=.77&&!e.nearAnnounced){
+    e.nearAnnounced=true;
+    announce(s,"목표 접근","약 "+Math.max(0,Math.round(e.goalDistanceM-e.distanceM))+"미터 남았어. "+paceState);
+   }
+   if(ratio>=.91&&!e.finalAnnounced){
+    e.finalAnnounced=true;announce(s,"종료 카운트다운","거의 도착했어. 5, 4, 3, 2, 1.");
+   }
+  }
+  if(s.phase==="briefing"&&!s.event.countdownAnnounced&&s.phaseSeconds<=3+1e-8){
+   s.event.countdownAnnounced=true;
+   announce(s,"시작 카운트다운","3, 2, 1. 곧 출발!");
+  }
+  if(s.phase==="challenge"&&(s.event.distanceM>=s.event.goalDistanceM-.001||s.phaseSeconds<=1e-8)){
+   if(!s.event.finalAnnounced){
+    s.event.finalAnnounced=true;announce(s,"종료 카운트다운","목표 구간 종료. 3, 2, 1.");
+   }
+   resolveEncounter(s);
+  }else if(s.phaseSeconds<=1e-8){
+   if(s.phase==="travel")beginEncounter(s);
+   else if(s.phase==="briefing")enterChallenge(s);
+   else if(s.phase==="recovery"){
+    s.phase="travel";s.phaseSeconds=55+Math.floor(rand(s)*5)*10;s.hp=clamp(s.hp+3,0,100);
+    announce(s,"다음 탐험 구간","호흡을 정리하며 새로운 흔적을 살펴보자.");
+   }
+  }
+  if(s.elapsedSec>=s.durationSec-1e-8&&s.phase!=="complete")finish(s);
  }
  s.distanceM=Math.round(s.distanceM*10)/10;return s;
 }

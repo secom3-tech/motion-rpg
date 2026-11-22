@@ -1,0 +1,38 @@
+import assert from "node:assert/strict";
+import fs from "node:fs";
+import {createAdventure,startAdventure,advanceAdventure,eventGoalDistance} from "../src/expedition.mjs";
+const follow=(g,n,p=8.5)=>advanceAdventure(g,n,p);
+assert.equal(eventGoalDistance(8.5,40),80);
+let g=startAdventure(createAdventure({mode:"gps",seed:9,basePace:8.5,durationMin:12}));
+g=follow(g,45);
+assert.equal(g.phase,"briefing");
+assert.ok(g.announcements.at(-1).detail.includes("미터"));
+assert.ok(g.event.goalDistanceM>=55);
+g=follow(g,4);assert.ok(g.announcements.some(x=>x.head==="시작 카운트다운"));
+g=follow(g,3);assert.equal(g.phase,"challenge");
+const goal=g.event.goalDistanceM;
+g=follow(g,goal*.51*8.5*60/1000);
+assert.ok(g.announcements.some(x=>x.head==="중간 상황"));
+g=follow(g,goal*.29*8.5*60/1000);
+assert.ok(g.announcements.some(x=>x.head==="목표 접근"));
+g=follow(g,goal*.12*8.5*60/1000);
+assert.ok(g.announcements.some(x=>x.head==="종료 카운트다운"));
+g=follow(g,goal*.10*8.5*60/1000);
+assert.equal(g.events.length,1);assert.equal(g.events[0].passed,true);
+assert.match(g.events[0].reason,/조건을 달성/);
+assert.ok(g.announcements.some(x=>x.head==="임무 성공"));
+// Every actual result for GPS must be grounded in recorded pace compliance.
+let bad=startAdventure(createAdventure({mode:"gps",seed:9,basePace:8.5,durationMin:12}));
+bad=follow(bad,52);assert.equal(bad.phase,"challenge");
+for(let i=0;i<20&&bad.events.length===0;i++)bad=follow(bad,5,12.8);
+assert.equal(bad.events.length,1);assert.equal(bad.events[0].passed,false);
+assert.match(bad.events[0].reason,/느린|페이스|미터/);
+// Catch a long GPS callback that crosses several progress thresholds in one step.
+let jump=startAdventure(createAdventure({mode:"gps",seed:9,basePace:8.5,durationMin:12}));
+jump=follow(jump,52);
+jump=follow(jump,60,8.5);
+const prompts=jump.announcements.map(a=>a.head);
+assert.ok(prompts.includes("중간 상황")&&prompts.includes("목표 접근")&&prompts.includes("종료 카운트다운")&&prompts.includes("임무 성공"),prompts.join(" / "));
+const html=fs.readFileSync(new URL("../preview.html",import.meta.url),"utf8");
+for(const phrase of ['voiceQueue','playNextVoice()','clearVoice()','notices=session.announcements.filter','GPS 신호 불안정. 임무 판정을 잠시 보류해','임무 준비·카운트다운'])assert.ok(html.includes(phrase),phrase);
+console.log("GPS VOICE MISSIONS PASS: metric goals, countdowns, middle, near, outcome, reason, GPS signal gating and FIFO narration");
